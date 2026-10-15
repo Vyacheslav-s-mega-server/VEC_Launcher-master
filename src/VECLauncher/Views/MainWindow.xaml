@@ -9,6 +9,7 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="True"
+        ShowInTaskbar="True"
         Background="Transparent"
         FontFamily="Segoe UI"
         UseLayoutRounding="True"
@@ -733,7 +734,18 @@
                                                 </Grid>
 
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12">
-                                                    <!-- Change Skin Button -->
+                                                    <Button x:Name="BtnRefreshSkin" Width="34" Height="34" Margin="0,0,6,0"
+                                                            Background="#E616161C" Foreground="White" BorderBrush="#33FFFFFF" BorderThickness="1"
+                                                            Cursor="Hand" ToolTip="Синхронизировать скин и плащ с сервером VEC"
+                                                            Click="BtnRefreshSkin_Click">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="8"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                        <TextBlock Text="🔄" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Button>
+
                                                     <Button x:Name="BtnBrowseSkin" Width="34" Height="34" Margin="0,0,6,0"
                                                             Background="#E616161C" Foreground="White" BorderBrush="#33FFFFFF" BorderThickness="1"
                                                             Cursor="Hand" ToolTip="Сменить скин (выбрать PNG-файл)"
@@ -936,6 +948,7 @@
                         </Grid>
                         </Grid>
                     </Grid>
+
 
                     <Grid x:Name="PageSettings" Grid.Row="0" Margin="24,14,18,0" Visibility="Collapsed">
                         <Grid.RowDefinitions>
@@ -1426,7 +1439,7 @@
                         <Grid Grid.Row="0" Margin="0,0,0,14">
                             <StackPanel>
                                 <TextBlock Text="Моды и Контент" Style="{StaticResource H1}"/>
-                                <TextBlock x:Name="TxtModsSubtitle" Text="Поиск и установка дополнений с Modrinth" Foreground="#777788" FontSize="11.5" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="TxtModsSubtitle" Text="Одобренные модификации сервера VEC 1.21.11" Foreground="#777788" FontSize="11.5" Margin="0,4,0,0"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                                 <Button Style="{StaticResource IconButton}" Content="Импорт .jar"
@@ -1448,17 +1461,20 @@
                                      FontSize="12" Padding="12,0"
                                      VerticalContentAlignment="Center"/>
 
-                            <ComboBox x:Name="CbModType" Grid.Column="1" Width="130" Height="36" Margin="8,0,0,0"
+                            <ComboBox x:Name="CbModType" Grid.Column="1" Width="140" Height="36" Margin="8,0,0,0"
                                       FontSize="11" SelectionChanged="ModFilter_Changed">
-                                <ComboBoxItem Content="Моды" IsSelected="True" Tag="0"/>
-                                <ComboBoxItem Content="Ресурспаки" Tag="1"/>
-                                <ComboBoxItem Content="Шейдеры" Tag="2"/>
+                                <ComboBoxItem Content="Все категории" IsSelected="True" Tag="all"/>
+                                <ComboBoxItem Content="Ядро (Core)" Tag="Core"/>
+                                <ComboBoxItem Content="Оптимизация" Tag="Optimization"/>
+                                <ComboBoxItem Content="Графика (Visual)" Tag="Visual"/>
+                                <ComboBoxItem Content="Утилиты (Utility)" Tag="Utility"/>
+                                <ComboBoxItem Content="Шейдеры" Tag="Shaders"/>
+                                <ComboBoxItem Content="Ресурспаки" Tag="Resourcepacks"/>
                             </ComboBox>
 
-                            <ComboBox x:Name="CbModSource" Grid.Column="2" Width="120" Height="36" Margin="8,0,0,0"
-                                      FontSize="11" SelectionChanged="ModFilter_Changed">
-                                <ComboBoxItem Content="Все" IsSelected="True" Tag="all"/>
-                                <ComboBoxItem Content="Modrinth" Tag="modrinth"/>
+                            <ComboBox x:Name="CbModSource" Grid.Column="2" Width="110" Height="36" Margin="8,0,0,0"
+                                      FontSize="11" SelectionChanged="ModFilter_Changed" IsEnabled="False">
+                                <ComboBoxItem Content="База VEC" IsSelected="True" Tag="vec"/>
                             </ComboBox>
 
                             <Button x:Name="BtnModSearch" Grid.Column="3" Style="{StaticResource AccentButton}"
@@ -1466,7 +1482,6 @@
                                     Click="BtnModSearchNew_Click"/>
                         </Grid>
 
-                        <!-- Catalog -->
                         <Grid x:Name="PanelBrowse" Grid.Row="2">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
@@ -1518,24 +1533,11 @@
                                                         </StackPanel>
 
                                                         <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                            <Button MinWidth="96" Height="30" Style="{StaticResource AccentButton}"
-                                                                    Content="Установить" FontSize="11"
+                                                            <Button MinWidth="105" Height="32" Style="{StaticResource AccentButton}"
+                                                                    Content="{Binding ActionText, FallbackValue='Установить'}"
+                                                                    IsEnabled="{Binding ActionEnabled, FallbackValue=True}"
+                                                                    FontSize="11"
                                                                     Click="ModInstall_Click" Tag="{Binding Index}"/>
-                                                            <Grid Margin="0,5,0,0">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <Button Grid.Column="0" Content="Открыть" FontSize="10.5" Padding="6,3"
-                                                                        Style="{StaticResource IconButton}"
-                                                                        Click="ModPageInApp_Click" Tag="{Binding Index}"/>
-                                                                <Button Grid.Column="1" FontSize="10.5" Padding="6,3"
-                                                                        Style="{StaticResource IconButton}"
-                                                                        Margin="4,0,0,0"
-                                                                        Click="ModPage_Click" Tag="{Binding PageUrl}">
-                                                                    <TextBlock Text="↗" FontSize="11" Foreground="#AAAAAA"/>
-                                                                </Button>
-                                                            </Grid>
                                                         </StackPanel>
                                                     </Grid>
                                                 </Border>
@@ -1821,6 +1823,7 @@
                                         <TextBlock Text="Профиль" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </RadioButton>
+
                                 <RadioButton x:Name="NavSettings" Style="{StaticResource NavToggleDiscord}" Checked="Nav_Checked" Tag="4">
                                     <StackPanel Orientation="Horizontal">
                                         <Image Source="pack://application:,,,/Assets/setting_page.png" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>

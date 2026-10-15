@@ -239,11 +239,7 @@ public partial class AccountViewModel : ObservableObject
                 }
             });
 
-            var capeFile = OfflineSkinService.FindAccountCape(acc.Username);
-            foreach (var inst in _state.Instances.Where(OfflineSkinService.IsCslSupported))
-            {
-                OfflineSkinService.SyncToInstance(inst, acc.Username, skinFile, capeFile, isSlim);
-            }
+
         }
         else
         {
@@ -259,11 +255,7 @@ public partial class AccountViewModel : ObservableObject
                     if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                     File.WriteAllBytes(slotPath, defaultSkinBytes);
 
-                    var capeFile = OfflineSkinService.FindAccountCape(acc.Username);
-                    foreach (var inst in _state.Instances.Where(OfflineSkinService.IsCslSupported))
-                    {
-                        OfflineSkinService.SyncToInstance(inst, acc.Username, slotPath, capeFile, isSlim);
-                    }
+
                 }
                 catch (Exception ex) { Log.Warn(ex.Message); }
 
@@ -307,14 +299,7 @@ public partial class AccountViewModel : ObservableObject
         if (!string.IsNullOrEmpty(skinDir)) Directory.CreateDirectory(skinDir);
         lock (_skinFileLock) { File.WriteAllBytes(skinFile, bytes); }
 
-        var capeFile = OfflineSkinService.FindAccountCape(acc.Username);
-        bool isSlim = CurrentSkinModel.Equals(Constants.SkinModel.Slim, StringComparison.OrdinalIgnoreCase);
 
-        foreach (var inst in _state.Instances.Where(OfflineSkinService.IsCslSupported))
-        {
-            await OfflineSkinService.EnsureCslModAsync(inst);
-            OfflineSkinService.SyncToInstance(inst, acc.Username, skinFile, capeFile, isSlim);
-        }
 
         if (acc.IsVec)
         {
@@ -370,13 +355,7 @@ public partial class AccountViewModel : ObservableObject
 
             _state.CurrentSkinRawBytes = defaultSkinBytes;
 
-            var currentCape = OfflineSkinService.FindAccountCape(acc.Username);
-            foreach (var inst in _state.Instances.Where(OfflineSkinService.IsCslSupported))
-            {
-                await OfflineSkinService.EnsureCslModAsync(inst);
-                OfflineSkinService.SyncToInstance(inst, acc.Username, skinFile, currentCape, isSlim);
-                OfflineSkinService.ClearCslCache(InstanceService.InstanceDir(inst));
-            }
+
 
             if (acc.IsVec)
             {

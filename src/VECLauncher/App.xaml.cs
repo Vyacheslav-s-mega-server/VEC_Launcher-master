@@ -26,7 +26,6 @@ public partial class App : Application
 {
     public static HttpClient Http { get; private set; } = null!;
 
-    /// <summary>Global DI service provider — use to resolve services anywhere.</summary>
     public static IServiceProvider Services { get; private set; } = null!;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -38,6 +37,14 @@ public partial class App : Application
             Shutdown();
             return;
         }
+
+        if (!ProtocolService.TryEnsureSingleInstance(e.Args))
+        {
+            Shutdown();
+            return;
+        }
+
+        ProtocolService.RegisterProtocol();
 
         ServicePointManager.DefaultConnectionLimit = 64;
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
@@ -60,20 +67,6 @@ public partial class App : Application
         PresentationTraceSources.DataBindingSource.Switch.Level = SourceLevels.Error;
 #endif
 
-        LauncherPaths.EnsureAll();
-        Log.Info("VEC Launcher started");
-
-        // ── Build DI container (all services, VMs registered here) ──
-        Services = ServiceConfig.Configure();
-
-        try
-        {
-            var s = Services.GetRequiredService<LauncherSettings>();
-            ThemeService.ApplyTheme(s.Theme);
-            ThemeService.ApplyAccent(s.AccentColor);
-        }
-        catch (Exception ex) { Log.Warn("Failed to apply theme: " + ex.Message); }
-
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
             Log.Error("Unhandled domain exception: " + args.ExceptionObject);
@@ -83,7 +76,27 @@ public partial class App : Application
             args.SetObserved();
         };
 
-        // SplashWindow.xaml is the StartupUri — it resolves MainWindow from DI
+        LauncherPaths.EnsureAll();
+        Log.Info("VEC Launcher started");
+
+        try
+        {
+            Services = ServiceConfig.Configure();
+            var s = Services.GetRequiredService<LauncherSettings>();
+            ThemeService.ApplyTheme(s.Theme);
+            ThemeService.ApplyAccent(s.AccentColor);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Fatal startup error: " + ex);
+            MessageBox.Show("Fatal startup error: " + ex.Message + "\n" + ex.StackTrace, "VEC Launcher", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown();
+            return;
+        }
+
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        var splash = new Views.SplashWindow();
+        splash.Show();
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -99,6 +112,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         Log.Info("Shutting down");
+        ProtocolService.Dispose();
         Http?.Dispose();
         base.OnExit(e);
     }

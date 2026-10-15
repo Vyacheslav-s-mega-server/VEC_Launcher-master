@@ -28,6 +28,7 @@ public static class ServiceConfig
         services.AddSingleton<ModService>();
         services.AddSingleton<ModpackService>();
         services.AddSingleton<RamMonitor>();
+        services.AddSingleton<WebAuthService>();
 
         // ── Service interfaces (replace static calls) ──
         services.AddSingleton<IInstanceService, InstanceServiceAdapter>();

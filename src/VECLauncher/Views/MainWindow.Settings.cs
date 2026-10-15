@@ -560,8 +560,14 @@ public partial class MainWindow
 
         AnimatePageTransition(tag);
 
+        if (tag == "0" && _account != null) _ = LoadSkinImagesAsync(_account);
         if (tag == "1") { RefreshInstanceStats(); LoadScreenshots(); }
-        if (tag == "3") UpdateSkinTabHeader();
+        if (tag == "3")
+        {
+            UpdateSkinTabHeader();
+            if (_account != null) _ = LoadSkinImagesAsync(_account);
+        }
+        if (tag == "9" && _account != null) _ = LoadSkinImagesAsync(_account);
         if (tag == "6")
         {
             UpdateModsSubtitle();

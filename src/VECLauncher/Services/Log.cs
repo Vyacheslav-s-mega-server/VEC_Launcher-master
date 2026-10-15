@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace VECLauncher.Services;
 
@@ -26,6 +26,8 @@ public static class Log
                 File.AppendAllText(LauncherPaths.LauncherLogFile, line + Environment.NewLine, Encoding.UTF8);
             }
         }
-        catch (Exception ex) { Log.Warn(ex.Message); }
+        catch
+        {
+        }
     }
 }

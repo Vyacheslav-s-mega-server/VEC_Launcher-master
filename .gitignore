@@ -60,5 +60,8 @@ start_auth_server.bat
 Новая папка/
 
 # Build outputs
-builds/
+/builds/
 src/builds_tmp/
+dist/
+VyacheslavsMegaWebApp-dev/
+vec-fabric-guard/

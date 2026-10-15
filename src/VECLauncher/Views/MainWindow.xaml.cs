@@ -115,85 +115,153 @@ public partial class MainWindow : Window
         Loaded += OnLoadedAsync;
         Closing += OnClosing;
         KeyDown += Window_KeyDown;
+        Activated += MainWindow_Activated;
+        InitSkinDirectoryWatchers();
+    }
+
+    private FileSystemWatcher? _skinWatcher;
+    private FileSystemWatcher? _capeWatcher;
+    private DateTime _lastWatcherReload = DateTime.MinValue;
+
+    private void MainWindow_Activated(object? sender, EventArgs e)
+    {
+        if (_account != null && (DateTime.UtcNow - _lastWatcherReload).TotalSeconds > 1)
+        {
+            _lastWatcherReload = DateTime.UtcNow;
+            _ = LoadSkinImagesAsync(_account);
+        }
+    }
+
+    private void InitSkinDirectoryWatchers()
+    {
+        try
+        {
+            var skinsDir = System.IO.Path.Combine(LauncherPaths.Root, "skins");
+            Directory.CreateDirectory(skinsDir);
+            _skinWatcher = new FileSystemWatcher(skinsDir)
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
+                EnableRaisingEvents = true
+            };
+            _skinWatcher.Changed += OnSkinFileChanged;
+            _skinWatcher.Created += OnSkinFileChanged;
+
+            var capesDir = System.IO.Path.Combine(LauncherPaths.Root, "capes");
+            Directory.CreateDirectory(capesDir);
+            _capeWatcher = new FileSystemWatcher(capesDir)
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size,
+                EnableRaisingEvents = true
+            };
+            _capeWatcher.Changed += OnSkinFileChanged;
+            _capeWatcher.Created += OnSkinFileChanged;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("Skin directory watcher failed: " + ex.Message);
+        }
+    }
+
+    private void OnSkinFileChanged(object sender, FileSystemEventArgs e)
+    {
+        if (_account == null) return;
+        var name = System.IO.Path.GetFileNameWithoutExtension(e.Name);
+        if (string.Equals(name, _account.Username, StringComparison.OrdinalIgnoreCase))
+        {
+            Dispatcher.InvokeAsync(async () =>
+            {
+                if ((DateTime.UtcNow - _lastWatcherReload).TotalMilliseconds < 250) return;
+                _lastWatcherReload = DateTime.UtcNow;
+                await Task.Delay(100);
+                await LoadSkinImagesAsync(_account);
+            });
+        }
     }
 
     private async void OnLoadedAsync(object sender, RoutedEventArgs e)
     {
-        _initializing = true;
-        _settings = SettingsService.Load();
-
-        ThemeService.ApplyTheme(_settings.Theme);
-        ThemeService.ApplyAccent(_settings.AccentColor);
-        ApplySettingsToUi();
-        BuildThemeCards();
-        BuildAccentSwatches();
-        BuildBackgroundStyleButtons();
-        ApplyBanner();
-        ApplyWindowBackground();
-
-        AppendLog("VEC Launcher запущен. Папка: " + _settings.GameDir);
-
-        _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _uptimeTimer.Tick += (_, _) => UpdateUptimeBadge();
-        _uptimeTimer.Start();
-
-        _ = Task.Run(DetectJava);
-
-        var saved = Vm.Accounts.GetActive();
-        if (saved is not null)
+        try
         {
-            SetAccount(saved, refreshSkin: true);
+            _initializing = true;
+            _settings = SettingsService.Load();
 
-            if (!saved.IsOffline && saved.IsExpired && !string.IsNullOrEmpty(saved.MicrosoftRefreshToken))
+            ThemeService.ApplyTheme(_settings.Theme);
+            ThemeService.ApplyAccent(_settings.AccentColor);
+            ApplySettingsToUi();
+            BuildThemeCards();
+            BuildAccentSwatches();
+            BuildBackgroundStyleButtons();
+            ApplyBanner();
+            ApplyWindowBackground();
+
+            AppendLog("VEC Launcher запущен. Папка: " + _settings.GameDir);
+
+            _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _uptimeTimer.Tick += (_, _) => UpdateUptimeBadge();
+            _uptimeTimer.Start();
+
+            _ = Task.Run(DetectJava);
+
+            var saved = Vm.Accounts.GetActive();
+            if (saved is not null)
             {
-                try
-                {
-                    SetStage("Обновляю сессию Microsoft...");
-                    var refreshed = await _auth.RefreshOrReloginAsync(saved.MicrosoftRefreshToken!);
-                    Vm.Accounts.Save(refreshed);
-                    SetAccount(refreshed, refreshSkin: true);
-                }
-                catch (MicrosoftAuthService.TokenExpiredException)
+                SetAccount(saved, refreshSkin: true);
+
+                if (!saved.IsOffline && saved.IsExpired && !string.IsNullOrEmpty(saved.MicrosoftRefreshToken))
                 {
                     try
                     {
-                        AppendLog("Токен истёк — открываю окно входа Microsoft...");
-                        var relogged = await ReloginMicrosoftAsync();
-                        SetAccount(relogged, refreshSkin: true);
+                        SetStage("Обновляю сессию Microsoft...");
+                        var refreshed = await _auth.RefreshOrReloginAsync(saved.MicrosoftRefreshToken!);
+                        Vm.Accounts.Save(refreshed);
+                        SetAccount(refreshed, refreshSkin: true);
                     }
-                    catch (Exception rex)
+                    catch (MicrosoftAuthService.TokenExpiredException)
                     {
-                        AppendLog("Повторный вход не удался: " + rex.Message);
+                        try
+                        {
+                            AppendLog("Токен истёк — открываю окно входа Microsoft...");
+                            var relogged = await ReloginMicrosoftAsync();
+                            SetAccount(relogged, refreshSkin: true);
+                        }
+                        catch (Exception rex)
+                        {
+                            AppendLog("Повторный вход не удался: " + rex.Message);
+                            TxtAuthState.Text = "Сессия истекла — войдите заново.";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        AppendLog("Не удалось обновить сессию: " + ex.Message);
                         TxtAuthState.Text = "Сессия истекла — войдите заново.";
                     }
+                    finally { HideProgress(); }
                 }
-                catch (Exception ex)
-                {
-                    AppendLog("Не удалось обновить сессию: " + ex.Message);
-                    TxtAuthState.Text = "Сессия истекла — войдите заново.";
-                }
-                finally { HideProgress(); }
             }
+            else
+            {
+                RefreshSavedAccountsListUI();
+            }
+
+            await LoadVersionsAsync();
+            LoadInstances();
+            _initializing = false;
+            UpdateRunStateUi();
+
+            Dispatcher.BeginInvoke(new Action(() => SetupWheelHandling(this)),
+                System.Windows.Threading.DispatcherPriority.Loaded);
+
+            _ramMonitor.Start();
+            UpdateStatisticsDisplay();
+            StartServerPingTimer();
+
+            InitNative3DSkinViewer();
+            if (_account != null) _ = LoadSkinImagesAsync(_account);
         }
-        else
+        catch (Exception ex)
         {
-            RefreshSavedAccountsListUI();
+            Log.Error("MainWindow OnLoadedAsync error: " + ex);
         }
-
-        await LoadVersionsAsync();
-        LoadInstances();
-        _initializing = false;
-        UpdateRunStateUi();
-
-        Dispatcher.BeginInvoke(new Action(() => SetupWheelHandling(this)),
-            System.Windows.Threading.DispatcherPriority.Loaded);
-
-        _ramMonitor.Start();
-        UpdateStatisticsDisplay();
-        StartServerPingTimer();
-
-        InitNative3DSkinViewer();
-        if (_account != null) _ = LoadSkinImagesAsync(_account);
     }
 
     private string _currentSkinModel = "classic";
@@ -273,7 +341,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            var status = await _ping.PingAsync("95.59.233.227:25565");
+            var status = await _ping.PingAsync(LauncherConfig.DefaultMinecraftServer);
             Dispatcher.Invoke(() =>
             {
                 if (status.Online)
@@ -317,6 +385,7 @@ public partial class MainWindow : Window
 
         _uptimeTimer?.Stop();
         PersistSettings();
+        Application.Current.Shutdown();
     }
 
     private static string FormatMinutes(long seconds)
@@ -361,7 +430,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            Process.Start(new ProcessStartInfo("https://vec.kpvk.edu.kz/") { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(LauncherConfig.ProjectWebsiteUrl) { UseShellExecute = true });
         }
         catch (Exception ex)
         {

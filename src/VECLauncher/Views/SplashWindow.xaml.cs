@@ -239,57 +239,45 @@ public partial class SplashWindow : Window
 
     private async Task RunLoadingSequenceAsync()
     {
-        SetSplashProgress(8, "Инициализация VEC Engine...", "Загрузка конфигурации и темы...");
-        await Task.Delay(1400);
-
-        SetSplashProgress(25, "Сканирование Java окружения...", "Обнаружение установленных JVM...");
-        await Task.Delay(1800);
-
-        SetSplashProgress(45, "Синхронизация профилей...", "Загрузка сохранённых аккаунтов и скинов...");
-        await Task.Delay(1800);
-
-        SetSplashProgress(68, "Проверка версий Minecraft...", "Синхронизация манифеста версий...");
-        await Task.Delay(1800);
-
-        SetSplashProgress(85, "Загрузка сборок и модов...", "Подготовка установленных модпаков...");
-        await Task.Delay(1600);
-
-        SetSplashProgress(98, "Всё готово!", "Запуск VEC Platform...");
-        await Task.Delay(1200);
-        SetSplashProgress(100, "Добро пожаловать!", "Открытие лаунчера...");
-
-        _isExitingSplash = true;
-        await Task.Delay(420);
-
-        var mainWindow = App.Services.GetRequiredService<MainWindow>();
-        mainWindow.Opacity = 0;
-        mainWindow.Show();
-
-        var fadeOut = new DoubleAnimation
+        try
         {
-            From = 1.0,
-            To = 0.0,
-            Duration = TimeSpan.FromMilliseconds(450),
-            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
-        };
+            SetSplashProgress(15, "Инициализация VEC Engine...", "Загрузка конфигурации и темы...");
+            await Task.Delay(150);
 
-        var fadeIn = new DoubleAnimation
-        {
-            From = 0.0,
-            To = 1.0,
-            Duration = TimeSpan.FromMilliseconds(500),
-            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-        };
+            SetSplashProgress(35, "Сканирование Java окружения...", "Обнаружение установленных JVM...");
+            await Task.Delay(150);
 
-        fadeOut.Completed += (_, _) =>
-        {
+            SetSplashProgress(55, "Синхронизация профилей...", "Загрузка сохранённых аккаунтов и скинов...");
+            await Task.Delay(150);
+
+            SetSplashProgress(75, "Проверка версий Minecraft...", "Синхронизация манифеста версий...");
+            await Task.Delay(150);
+
+            SetSplashProgress(90, "Загрузка сборок и модов...", "Подготовка установленных модпаков...");
+            await Task.Delay(150);
+
+            SetSplashProgress(100, "Добро пожаловать!", "Открытие лаунчера...");
+            await Task.Delay(100);
+
+            _isExitingSplash = true;
+            await Task.Delay(100);
+
+            Log.Info("Opening MainWindow from splash...");
+            var mainWindow = App.Services.GetRequiredService<MainWindow>();
+            Application.Current.MainWindow = mainWindow;
+            mainWindow.Opacity = 1;
+            mainWindow.Show();
+            mainWindow.Activate();
+            mainWindow.Focus();
+
             _splashSlimeTimer?.Stop();
             _splashSlimeTimer = null;
-            SplashSlimeVisual.Content = null;
             Close();
-        };
-
-        mainWindow.BeginAnimation(OpacityProperty, fadeIn);
-        BeginAnimation(OpacityProperty, fadeOut);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("RunLoadingSequenceAsync error: " + ex);
+            MessageBox.Show("Ошибка запуска MainWindow: " + ex.Message + "\n" + ex.StackTrace, "VEC Launcher", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 }

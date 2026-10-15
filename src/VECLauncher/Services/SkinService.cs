@@ -184,7 +184,7 @@ public sealed class SkinService
     {
         try
         {
-            var cleanUrl = serverUrl.TrimEnd('/');
+            var cleanUrl = string.IsNullOrWhiteSpace(serverUrl) ? VecAuthService.DefaultVecServerUrl : serverUrl.TrimEnd('/');
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(username), "username");
             if (!string.IsNullOrEmpty(uuid))
@@ -220,7 +220,7 @@ public sealed class SkinService
     {
         try
         {
-            var cleanUrl = serverUrl.TrimEnd('/');
+            var cleanUrl = string.IsNullOrWhiteSpace(serverUrl) ? VecAuthService.DefaultVecServerUrl : serverUrl.TrimEnd('/');
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(username), "username");
 
@@ -244,7 +244,7 @@ public sealed class SkinService
     {
         try
         {
-            var cleanUrl = serverUrl.TrimEnd('/');
+            var cleanUrl = string.IsNullOrWhiteSpace(serverUrl) ? VecAuthService.DefaultVecServerUrl : serverUrl.TrimEnd('/');
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(username), "username");
 
@@ -264,7 +264,7 @@ public sealed class SkinService
     {
         try
         {
-            var cleanUrl = serverUrl.TrimEnd('/');
+            var cleanUrl = string.IsNullOrWhiteSpace(serverUrl) ? VecAuthService.DefaultVecServerUrl : serverUrl.TrimEnd('/');
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(username), "username");
             content.Add(new StringContent(model), "model");
@@ -292,7 +292,7 @@ public sealed class SkinService
     {
         try
         {
-            var cleanUrl = serverUrl.TrimEnd('/');
+            var cleanUrl = string.IsNullOrWhiteSpace(serverUrl) ? VecAuthService.DefaultVecServerUrl : serverUrl.TrimEnd('/');
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(username), "username");
             content.Add(new StringContent(model), "model");

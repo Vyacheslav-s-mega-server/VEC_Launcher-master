@@ -55,7 +55,6 @@
     <Resource Include="Assets\default_content_icon.jpg" />
     <Resource Include="Assets\steve_classic.png" />
     <Resource Include="Assets\alex_slim.png" />
-    <Resource Include="Assets\cape_migrator.png" />
     <Resource Include="Assets\cape_vec.png" />
     <Resource Include="Assets\slime.png" />
     <Resource Include="Assets\main_page.png" />
@@ -72,7 +71,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Assets\steve_classic.png" />
     <EmbeddedResource Include="Assets\alex_slim.png" />
-    <EmbeddedResource Include="Assets\cape_migrator.png" />
     <EmbeddedResource Include="Assets\cape_vec.png" />
     <EmbeddedResource Include="Assets\3D_Model.gltf" />
   </ItemGroup>

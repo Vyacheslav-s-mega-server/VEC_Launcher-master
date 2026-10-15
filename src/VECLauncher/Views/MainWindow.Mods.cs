@@ -14,13 +14,11 @@ using VECLauncher.Services;
 
 namespace VECLauncher.Views;
 
-/// <summary>
-/// Partial class handling mod management: mod search, CurseForge/Modrinth catalog browsing,
-/// modpack import/export, local mod list display, and mod install/uninstall.
-/// </summary>
 public partial class MainWindow
 {
     private List<ModSearchResult> _modResults = new();
+    private List<BuildManifestFile> _approvedCatalog = new();
+    private List<BuildManifestFile> _displayedApproved = new();
     private CancellationTokenSource? _modCts;
     private const int ModPageSize = 20;
     private int _modOffset;
@@ -28,13 +26,22 @@ public partial class MainWindow
 
     private void TxtModSearch_KeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter) RunModSearchFromStart();
+        if (e.Key == Key.Enter)
+        {
+            if (_approvedCatalog.Count > 0) RenderApprovedCatalog();
+            else RunModSearchFromStart();
+        }
     }
 
     private void ModFilter_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded) return;
-        if (_modResults.Count > 0) RunModSearchFromStart();
+        if (_approvedCatalog.Count > 0)
+        {
+            RenderApprovedCatalog();
+            return;
+        }
+        RunModSearchFromStart();
     }
 
     private ModContentType SelectedContentType => (CbModType.SelectedItem as ComboBoxItem)?.Tag?.ToString() switch
@@ -147,13 +154,21 @@ public partial class MainWindow
 
     private void RunModSearch() => BtnModSearch_Click(this, new RoutedEventArgs());
 
-    private void BtnModSearchNew_Click(object sender, RoutedEventArgs e) => RunModSearchFromStart();
+    private void BtnModSearchNew_Click(object sender, RoutedEventArgs e)
+    {
+        if (_approvedCatalog.Count > 0)
+        {
+            RenderApprovedCatalog();
+            return;
+        }
+        RunModSearchFromStart();
+    }
 
     private async void BtnModSearch_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedInstance is null)
         {
-            TxtModStatus.Text = "Сначала выберите сборку — от неё зависят версия игры и загрузчик.";
+            TxtModStatus.Text = "Сначала выберите сборку.";
             return;
         }
 
@@ -162,99 +177,161 @@ public partial class MainWindow
         var ct = _modCts.Token;
 
         BtnModSearch.IsEnabled = false;
-        var type = SelectedContentType;
-        TxtModStatus.Text = "Ищу…";
+        TxtModStatus.Text = "Загрузка каталога VEC...";
         ItemsMods.ItemsSource = null;
 
         try
         {
-            var page = await _mods.SearchAsync(
-                TxtModSearch.Text.Trim(),
-                _selectedInstance.McVersion,
-                _selectedInstance.Loader,
-                type,
-                SelectedProvider,
-                ModPageSize, _modOffset, ct);
+            var serverUrl = !string.IsNullOrWhiteSpace(_account?.ServerUrl)
+                ? _account.ServerUrl.TrimEnd('/')
+                : VecAuthService.DefaultVecServerUrl;
 
-            if (ct.IsCancellationRequested) return;
+            var requestUrl = $"{serverUrl}/api/builds/vec-fabric-1-21-11/mods";
+            using var req = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+            using var resp = await App.Http.SendAsync(req, ct);
 
-            _modResults = page.Items;
-            _modTotal = page.TotalCount;
-
-            if (_modResults.Count == 0)
+            if (resp.IsSuccessStatusCode)
             {
-                TxtModStatus.Text = _selectedInstance.Loader == LoaderKind.Vanilla && type == ModContentType.Mod
-                    ? $"Ничего не найдено. У сборки «{_selectedInstance.Name}» нет модлоадера — " +
-                      "для модов создайте сборку с Fabric, Forge или NeoForge."
-                    : $"Ничего не найдено для Minecraft {_selectedInstance.McVersion}.";
-                UpdatePager(page);
-                return;
+                var json = await resp.Content.ReadAsStringAsync(ct);
+                var doc = System.Text.Json.JsonSerializer.Deserialize<BuildManifestResponse>(json);
+                _approvedCatalog = doc?.Files ?? new List<BuildManifestFile>();
             }
 
-            var extra = "";
-            TxtModStatus.Text = $"Найдено: {page.TotalCount}  ·  " +
-                                $"{_selectedInstance.McVersion} · {_selectedInstance.Loader.Display()}{extra}";
-
-            ItemsMods.ItemsSource = _modResults.Select((m, i) => BuildModView(m, i)).ToList();
-            UpdatePager(page);
-            ModScroll.ScrollToTop();
-
-            _ = LoadModIconsAsync(_modResults.ToList(), ct);
+            RenderApprovedCatalog();
         }
-        catch (OperationCanceledException ex) { Log.Warn(ex.Message); }
+        catch (OperationCanceledException) { }
         catch (Exception ex)
         {
-            TxtModStatus.Text = "Ошибка поиска: " + ex.Message;
-            Log.Error("Поиск модов", ex);
+            TxtModStatus.Text = "Ошибка загрузки: " + ex.Message;
+            Log.Error("Каталог VEC", ex);
         }
-        finally { BtnModSearch.IsEnabled = true; }
-    }
-
-    private object BuildModView(ModSearchResult m, int index)
-    {
-        var icon = _imageCache.TryGetCached(m.IconUrl);
-
-        var isModrinth = m.Provider == ModProvider.Modrinth;
-
-        return new
+        finally
         {
-            Index = index,
-            m.Title,
-            Summary = string.IsNullOrWhiteSpace(m.Summary) ? "Без описания" : m.Summary,
-            Icon = icon,
-            Initial = m.Title.Length > 0 ? m.Title[..1].ToUpperInvariant() : "?",
-            PlaceholderVisibility = icon is null ? Visibility.Visible : Visibility.Collapsed,
-            Source = m.ProviderDisplay,
-            SourceBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isModrinth ? "#3D3012" : "#33210F")),
-            SourceFg = new SolidColorBrush((Color)ColorConverter.ConvertFromString(isModrinth ? "#FACC15" : "#FB923C")),
-            DownloadsText = m.DownloadsDisplay + " загрузок",
-            AuthorText = string.IsNullOrEmpty(m.Author) ? "" : "автор: " + m.Author,
-            PageUrl = m.PageUrl ?? ""
-        };
+            BtnModSearch.IsEnabled = true;
+        }
     }
 
-    private async Task LoadModIconsAsync(List<ModSearchResult> items, CancellationToken ct)
+    private void RenderApprovedCatalog()
     {
-        var loadedAny = false;
+        if (_selectedInstance is null) return;
 
-        await Parallel.ForEachAsync(items,
-            new ParallelOptions { MaxDegreeOfParallelism = 5, CancellationToken = ct },
-            async (m, token) =>
+        var filter = TxtModSearch.Text.Trim();
+        var selectedTag = (CbModType.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "all";
+
+        var list = _approvedCatalog.AsEnumerable();
+
+        if (selectedTag != "all")
+        {
+            list = list.Where(m => m.Category.Equals(selectedTag, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            list = list.Where(m =>
+                m.DisplayName.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                m.Description.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                m.Category.Contains(filter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        _displayedApproved = list.ToList();
+
+        var instDir = _instancesService.InstanceDir(_selectedInstance);
+        var views = new List<object>();
+
+        for (int i = 0; i < _displayedApproved.Count; i++)
+        {
+            var m = _displayedApproved[i];
+            var rel = string.IsNullOrWhiteSpace(m.Path) ? ("mods/" + m.FileName) : m.Path;
+            var localPath = IOPath.Combine(instDir, rel.Replace('/', IOPath.DirectorySeparatorChar));
+            var isInstalled = File.Exists(localPath);
+
+            var actionText = m.IsRequired ? "Обязательно" : (isInstalled ? "Удалить" : "Установить");
+            var actionEnabled = !m.IsRequired;
+
+            views.Add(new
             {
-                var img = await _imageCache.GetAsync(m.IconUrl, App.Http, 108, token);
-                if (img is not null) loadedAny = true;
+                Index = i,
+                Title = m.DisplayName,
+                Summary = string.IsNullOrWhiteSpace(m.Description) ? "Компонент сборки сервера VEC" : m.Description,
+                Icon = (ImageSource?)null,
+                Initial = m.DisplayName.Length > 0 ? m.DisplayName[..1].ToUpperInvariant() : "V",
+                PlaceholderVisibility = Visibility.Visible,
+                Source = m.Category,
+                DownloadsText = m.IsRequired ? "Обязательный" : "Дополнительный",
+                AuthorText = m.FileName,
+                ActionText = actionText,
+                ActionEnabled = actionEnabled,
+                PageUrl = ""
             });
+        }
 
-        if (!loadedAny || ct.IsCancellationRequested) return;
-
-        await Dispatcher.InvokeAsync(() =>
-        {
-            if (ct.IsCancellationRequested) return;
-            if (!ReferenceEquals(_modResults, items) && !_modResults.SequenceEqual(items)) return;
-
-            ItemsMods.ItemsSource = _modResults.Select((m, i) => BuildModView(m, i)).ToList();
-        });
+        ItemsMods.ItemsSource = views;
+        ModPager.Visibility = Visibility.Collapsed;
+        TxtModStatus.Text = $"Компонентов сборки: {views.Count}  ·  Minecraft 1.21.11 Fabric";
     }
+
+    private async void ModInstall_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button btn || btn.Tag is not int index) return;
+        if (index < 0 || index >= _displayedApproved.Count || _selectedInstance is null) return;
+
+        var mod = _displayedApproved[index];
+        if (mod.IsRequired) return;
+
+        var instDir = _instancesService.InstanceDir(_selectedInstance);
+        var rel = string.IsNullOrWhiteSpace(mod.Path) ? ("mods/" + mod.FileName) : mod.Path;
+        var localPath = IOPath.Combine(instDir, rel.Replace('/', IOPath.DirectorySeparatorChar));
+
+        btn.IsEnabled = false;
+
+        try
+        {
+            if (File.Exists(localPath))
+            {
+                File.Delete(localPath);
+                AppendLog($"Удален опциональный компонент: {mod.DisplayName}");
+            }
+            else
+            {
+                var serverUrl = !string.IsNullOrWhiteSpace(_account?.ServerUrl)
+                    ? _account.ServerUrl.TrimEnd('/')
+                    : VecAuthService.DefaultVecServerUrl;
+
+                var downloadUrl = mod.DownloadUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                    ? mod.DownloadUrl
+                    : $"{serverUrl}{mod.DownloadUrl}";
+
+                using var resp = await App.Http.GetAsync(downloadUrl);
+                if (resp.IsSuccessStatusCode)
+                {
+                    var targetFolder = IOPath.GetDirectoryName(localPath);
+                    if (!string.IsNullOrEmpty(targetFolder))
+                    {
+                        Directory.CreateDirectory(targetFolder);
+                    }
+                    var bytes = await resp.Content.ReadAsByteArrayAsync();
+                    await File.WriteAllBytesAsync(localPath, bytes);
+                    AppendLog($"Установлен компонент: {mod.DisplayName} ({mod.FileName})");
+                }
+                else
+                {
+                    _dialog.ShowMessage($"Не удалось загрузить файл ({resp.StatusCode}).", "Ошибка", MessageSeverity.Warning);
+                }
+            }
+
+            RenderApprovedCatalog();
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Установка/удаление мода", ex);
+            _dialog.ShowMessage(ex.Message, "Ошибка", MessageSeverity.Error);
+        }
+        finally
+        {
+            btn.IsEnabled = true;
+        }
+    }
+
     private void ModPage_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement fe || fe.Tag is not string url || url.Length == 0) return;
@@ -264,101 +341,6 @@ public partial class MainWindow
 
     private void ModPageInApp_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button btn || btn.Tag is not int index) return;
-        if (index < 0 || index >= _modResults.Count) return;
-
-        var project = _modResults[index];
-
-        var dlg = new ModBrowserDialog(project) { Owner = this };
-        var result = dlg.ShowDialog();
-
-        if (result == true && dlg.InstallRequested)
-            _ = InstallModAsync(project, null);
-    }
-    private async void ModInstall_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button btn || btn.Tag is not int index) return;
-        if (index < 0 || index >= _modResults.Count) return;
-
-        await InstallModAsync(_modResults[index], btn);
-    }
-
-    private static void SetButtonText(Button btn, string text)
-    {
-        var tb = FindChild<TextBlock>(btn);
-        if (tb != null) tb.Text = text;
-        else btn.Content = text;
-    }
-
-    private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
-    {
-        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
-        {
-            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
-            if (child is T found) return found;
-            var deep = FindChild<T>(child);
-            if (deep != null) return deep;
-        }
-        return null;
-    }
-
-    private async Task InstallModAsync(ModSearchResult project, Button? btn)
-    {
-        if (_selectedInstance is null)
-        {
-            _dialog.ShowMessage("Сначала выберите сборку.", "Сборка не выбрана");
-            return;
-        }
-
-        var inst = _selectedInstance;
-
-        if (btn is not null)
-        {
-            btn.IsEnabled = false;
-            SetButtonText(btn, "…");
-        }
-
-        try
-        {
-            var dlg = new ModVersionDialog(_mods, project, inst.McVersion, inst.Loader) { Owner = this };
-            if (dlg.ShowDialog() != true || dlg.SelectedFile is null) return;
-
-            var chosen = dlg.SelectedFile;
-
-            var targetDir = SelectedContentType switch
-            {
-                ModContentType.ResourcePack => _instancesService.ResourcePacksDir(inst),
-                ModContentType.ShaderPack => _instancesService.ShaderPacksDir(inst),
-                _ => _instancesService.ModsDir(inst)
-            };
-
-            var outcome = await _mods.InstallAsync(
-                chosen, targetDir, inst.McVersion, inst.Loader, dlg.InstallDependencies);
-
-            var msg = $"Установлено: {outcome.Installed.Count}";
-            if (outcome.Skipped.Count > 0) msg += $"\nПропущено: {string.Join(", ", outcome.Skipped)}";
-            if (outcome.Failed.Count > 0) msg += $"\nОшибки: {string.Join(", ", outcome.Failed)}";
-
-            AppendLog($"«{project.Title}» → {msg.Replace("\n", "; ")}");
-
-            _dialog.ShowMessage(msg, project.Title,
-                outcome.Failed.Count > 0 ? MessageSeverity.Warning : MessageSeverity.Info);
-
-            RefreshInstanceStats();
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Установка мода", ex);
-            _dialog.ShowMessage(ex.Message, "Ошибка установки", MessageSeverity.Error);
-        }
-        finally
-        {
-            if (btn is not null)
-            {
-                btn.IsEnabled = true;
-                SetButtonText(btn, "Установить");
-            }
-        }
     }
 
     private void UpdateModsSubtitle()
@@ -719,6 +701,16 @@ public partial class MainWindow
         if (_selectedInstance is null)
         {
             _dialog.ShowMessage("Сначала выберите сборку.", "Сборка не выбрана");
+            return;
+        }
+
+        if (_selectedInstance.Name.Contains("VEC", StringComparison.OrdinalIgnoreCase))
+        {
+            _dialog.ShowMessage(
+                "На официальной сборке VEC включена система защиты целостности.\n\n" +
+                "Все сторонние .jar моды удаляются перед запуском игры для предотвращения читов.\n\n" +
+                "Управляйте модами через каталог вкладки «Моды и Контент».",
+                "Защита VEC Server", MessageSeverity.Info);
             return;
         }
 

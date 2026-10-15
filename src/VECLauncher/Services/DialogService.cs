@@ -1,4 +1,5 @@
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using VECLauncher.Models;
 using VECLauncher.Views;
 
@@ -72,13 +73,8 @@ public sealed class DialogService : IDialogService
 
     public async Task<MinecraftAccount?> ShowVecLoginAsync()
     {
-        var dialog = new VecLoginDialog { Owner = _owner };
-        var result = dialog.ShowDialog();
-
-        if (result != true || dialog.ResultAccount is null)
-            return null;
-
-        return dialog.ResultAccount;
+        var webAuth = App.Services.GetService<WebAuthService>() ?? new WebAuthService();
+        return await webAuth.LoginViaWebAsync();
     }
 
     public void MinimizeWindow()

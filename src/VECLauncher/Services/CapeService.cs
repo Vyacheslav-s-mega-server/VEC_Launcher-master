@@ -120,26 +120,6 @@ public static class CapeService
             });
         }
 
-        var migratorBytes = LoadEmbeddedCape("cape_migrator.png");
-        if (migratorBytes != null)
-        {
-            var isEq = currentlyEquippedBytes != null && currentlyEquippedBytes.Length > 0 &&
-                       currentlyEquippedBytes.SequenceEqual(migratorBytes);
-            result.Add(new CapeItem
-            {
-                Id = "mojang_migrator",
-                Name = "Плащ Migrator",
-                Description = "Классический плащ миграции аккаунта Mojang.",
-                Category = "Официальные",
-                IsDefaultUnlocked = true,
-                IsUnlocked = true,
-                IsEquipped = isEq,
-                IsOfficialMojang = true,
-                RawTextureBytes = migratorBytes,
-                PreviewImage = CreateCapePreview(migratorBytes)
-            });
-        }
-
         return result;
     }
 

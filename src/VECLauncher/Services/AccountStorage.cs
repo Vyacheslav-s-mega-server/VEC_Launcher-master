@@ -85,11 +85,14 @@ public static class AccountStorage
                     try
                     {
                         var protectedBytes = File.ReadAllBytes(file);
-                        if (protectedBytes.Length == 0) continue;
-
                         var json = ProtectedData.Unprotect(protectedBytes, Entropy, DataProtectionScope.CurrentUser);
                         var acc = JsonSerializer.Deserialize<MinecraftAccount>(json);
                         if (acc is null || string.IsNullOrEmpty(acc.Username)) continue;
+
+                        if (acc.IsVec && string.IsNullOrWhiteSpace(acc.ServerUrl))
+                        {
+                            acc.ServerUrl = VecAuthService.DefaultVecServerUrl;
+                        }
 
                         return acc;
                     }
@@ -148,6 +151,16 @@ public static class AccountStorage
 
             var json = ProtectedData.Unprotect(bytes, Entropy, DataProtectionScope.CurrentUser);
             var list = JsonSerializer.Deserialize<List<MinecraftAccount>>(json);
+            if (list != null)
+            {
+                foreach (var a in list)
+                {
+                    if (a.IsVec && string.IsNullOrWhiteSpace(a.ServerUrl))
+                    {
+                        a.ServerUrl = VecAuthService.DefaultVecServerUrl;
+                    }
+                }
+            }
             
             Log.Info($"AccountStorage: loaded {list?.Count ?? 0} saved accounts");
             return list ?? new List<MinecraftAccount>();

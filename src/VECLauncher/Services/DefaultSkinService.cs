@@ -31,7 +31,7 @@ public static class DefaultSkinService
     public static byte[]? GetDefaultCape()
     {
         if (_cachedCape != null) return _cachedCape;
-        var cape = LoadEmbeddedSkin("cape_vec.png") ?? LoadEmbeddedSkin("cape_migrator.png");
+        var cape = LoadEmbeddedSkin("cape_vec.png");
         if (cape != null) { _cachedCape = cape; return cape; }
         return null;
     }

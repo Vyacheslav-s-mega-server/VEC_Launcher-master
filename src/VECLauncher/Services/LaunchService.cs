@@ -135,14 +135,6 @@ public sealed class LaunchService
             useAuthlibInjector = vecResult.UseAuthlib;
             authlibServerUrl = vecResult.ServerUrl;
         }
-
-        // ── Offline skins (CSL) ──
-        if (account.IsOffline || account.IsVec)
-        {
-            await PrepareOfflineSkinsAsync(account, inst, ct);
-        }
-
-        // ── Game language ──
         if (settings.AutoSetGameLanguage)
         {
             var created = GameOptionsService.EnsureLanguage(
@@ -152,7 +144,22 @@ public sealed class LaunchService
                     GameOptionsService.LanguageCodeFor(inst.McVersion, settings.GameLanguage));
         }
 
-        // ── Build launch options ──
+        string? launchTicket = null;
+        if (account.IsVec)
+        {
+            var srvUrl = !string.IsNullOrWhiteSpace(authlibServerUrl) ? authlibServerUrl : VecAuthService.DefaultVecServerUrl;
+            var integrity = await IntegrityService.ValidateAndSyncAsync(inst, account, srvUrl, Log, SetStatus, ct);
+            launchTicket = integrity.Ticket;
+        }
+
+        var jvmArgs = JvmPresetService.Resolve(inst.JvmPreset,
+            string.IsNullOrWhiteSpace(inst.ExtraJvmArgs) ? settings.ExtraJvmArgs : inst.ExtraJvmArgs);
+
+        if (!string.IsNullOrWhiteSpace(launchTicket))
+        {
+            jvmArgs = $"{jvmArgs} -Dvec.ticket={launchTicket}".Trim();
+        }
+
         var options = new LaunchOptions
         {
             Account = account,
@@ -165,8 +172,7 @@ public sealed class LaunchService
             WindowHeight = inst.WindowHeight > 0 ? inst.WindowHeight : settings.WindowHeight,
             Fullscreen = settings.Fullscreen,
             ServerAddress = serverAddress ?? (string.IsNullOrWhiteSpace(inst.ServerAddress) ? null : inst.ServerAddress),
-            ExtraJvmArgs = JvmPresetService.Resolve(inst.JvmPreset,
-                string.IsNullOrWhiteSpace(inst.ExtraJvmArgs) ? settings.ExtraJvmArgs : inst.ExtraJvmArgs),
+            ExtraJvmArgs = jvmArgs,
             ShowConsole = settings.ShowConsole,
             CloseLauncherOnStart = settings.CloseLauncherOnStart,
             UseAuthlibInjector = useAuthlibInjector,
@@ -210,82 +216,7 @@ public sealed class LaunchService
         if (jar == null) return (false, null);
 
         Log($"Подключен VEC Auth Server ({srvUrl}).");
-
-        // Upload skin
-        var skinF = OfflineSkinService.FindAccountSkin(account.Username);
-        if (skinF != null && File.Exists(skinF))
-        {
-            try
-            {
-                var skinBytes = await File.ReadAllBytesAsync(skinF, ct);
-                var model = account.SkinModel.Equals(Constants.SkinModel.Slim, StringComparison.OrdinalIgnoreCase)
-                    ? SkinService.SkinModel.Slim
-                    : SkinService.SkinModel.Classic;
-                Log($"Загрузка скина на VEC: модель={model}, сервер={srvUrl}, размер={skinBytes.Length} байт");
-                var uploadOk = await _skins.UploadSkinToVecServerAsync(srvUrl, account.Username, skinBytes, model, account.Uuid, ct);
-                if (uploadOk) Log("Скин+модель загружены на VEC OK.");
-                else Log("⚠ ОШИБКА: скин НЕ загружен на сервер VEC! Проверьте лог.");
-            }
-            catch (Exception exSkin)
-            {
-                Log($"⚠ Ошибка загрузки скина на VEC: {exSkin.Message}");
-            }
-        }
-
-        // Upload cape
-        var capeF = OfflineSkinService.FindAccountCape(account.Username);
-        if (capeF != null && File.Exists(capeF))
-        {
-            try
-            {
-                var capeBytes = await File.ReadAllBytesAsync(capeF, ct);
-                await _skins.UploadCapeToVecServerAsync(srvUrl, account.Username, capeBytes, ct);
-            }
-            catch (Exception ex) { VECLauncher.Services.Log.Warn(ex.Message); }
-        }
-
-        // Sync skin model
-        try
-        {
-            var modelStr = account.SkinModel.Equals(Constants.SkinModel.Slim, StringComparison.OrdinalIgnoreCase) ? Constants.SkinModel.Slim : Constants.SkinModel.Classic;
-            Log($"Синхронизация модели: {modelStr} для {account.Username}...");
-            await _skins.UpdateSkinModelOnVecServerAsync(srvUrl, account.Username, modelStr, ct);
-            Log($"Модель '{modelStr}' отправлена на сервер VEC.");
-        }
-        catch (Exception exModel)
-        {
-            Log($"Ошибка синхронизации модели: {exModel.Message}");
-        }
-
         return (true, srvUrl);
-    }
-
-    // ── Offline skins ──
-    private async Task PrepareOfflineSkinsAsync(MinecraftAccount account, GameInstance inst, CancellationToken ct)
-    {
-        var skinFile = OfflineSkinService.FindAccountSkin(account.Username);
-        var capeFile = OfflineSkinService.FindAccountCape(account.Username);
-        var isSlim = account.SkinModel.Equals(Constants.SkinModel.Slim, StringComparison.OrdinalIgnoreCase);
-
-        if (skinFile == null && capeFile == null) return;
-        if (!OfflineSkinService.IsCslSupported(inst))
-        {
-            if (!account.IsVec)
-                Log("Внимание: чистая Vanilla без модов. Для оффлайн-скинов рекомендуется Fabric/Forge.");
-            return;
-        }
-
-        SetStatus("Подготавливаю скин и плащ (CustomSkinLoader)...");
-        var cslOk = await OfflineSkinService.EnsureCslModAsync(inst, ct);
-        if (cslOk)
-        {
-            OfflineSkinService.SyncToInstance(inst, account.Username, skinFile, capeFile, isSlim);
-            Log($"Скин и плащ «{account.Username}» синхронизированы в CustomSkinLoader.");
-        }
-        else
-        {
-            Log("Не удалось подготовить CustomSkinLoader.");
-        }
     }
 
     private static int EffectiveMemory(GameInstance inst, LauncherSettings settings) =>

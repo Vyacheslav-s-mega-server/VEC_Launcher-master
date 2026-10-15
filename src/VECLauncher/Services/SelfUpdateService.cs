@@ -2,7 +2,18 @@ using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Win32;
 
+using System.Net.Http;
+using System.Text.Json;
+
 namespace VECLauncher.Services;
+
+public sealed class UpdateInfo
+{
+    public bool HasUpdate { get; set; }
+    public string LatestVersion { get; set; } = "";
+    public string DownloadUrl { get; set; } = "";
+    public string Changelog { get; set; } = "";
+}
 
 public static class SelfUpdateService
 {
@@ -16,56 +27,44 @@ public static class SelfUpdateService
     private static string CurrentExePath => Environment.ProcessPath
         ?? Path.Combine(AppContext.BaseDirectory, ExeName);
 
-    public static bool RunSelfReplacementIfNeeded()
+    public static async Task<UpdateInfo?> CheckForUpdatesAsync(string? serverUrl = null)
     {
         try
         {
-            var current = Path.GetFullPath(CurrentExePath);
-            var desktop = Path.GetFullPath(DesktopExePath);
-
-            if (string.Equals(current, desktop, StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            if (!IsUnderDownloads(Path.GetDirectoryName(current)!))
-                return false;
-
-            if (File.Exists(desktop) && GetVersion(desktop) >= GetVersion(current))
-                return false;
-
-            KillOldInstances();
-
-            var desktopDir = Path.GetDirectoryName(desktop);
-            if (string.IsNullOrEmpty(desktopDir)) return false;
-            Directory.CreateDirectory(desktopDir);
-
-            var copied = false;
-            for (var i = 0; i < 25 && !copied; i++)
+            var srv = !string.IsNullOrEmpty(serverUrl) ? serverUrl.TrimEnd('/') : await VecAuthService.GetActiveServerUrlAsync();
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(4) };
+            var json = await http.GetStringAsync($"{srv}/api/launcher/version");
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("version", out var vProp))
             {
-                try
+                var serverVerStr = vProp.GetString() ?? "1.0.0";
+                if (Version.TryParse(serverVerStr, out var serverVer))
                 {
-                    File.Copy(current, desktop, overwrite: true);
-                    copied = true;
+                    var currentVer = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
+                    if (serverVer > currentVer)
+                    {
+                        return new UpdateInfo
+                        {
+                            HasUpdate = true,
+                            LatestVersion = serverVerStr,
+                            DownloadUrl = root.TryGetProperty("downloadUrl", out var d) ? d.GetString() ?? "" : "",
+                            Changelog = root.TryGetProperty("changelog", out var c) ? c.GetString() ?? "" : ""
+                        };
+                    }
                 }
-                catch (IOException) { Thread.Sleep(300); }
-                catch (UnauthorizedAccessException) { Thread.Sleep(300); }
             }
-
-            if (!copied) return false;
-
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = desktop,
-                WorkingDirectory = desktopDir,
-                UseShellExecute = true
-            });
-
-            ScheduleSelfDelete(current);
-            return true;
         }
-        catch
+        catch (Exception ex)
         {
-            return false;
+            Log.Warn($"CheckForUpdates error: {ex.Message}");
         }
+        return null;
+    }
+
+    public static bool RunSelfReplacementIfNeeded()
+    {
+        return false;
     }
 
     private static void KillOldInstances()

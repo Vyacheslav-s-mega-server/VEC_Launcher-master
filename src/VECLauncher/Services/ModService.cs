@@ -18,8 +18,7 @@ public sealed class ModService
     private const int CurseClassShaders = 6552;
     private const int CurseClassModpacks = 4471;
 
-    public const string CurseForgeApiKey =
-        "$2a$10$bLg9FB9sTvausnTAWSbM8uGFvXYfvtcr05CoUI67UKV6768wRI7G2";
+    public const string CurseForgeApiKey = "";
 
     private readonly HttpClient _http;
 
@@ -37,8 +36,7 @@ public sealed class ModService
             ? relativeUrl
             : CurseBase + relativeUrl;
 
-        var userKey = SettingsService.Load().CurseForgeApiKey;
-        var keyToUse = !string.IsNullOrWhiteSpace(userKey) ? userKey : CurseForgeApiKey;
+        var keyToUse = CurseForgeApiKey;
 
         using var req = new HttpRequestMessage(HttpMethod.Get, url);
         req.Headers.TryAddWithoutValidation("x-api-key", keyToUse);

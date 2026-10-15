@@ -117,11 +117,6 @@ public partial class MainWindow
                 if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                 lock (_skinFileLock) { File.WriteAllBytes(capePath, newCape); }
 
-                foreach (var inst in _instances.Where(_offlineSkins.IsCslSupported))
-                {
-                    await _offlineSkins.EnsureCslModAsync(inst);
-                    _offlineSkins.SyncToInstance(inst, _account.Username, skinPath, capePath, isSlim);
-                }
 
                 if (_account.IsVec)
                 {
@@ -140,8 +135,6 @@ public partial class MainWindow
             else
             {
                 if (System.IO.File.Exists(capePath)) System.IO.File.Delete(capePath);
-                foreach (var inst in _instances.Where(_offlineSkins.IsCslSupported))
-                    _offlineSkins.RemoveCapeFromInstance(inst, _account.Username);
                 if (_account.IsVec)
                 {
                     _ = Task.Run(async () =>

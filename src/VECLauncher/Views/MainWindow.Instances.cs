@@ -59,28 +59,19 @@ public partial class MainWindow
             AppendLog($"Найдено сборок на диске: {orphans.Count}.");
         }
 
-        if (_instances.Count == 0 && _manifest is not null && _instancesService.Loaded)
+        if (_instancesService.Loaded && !_instances.Any(i => i.Name.Equals("VEC Fabric 1.21.11", StringComparison.OrdinalIgnoreCase)))
         {
-            var latest = VersionService.FilterSupported(_manifest, false).FirstOrDefault();
-            if (latest is not null)
+            var defaultInst = new GameInstance
             {
-                var inst = new GameInstance
-                {
-                    Name = "Minecraft " + latest.Id,
-                    McVersion = latest.Id,
-                    Loader = LoaderKind.Vanilla,
-                    LaunchVersionId = latest.Id
-                };
-                _instancesService.EnsureFolders(inst);
-                _instances.Add(inst);
-                _instancesService.SaveAll(_instances);
-                AppendLog($"Создана стартовая сборка «{inst.Name}».");
-            }
-        }
-        else if (_instances.Count == 0 && _manifest is null)
-        {
-            AppendLog("Нет соединения с Mojang — список версий недоступен. " +
-                      "Сборки не создаются, существующие данные сохранены.");
+                Name = "VEC Fabric 1.21.11",
+                McVersion = "1.21.11",
+                Loader = LoaderKind.Fabric,
+                ServerAddress = LauncherConfig.DefaultMinecraftServer
+            };
+            _instancesService.EnsureFolders(defaultInst);
+            _instances.Insert(0, defaultInst);
+            _instancesService.SaveAll(_instances);
+            AppendLog($"Создана официальная сборка сервера «{defaultInst.Name}».");
         }
 
         RefreshInstanceLists();
@@ -139,7 +130,9 @@ public partial class MainWindow
             }
         }
 
-        var target = ordered.FirstOrDefault(i => i.Id == _settings.LastInstanceId) ?? ordered.FirstOrDefault();
+        var target = ordered.FirstOrDefault(i => i.Id == _settings.LastInstanceId)
+            ?? ordered.FirstOrDefault(i => i.Name.Equals("VEC Fabric 1.21.11", StringComparison.OrdinalIgnoreCase))
+            ?? ordered.FirstOrDefault();
         if (target is not null)
         {
             CbInstances.SelectedItem = target;

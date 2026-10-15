@@ -12,20 +12,35 @@ namespace VECLauncher.Services;
 
 public sealed class VecAuthService
 {
-    public const string DefaultVecServerUrl = "http://95.59.233.227:8080";
+    public static string DefaultVecServerUrl
+    {
+        get
+        {
+            var env = Environment.GetEnvironmentVariable("VEC_SERVER_URL");
+            if (!string.IsNullOrWhiteSpace(env)) return env.TrimEnd('/');
+            try
+            {
+                var s = SettingsService.Load();
+                if (!string.IsNullOrWhiteSpace(s.WebServerUrl)) return s.WebServerUrl.TrimEnd('/');
+            }
+            catch { }
+            return LauncherConfig.DefaultWebServerUrl;
+        }
+    }
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(3) };
 
     public static async Task<string> GetActiveServerUrlAsync()
     {
+        var targetUrl = DefaultVecServerUrl;
         try
         {
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(1) };
-            var resp = await http.GetAsync("http://localhost:8080/api/info");
-            if (resp.IsSuccessStatusCode) return "http://localhost:8080";
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+            var resp = await http.GetAsync($"{targetUrl}/api/status");
+            if (resp.IsSuccessStatusCode) return targetUrl;
         }
         catch (Exception ex) { Log.Warn(ex.Message); }
 
-        return DefaultVecServerUrl;
+        return targetUrl;
     }
 
     public async Task<MinecraftAccount> LoginAsync(string login, string password, string? serverUrl = null)
@@ -55,11 +70,13 @@ public sealed class VecAuthService
                 var body = await resp.Content.ReadAsStringAsync();
                 var json = JsonNode.Parse(body);
 
-                var token = json?["accessToken"]?.ToString() ?? Guid.NewGuid().ToString("N");
+                var token = json?["accessToken"]?.ToString() ?? json?["sessionKey"]?.ToString() ?? Guid.NewGuid().ToString("N");
                 var userNode = json?["selectedProfile"] ?? json?["user"];
-                var username = userNode?["name"]?.ToString() ?? login;
+                var username = userNode?["name"]?.ToString() ?? userNode?["username"]?.ToString() ?? login;
                 var uuid = userNode?["id"]?.ToString() ?? Guid.NewGuid().ToString("N");
-                var skinUrl = json?["skinUrl"]?.ToString() ?? $"{url}/api/skin/{username}.png";
+                var skinUrl = json?["skinUrl"]?.ToString() ?? userNode?["skinUrl"]?.ToString() ?? $"{url}/api/skin/{username}.png";
+                var capeUrl = json?["capeUrl"]?.ToString() ?? userNode?["capeUrl"]?.ToString() ?? $"{url}/api/cape/{username}.png";
+                var skinModel = json?["model"]?.ToString() ?? userNode?["model"]?.ToString() ?? "classic";
 
                 return new MinecraftAccount
                 {
@@ -69,7 +86,8 @@ public sealed class VecAuthService
                     Type = AccountType.Vec,
                     ServerUrl = url,
                     SkinUrl = skinUrl,
-                    CapeUrl = $"{url}/api/cape/{username}.png",
+                    CapeUrl = capeUrl,
+                    SkinModel = skinModel,
                     ExpiresAt = DateTimeOffset.UtcNow.AddDays(30)
                 };
             }

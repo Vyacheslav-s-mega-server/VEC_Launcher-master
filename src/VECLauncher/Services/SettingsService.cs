@@ -19,8 +19,8 @@ public sealed class LauncherSettings : System.ComponentModel.INotifyPropertyChan
     [JsonPropertyName("showSnapshots")] public bool ShowSnapshots { get; set; }
     [JsonPropertyName("closeOnLaunch")] public bool CloseLauncherOnStart { get; set; }
     [JsonPropertyName("showConsole")] public bool ShowConsole { get; set; }
-    [JsonPropertyName("serverAddress")] public string ServerAddress { get; set; } = "95.59.233.227:25565";
-    [JsonPropertyName("curseForgeApiKey")] public string CurseForgeApiKey { get; set; } = "$2a$10$OWlzDC41GSVY/PTAJJw01uClvqVZn6t12H.s9gkaRihtOCu0fd8TW";
+    [JsonPropertyName("serverAddress")] public string ServerAddress { get; set; } = LauncherConfig.DefaultMinecraftServer;
+    [JsonPropertyName("webServerUrl")] public string WebServerUrl { get; set; } = LauncherConfig.DefaultWebServerUrl;
     [JsonPropertyName("extraJvmArgs")] public string ExtraJvmArgs { get; set; } = "";
     [JsonPropertyName("gameDir")] public string GameDir { get; set; } = "";
     [JsonPropertyName("customJavaPath")] public string CustomJavaPath { get; set; } = "";

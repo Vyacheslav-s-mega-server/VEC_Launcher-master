@@ -77,7 +77,6 @@ public sealed class SettingsServiceDI : ISettingsService
             CloseLauncherOnStart = src.CloseLauncherOnStart,
             ShowConsole = src.ShowConsole,
             ServerAddress = src.ServerAddress,
-            CurseForgeApiKey = src.CurseForgeApiKey,
             ExtraJvmArgs = src.ExtraJvmArgs,
             GameDir = src.GameDir,
             CustomJavaPath = src.CustomJavaPath,

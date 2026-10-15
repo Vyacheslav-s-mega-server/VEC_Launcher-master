@@ -796,7 +796,7 @@ public partial class MainWindowViewModel : ObservableObject, IAccountState
     {
         try
         {
-            Process.Start(new ProcessStartInfo("https://vec.kpvk.edu.kz/") { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(LauncherConfig.ProjectWebsiteUrl) { UseShellExecute = true });
         }
         catch (Exception ex)
         {
@@ -994,7 +994,7 @@ public partial class MainWindowViewModel : ObservableObject, IAccountState
         }
 
         var targetIp = string.IsNullOrWhiteSpace(inst.ServerAddress)
-            ? "95.59.233.227:25565"
+            ? LauncherConfig.DefaultMinecraftServer
             : inst.ServerAddress;
 
         if (LaunchAsyncCallback is not null)

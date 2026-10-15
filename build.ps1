@@ -1,10 +1,10 @@
-﻿#requires -Version 5.1
+#requires -Version 5.1
 
 $ErrorActionPreference = 'Stop'
 
 $root     = $PSScriptRoot
 $project  = Join-Path $root 'src\VECLauncher\VECLauncher.csproj'
-$outDir   = Join-Path $root 'билды exe'
+$outDir   = Join-Path $root 'dist'
 $tempPub  = Join-Path $env:TEMP 'veclauncher_publish'
 
 Write-Host ''

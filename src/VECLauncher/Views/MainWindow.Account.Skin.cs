@@ -29,23 +29,98 @@ public partial class MainWindow
             byte[]? capeRawBytes = null;
             var isSlim = _currentSkinModel.Equals("slim", StringComparison.OrdinalIgnoreCase);
 
-            if (acc.IsOffline || acc.IsVec)
+            if (acc.IsVec)
             {
-                lock (_skinFileLock)
+                try
                 {
-                    var localFile = _offlineSkins.FindAccountSkin(acc.Username);
-                    if (localFile != null && File.Exists(localFile))
+                    var srvUrl = (!string.IsNullOrEmpty(acc.ServerUrl) && !acc.ServerUrl.Contains("95.59.233")) ? acc.ServerUrl : await VecAuthService.GetActiveServerUrlAsync();
+                    acc.ServerUrl = srvUrl;
+                    var skinUrl = $"{srvUrl}/api/skin/{Uri.EscapeDataString(acc.Username)}.png?t={DateTime.UtcNow.Ticks}";
+                    using var sResp = await App.Http.GetAsync(skinUrl);
+                    if (sResp.IsSuccessStatusCode)
                     {
-                        try { skinRawBytes = File.ReadAllBytes(localFile); }
-                        catch (Exception ex) { Log.Warn(ex.Message); }
+                        skinRawBytes = await sResp.Content.ReadAsByteArrayAsync();
+                        var skinPath = IOPath.Combine(LauncherPaths.Root, "skins", $"{acc.Username}.png");
+                        var dir = IOPath.GetDirectoryName(skinPath);
+                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                        lock (_skinFileLock) { File.WriteAllBytes(skinPath, skinRawBytes); }
                     }
 
-                    var localCape = _offlineSkins.FindAccountCape(acc.Username);
-                    if (localCape != null && File.Exists(localCape))
+                    var capeUrl = $"{srvUrl}/api/cape/{Uri.EscapeDataString(acc.Username)}.png?t={DateTime.UtcNow.Ticks}";
+                    using var cResp = await App.Http.GetAsync(capeUrl);
+                    if (cResp.IsSuccessStatusCode)
                     {
-                        try { capeRawBytes = File.ReadAllBytes(localCape); }
-                        catch (Exception ex) { Log.Warn(ex.Message); }
+                        capeRawBytes = await cResp.Content.ReadAsByteArrayAsync();
+                        var capePath = IOPath.Combine(LauncherPaths.Root, "capes", $"{acc.Username}.png");
+                        var dir = IOPath.GetDirectoryName(capePath);
+                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                        lock (_skinFileLock) { File.WriteAllBytes(capePath, capeRawBytes); }
                     }
+                    else if (cResp.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        var capePath = IOPath.Combine(LauncherPaths.Root, "capes", $"{acc.Username}.png");
+                        if (File.Exists(capePath)) { lock (_skinFileLock) { File.Delete(capePath); } }
+                        capeRawBytes = null;
+                    }
+
+                    var metaFile = IOPath.Combine(LauncherPaths.Root, "skins", $"{acc.Username}.json");
+                    if (File.Exists(metaFile))
+                    {
+                        try
+                        {
+                            var metaJson = File.ReadAllText(metaFile);
+                            using var doc = System.Text.Json.JsonDocument.Parse(metaJson);
+                            if (doc.RootElement.TryGetProperty("model", out var mProp))
+                            {
+                                var m = mProp.GetString();
+                                if (!string.IsNullOrEmpty(m))
+                                {
+                                    _currentSkinModel = m.Equals("slim", StringComparison.OrdinalIgnoreCase) ? "slim" : "classic";
+                                    acc.SkinModel = _currentSkinModel;
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                    else if (!string.IsNullOrEmpty(acc.SkinModel))
+                    {
+                        _currentSkinModel = acc.SkinModel;
+                    }
+
+                    isSlim = _currentSkinModel.Equals("slim", StringComparison.OrdinalIgnoreCase);
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (TxtSkinModelBadge != null)
+                            TxtSkinModelBadge.Text = isSlim ? "Slim" : "Classic";
+                        if (TxtToggleModelBadge != null)
+                            TxtToggleModelBadge.Text = isSlim ? "Slim" : "Classic";
+                        if (TxtSkinModel != null)
+                            TxtSkinModel.Text = isSlim ? "Slim" : "Classic";
+                    });
+                }
+                catch (Exception exVec)
+                {
+                    Log.Warn($"VEC skin sync: {exVec.Message}");
+                }
+            }
+
+            if (skinRawBytes == null)
+            {
+                var localFile = IOPath.Combine(LauncherPaths.Root, "skins", $"{acc.Username}.png");
+                if (File.Exists(localFile))
+                {
+                    try { skinRawBytes = File.ReadAllBytes(localFile); }
+                    catch (Exception ex) { Log.Warn(ex.Message); }
+                }
+            }
+
+            if (capeRawBytes == null)
+            {
+                var localCape = IOPath.Combine(LauncherPaths.Root, "capes", $"{acc.Username}.png");
+                if (File.Exists(localCape))
+                {
+                    try { capeRawBytes = File.ReadAllBytes(localCape); }
+                    catch (Exception ex) { Log.Warn(ex.Message); }
                 }
             }
 
@@ -202,11 +277,7 @@ public partial class MainWindow
                     }
                 });
 
-                var capeFile = _offlineSkins.FindAccountCape(_account.Username);
-                foreach (var inst in _instances.Where(_offlineSkins.IsCslSupported))
-                {
-                    _offlineSkins.SyncToInstance(inst, _account.Username, skinFile, capeFile, isSlim);
-                }
+
             }
             else
             {
@@ -223,11 +294,7 @@ public partial class MainWindow
                         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                         File.WriteAllBytes(slotPath, defaultSkinBytes);
 
-                        var capeFileToggle = _offlineSkins.FindAccountCape(username);
-                        foreach (var inst in _instances.Where(_offlineSkins.IsCslSupported))
-                        {
-                            _offlineSkins.SyncToInstance(inst, username, slotPath, capeFileToggle, isSlim);
-                        }
+
                     }
                     catch (Exception ex) { Log.Warn(ex.Message); }
 
@@ -261,6 +328,17 @@ public partial class MainWindow
             _gltfSkinModel.UpdateCapeTexture(_capeCarouselCapes[_capeCarouselIndex].RawTextureBytes);
         }
     }
+
+    private async void BtnRefreshSkin_Click(object sender, RoutedEventArgs e)
+    {
+        if (_account is null) return;
+        TxtSkinStatus.Text = "Синхронизация с сервером...";
+        TxtSkinStatus.Foreground = (Brush)(TryFindResource("FgMuted") ?? Brushes.Gray);
+        await LoadSkinImagesAsync(_account);
+        TxtSkinStatus.Text = "";
+        _toast.Show("Синхронизация", "Скин и плащ успешно обновлены с сервера!", NotificationType.Success);
+    }
+
     private async void BtnBrowseSkin_Click(object sender, RoutedEventArgs e)
     {
         if (_account is null)
@@ -308,11 +386,7 @@ public partial class MainWindow
                 if (!string.IsNullOrEmpty(skinDir)) Directory.CreateDirectory(skinDir);
                 lock (_skinFileLock) { File.WriteAllBytes(skinFile, bytes); }
 
-                foreach (var inst in _instances.Where(_offlineSkins.IsCslSupported))
-                {
-                    await _offlineSkins.EnsureCslModAsync(inst);
-                    _offlineSkins.SyncToInstance(inst, _account.Username, skinFile, capeFile, isSlim);
-                }
+
 
                 if (_account.IsVec)
                 {
@@ -395,13 +469,7 @@ public partial class MainWindow
 
                 _currentSkinRawBytes = defaultSkinBytes;
 
-                var currentCape = _offlineSkins.FindAccountCape(_account.Username);
-                foreach (var inst in _instances.Where(_offlineSkins.IsCslSupported))
-                {
-                    await _offlineSkins.EnsureCslModAsync(inst);
-                    _offlineSkins.SyncToInstance(inst, _account.Username, skinFile, currentCape, isSlim);
-                    _offlineSkins.ClearCslCache(_instancesService.InstanceDir(inst));
-                }
+
 
 
                 if (_account.IsVec)
@@ -638,35 +706,9 @@ public partial class MainWindow
                     }
                 }
 
-                var synced = 0;
-                foreach (var inst in _instances.Where(_offlineSkins.IsCslSupported))
-                {
-                    var cslOk = await _offlineSkins.EnsureCslModAsync(inst);
-                    AppendLog($"CSL для «{inst.Name}» ({inst.Loader}): " + (cslOk ? "мод готов" : "не удалось установить"));
-                    if (!cslOk) continue;
-                    _offlineSkins.SyncToInstance(inst, account.Username, slot);
-                    synced++;
-                    AppendLog($"Оффлайн-скин «{account.Username}» скопирован в «{inst.Name}».");
-                }
-                if (_instances.Count == 0 && _selectedInstance != null && _offlineSkins.IsCslSupported(_selectedInstance))
-                {
-                    var cslOk = await _offlineSkins.EnsureCslModAsync(_selectedInstance);
-                    if (cslOk)
-                    {
-                        _offlineSkins.SyncToInstance(_selectedInstance, account.Username, slot);
-                        synced++;
-                        AppendLog($"Оффлайн-скин «{account.Username}» скопирован в «{_selectedInstance.Name}».");
-                    }
-                }
-                AppendLog(synced > 0
-                    ? $"Скин «{_selectedSkin.Name}» надет на «{account.Username}» (сборок: {synced})."
-                    : "Скин сохранён, но подходящих сборок с модлоадером не найдено.");
-
                 LoadLocalSkins();
 
-                _toast.Show("Скин надет", synced > 0
-                    ? $"«{_selectedSkin.Name}» установлен для оффлайн-аккаунта «{account.Username}» и будет показываться в игре."
-                    : "Скин сохранён. Для показа в игре оффлайн-аккаунту нужна сборка с модлоадером Fabric/Forge.",
+                _toast.Show("Скин надет", $"«{_selectedSkin.Name}» установлен для аккаунта «{account.Username}».",
                     NotificationType.Success);
                 UpdateSkinTabHeader();
                 _ = LoadSkinImagesAsync(account);
@@ -743,10 +785,7 @@ public partial class MainWindow
                 var slot = _offlineSkins.AccountSkinPath(account.Username);
                 if (File.Exists(slot)) File.Delete(slot);
 
-                foreach (var inst in _instances.Where(_offlineSkins.IsCslSupported))
-                {
-                    _offlineSkins.RemoveFromInstance(inst, account.Username);
-                }
+
 
                 if (_selectedSkin != null && _selectedSkin.Url.StartsWith("http")) LoadLocalSkins();
                 _toast.Show("Скин по умолчанию",

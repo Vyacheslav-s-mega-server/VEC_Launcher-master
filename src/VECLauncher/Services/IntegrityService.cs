@@ -1,282 +1,218 @@
-using System.IO.Compression;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
 using VECLauncher.Models;
 
 namespace VECLauncher.Services;
 
-public sealed class IntegrityReport
+public sealed class IntegrityResult
 {
-    public List<string> Ok { get; } = new();
-    public List<string> Problems { get; } = new();
-    public List<string> Warnings { get; } = new();
-    public List<string> Fixable { get; } = new();
-
-    public bool IsHealthy => Problems.Count == 0;
-
-    public string Summary => Problems.Count == 0 && Warnings.Count == 0
-        ? "Instance is healthy - everything in place."
-        : $"Problems: {Problems.Count}, Warnings: {Warnings.Count}";
+    public bool Success { get; set; }
+    public string? Ticket { get; set; }
+    public string? ErrorMessage { get; set; }
 }
 
-public sealed class IntegrityService
+public sealed class BuildManifestFile
 {
-    private readonly VersionService _versions;
+    [JsonPropertyName("path")] public string Path { get; set; } = string.Empty;
+    [JsonPropertyName("fileName")] public string FileName { get; set; } = string.Empty;
+    [JsonPropertyName("sha256")] public string Sha256 { get; set; } = string.Empty;
+    [JsonPropertyName("size")] public long Size { get; set; }
+    [JsonPropertyName("isRequired")] public bool IsRequired { get; set; }
+    [JsonPropertyName("downloadUrl")] public string DownloadUrl { get; set; } = string.Empty;
+    [JsonPropertyName("category")] public string Category { get; set; } = "Core";
+    [JsonPropertyName("displayName")] public string DisplayName { get; set; } = string.Empty;
+    [JsonPropertyName("description")] public string Description { get; set; } = string.Empty;
+}
 
-    public IntegrityService(VersionService versions) => _versions = versions;
+public sealed class BuildManifestResponse
+{
+    [JsonPropertyName("build")] public string Build { get; set; } = string.Empty;
+    [JsonPropertyName("version")] public string Version { get; set; } = string.Empty;
+    [JsonPropertyName("files")] public List<BuildManifestFile> Files { get; set; } = new();
+}
 
-    public event Action<string>? Status;
+public static class IntegrityService
+{
+    private static readonly string[] ForbiddenPackKeywords = { "xray", "x-ray", "x_ray", "ore_finder", "orefinder", "see_through" };
 
-    public async Task<IntegrityReport> CheckAsync(GameInstance inst, CancellationToken ct = default)
+    public static async Task<IntegrityResult> ValidateAndSyncAsync(
+        GameInstance inst,
+        MinecraftAccount account,
+        string serverUrl,
+        Action<string>? log,
+        Action<string>? setStatus,
+        CancellationToken ct)
     {
-        var report = new IntegrityReport();
-        var paths = GamePaths.ForInstance(inst);
+        var cleanServerUrl = string.IsNullOrWhiteSpace(serverUrl) ? VecAuthService.DefaultVecServerUrl : serverUrl.TrimEnd('/');
+        var slug = "vec-fabric-1-21-11";
 
-        Status?.Invoke("Checking version files...");
+        setStatus?.Invoke("Проверка целостности сборки VEC...");
+        log?.Invoke($"Запрос манифеста защиты с {cleanServerUrl}...");
 
-        var jar = paths.VersionJar(inst.McVersion);
-        if (File.Exists(jar))
+        BuildManifestResponse? manifest = null;
+        try
         {
-            var size = new FileInfo(jar).Length;
-            if (size < 1024 * 1024)
-            {
-                report.Problems.Add($"client.jar suspiciously small ({size / 1024} KB) - likely corrupt");
-                report.Fixable.Add("client");
-            }
-            else if (!IsValidZip(jar))
-            {
-                report.Problems.Add("client.jar corrupted (not a valid archive)");
-                report.Fixable.Add("client");
-            }
-            else report.Ok.Add($"client.jar present ({size / 1048576} MB)");
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            var manifestJson = await http.GetStringAsync($"{cleanServerUrl}/api/builds/{slug}/manifest", ct);
+            manifest = JsonSerializer.Deserialize<BuildManifestResponse>(manifestJson);
         }
-        else
+        catch (Exception ex)
         {
-            report.Problems.Add($"client.jar missing for {inst.McVersion}");
-            report.Fixable.Add("client");
+            log?.Invoke($"Предупреждение: не удалось получить манифест сборки: {ex.Message}");
         }
 
-        var launchId = inst.EffectiveVersionId;
-        var json = paths.VersionJson(launchId);
-
-        if (!File.Exists(json))
-        {
-            report.Problems.Add($"Version profile missing: {launchId}");
-            report.Fixable.Add("version");
-        }
-        else
-        {
-            try
-            {
-                var detail = await _versions.ResolveAsync(launchId, ct).ConfigureAwait(false);
-                report.Ok.Add($"Version profile readable ({detail.Libraries.Count} libraries)");
-
-                Status?.Invoke("Checking libraries...");
-
-                var missing = 0;
-                var checkedCount = 0;
-
-                foreach (var lib in detail.Libraries)
-                {
-                    ct.ThrowIfCancellationRequested();
-
-                    if (!RuleEvaluator.Allows(lib.Rules)) continue;
-                    if (RuleEvaluator.IsNativeArtifactName(lib.Name) &&
-                        !RuleEvaluator.NativeMatchesCurrentArch(lib.Name)) continue;
-
-                    var rel = lib.Downloads?.Artifact?.Path;
-                    if (rel is null)
-                    {
-                        try { rel = RuleEvaluator.MavenNameToPath(lib.Name); }
-                        catch { continue; }
-                    }
-
-                    var path = Path.Combine(paths.LibrariesDir,
-                        rel.Replace('/', Path.DirectorySeparatorChar));
-
-                    checkedCount++;
-                    if (!File.Exists(path)) missing++;
-                }
-
-                if (missing > 0)
-                {
-                    report.Problems.Add($"Missing libraries: {missing} of {checkedCount}");
-                    report.Fixable.Add("libraries");
-                }
-                else report.Ok.Add($"Libraries present ({checkedCount})");
-
-                var nativesDir = DownloadManager.ResolveNativesExtractDir(
-                    detail, paths.NativesDir(launchId));
-
-                if (Directory.Exists(nativesDir))
-                {
-                    var dlls = Directory.GetFiles(nativesDir, "*.dll").Length;
-                    if (dlls == 0)
-                    {
-                        report.Problems.Add("Native libraries not extracted (empty folder)");
-                        report.Fixable.Add("natives");
-                    }
-                    else if (!File.Exists(Path.Combine(nativesDir, "lwjgl.dll")))
-                    {
-                        report.Problems.Add("lwjgl.dll missing - game won't launch");
-                        report.Fixable.Add("natives");
-                    }
-                    else report.Ok.Add($"Native libraries present ({dlls} files)");
-                }
-                else
-                {
-                    report.Problems.Add("Natives folder missing");
-                    report.Fixable.Add("natives");
-                }
-
-                Status?.Invoke("Checking game assets...");
-
-                if (detail.AssetIndex is not null)
-                {
-                    var indexPath = Path.Combine(paths.AssetsIndexesDir, detail.AssetIndex.Id + ".json");
-
-                    if (!File.Exists(indexPath))
-                    {
-                        report.Problems.Add($"Asset index missing: {detail.AssetIndex.Id}");
-                        report.Fixable.Add("assets");
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var idx = JsonSerializer.Deserialize<AssetIndexFile>(
-                                await File.ReadAllTextAsync(indexPath, ct).ConfigureAwait(false));
-
-                            if (idx is not null)
-                            {
-                                var sample = idx.Objects.Values.Take(150).ToList();
-                                var lost = sample.Count(o => !File.Exists(
-                                    Path.Combine(paths.AssetsObjectsDir, o.TwoLetterPrefix, o.Hash)));
-
-                                if (lost > 0)
-                                {
-                                    var percent = lost * 100 / Math.Max(1, sample.Count);
-                                    report.Problems.Add(
-                                        $"Approximately {percent}% of assets missing (sounds, languages)");
-                                    report.Fixable.Add("assets");
-                                }
-                                else report.Ok.Add($"Assets present (checked {sample.Count} of {idx.Objects.Count})");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            report.Warnings.Add("Asset index unreadable: " + ex.Message);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                report.Problems.Add("Version profile corrupted: " + ex.Message);
-                report.Fixable.Add("version");
-            }
-        }
-
-        Status?.Invoke("Checking mods...");
-
+        var instDir = InstanceService.InstanceDir(inst);
         var modsDir = InstanceService.ModsDir(inst);
-        if (Directory.Exists(modsDir))
+        Directory.CreateDirectory(modsDir);
+
+        if (manifest != null && manifest.Files.Count > 0)
         {
-            var jars = Directory.GetFiles(modsDir, "*.jar");
-            var broken = jars.Where(f => !IsValidZip(f)).ToList();
+            var allowedMods = new HashSet<string>(manifest.Files.Where(f => f.Path.StartsWith("mods/", StringComparison.OrdinalIgnoreCase)).Select(f => f.FileName), StringComparer.OrdinalIgnoreCase);
+            var localMods = Directory.GetFiles(modsDir, "*.jar", SearchOption.TopDirectoryOnly);
 
-            if (broken.Count > 0)
-                report.Problems.Add($"Corrupted mods: {string.Join(", ", broken.Select(Path.GetFileName))}");
-            else if (jars.Length > 0)
-                report.Ok.Add($"Mods readable ({jars.Length} files)");
-
-            if (jars.Length > 0 && inst.Loader == LoaderKind.Vanilla)
-                report.Warnings.Add(
-                    $"Instance has {jars.Length} mod(s) but no loader installed - they won't load");
-
-            var conflicts = ModInspector.FindConflicts(
-                ModInspector.ReadAll(modsDir), inst.Loader);
-
-            foreach (var c in conflicts.Where(x => x.IsError))
-                report.Problems.Add(c.Title + " — " + c.Details);
-
-            foreach (var c in conflicts.Where(x => !x.IsError))
-                report.Warnings.Add(c.Title);
-        }
-
-        var required = JavaService.RequiredJavaFor(inst.McVersion);
-        if (!string.IsNullOrWhiteSpace(inst.JavaPath))
-        {
-            if (!File.Exists(inst.JavaPath))
-                report.Problems.Add("Instance-specific java.exe not found");
-            else
+            foreach (var localMod in localMods)
             {
-                var probe = JavaService.Probe(inst.JavaPath, "check");
-                if (probe is null) report.Problems.Add("Instance-specific java.exe won't launch");
-                else if (probe.MajorVersion < required)
-                    report.Warnings.Add(
-                        $"Selected Java {probe.MajorVersion}, {inst.McVersion} requires {required}");
-                else report.Ok.Add($"Java {probe.MajorVersion} compatible");
+                var modName = Path.GetFileName(localMod);
+                if (!allowedMods.Contains(modName))
+                {
+                    try
+                    {
+                        File.Delete(localMod);
+                        log?.Invoke($"[Античит] Удален посторонний мод: {modName}");
+                    }
+                    catch (Exception ex)
+                    {
+                        log?.Invoke($"[Античит] Не удалось удалить посторонний файл {modName}: {ex.Message}");
+                    }
+                }
+            }
+
+            using var sha = SHA256.Create();
+            foreach (var manifestMod in manifest.Files)
+            {
+                var relPath = string.IsNullOrWhiteSpace(manifestMod.Path) ? ("mods/" + manifestMod.FileName) : manifestMod.Path;
+                var targetFile = Path.Combine(instDir, relPath.Replace('/', Path.DirectorySeparatorChar));
+                var targetFolder = Path.GetDirectoryName(targetFile);
+                if (!string.IsNullOrEmpty(targetFolder))
+                {
+                    Directory.CreateDirectory(targetFolder);
+                }
+
+                bool needsDownload = false;
+
+                if (!File.Exists(targetFile))
+                {
+                    if (manifestMod.IsRequired)
+                    {
+                        needsDownload = true;
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(manifestMod.Sha256) && manifestMod.Size > 0)
+                {
+                    try
+                    {
+                        using var stream = File.OpenRead(targetFile);
+                        var computedHash = BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+                        if (!string.Equals(computedHash, manifestMod.Sha256, StringComparison.OrdinalIgnoreCase))
+                        {
+                            log?.Invoke($"[Античит] Обнаружена модификация {manifestMod.FileName}, восстанавливаю оригинал...");
+                            File.Delete(targetFile);
+                            needsDownload = true;
+                        }
+                    }
+                    catch
+                    {
+                        needsDownload = true;
+                    }
+                }
+
+                if (needsDownload && !string.IsNullOrWhiteSpace(manifestMod.DownloadUrl))
+                {
+                    setStatus?.Invoke($"Загрузка компонента сборки: {manifestMod.DisplayName}...");
+                    log?.Invoke($"Скачивание файла: {manifestMod.FileName}...");
+                    try
+                    {
+                        var url = manifestMod.DownloadUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                            ? manifestMod.DownloadUrl
+                            : $"{cleanServerUrl}{manifestMod.DownloadUrl}";
+
+                        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+                        var bytes = await http.GetByteArrayAsync(url, ct);
+                        await File.WriteAllBytesAsync(targetFile, bytes, ct);
+                        log?.Invoke($"Установлен компонент: {manifestMod.FileName}");
+                    }
+                    catch (Exception ex)
+                    {
+                        log?.Invoke($"Ошибка загрузки файла {manifestMod.FileName}: {ex.Message}");
+                    }
+                }
             }
         }
 
-        try
+        var resourcepacksDir = Path.Combine(instDir, "resourcepacks");
+        if (Directory.Exists(resourcepacksDir))
         {
-            var drive = new DriveInfo(Path.GetPathRoot(LauncherPaths.Root)!);
-            var freeGb = drive.AvailableFreeSpace / 1073741824.0;
-
-            if (freeGb < 1) report.Problems.Add($"Less than 1 GB free on disk ({freeGb:0.#} GB)");
-            else if (freeGb < 3) report.Warnings.Add($"Low disk space: {freeGb:0.#} GB");
-        }
-        catch (Exception ex) { Log.Warn(ex.Message); }
-
-        Status?.Invoke(report.Summary);
-        return report;
-    }
-
-    private static bool IsValidZip(string path)
-    {
-        try
-        {
-            using var zip = ZipFile.OpenRead(path);
-            return zip.Entries.Count > 0;
-        }
-        catch { return false; }
-    }
-
-    public static int Repair(GameInstance inst, IntegrityReport report)
-    {
-        var removed = 0;
-        var paths = GamePaths.ForInstance(inst);
-
-        try
-        {
-            if (report.Fixable.Contains("client"))
+            var packs = Directory.GetFiles(resourcepacksDir, "*.*", SearchOption.TopDirectoryOnly);
+            foreach (var pack in packs)
             {
-                var jar = paths.VersionJar(inst.McVersion);
-                if (File.Exists(jar)) { File.Delete(jar); removed++; }
-
-                var ok = jar + ".ok";
-                if (File.Exists(ok)) File.Delete(ok);
+                var name = Path.GetFileName(pack).ToLowerInvariant();
+                if (ForbiddenPackKeywords.Any(k => name.Contains(k)))
+                {
+                    try
+                    {
+                        File.Delete(pack);
+                        log?.Invoke($"[Античит] Удален запрещенный ресурспак: {Path.GetFileName(pack)}");
+                    }
+                    catch { }
+                }
             }
+        }
 
-            if (report.Fixable.Contains("natives"))
+        string? launchTicket = null;
+        try
+        {
+            setStatus?.Invoke("Получение защитного билета запуска...");
+            var hwid = HwidService.GetHwid();
+            var ticketReq = new
             {
-                var dir = paths.NativesDir(inst.EffectiveVersionId);
-                if (Directory.Exists(dir)) { Directory.Delete(dir, true); removed++; }
-            }
+                username = account.Username,
+                sessionKey = account.AccessToken,
+                hwid = hwid
+            };
 
-            if (report.Fixable.Contains("version"))
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+            var content = new StringContent(JsonSerializer.Serialize(ticketReq), Encoding.UTF8, "application/json");
+            var resp = await http.PostAsync($"{cleanServerUrl}/api/launch/request-ticket", content, ct);
+
+            if (resp.IsSuccessStatusCode)
             {
-                var dir = paths.VersionDir(inst.EffectiveVersionId);
-                if (Directory.Exists(dir)) { Directory.Delete(dir, true); removed++; }
+                var body = await resp.Content.ReadAsStringAsync(ct);
+                using var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("ticket", out var tProp))
+                {
+                    launchTicket = tProp.GetString();
+                    log?.Invoke($"Защитный билет запуска активирован: {launchTicket}");
+                }
             }
         }
         catch (Exception ex)
         {
-            Log.Warn($"IntegrityService: repair failed: {ex.Message}");
+            log?.Invoke($"Предупреждение: ошибка получения билета: {ex.Message}");
         }
 
-        return removed;
+        return new IntegrityResult
+        {
+            Success = true,
+            Ticket = launchTicket
+        };
     }
 }

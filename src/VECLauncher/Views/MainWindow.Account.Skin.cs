@@ -43,7 +43,9 @@ public partial class MainWindow
                         var skinPath = IOPath.Combine(LauncherPaths.Root, "skins", $"{acc.Username}.png");
                         var dir = IOPath.GetDirectoryName(skinPath);
                         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                        lock (_skinFileLock) { File.WriteAllBytes(skinPath, skinRawBytes); }
+                        _isInternalSkinWrite = true;
+                        try { lock (_skinFileLock) { File.WriteAllBytes(skinPath, skinRawBytes); } }
+                        finally { _isInternalSkinWrite = false; }
                     }
 
                     var capeUrl = $"{srvUrl}/api/cape/{Uri.EscapeDataString(acc.Username)}.png?t={DateTime.UtcNow.Ticks}";
@@ -54,12 +56,19 @@ public partial class MainWindow
                         var capePath = IOPath.Combine(LauncherPaths.Root, "capes", $"{acc.Username}.png");
                         var dir = IOPath.GetDirectoryName(capePath);
                         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                        lock (_skinFileLock) { File.WriteAllBytes(capePath, capeRawBytes); }
+                        _isInternalSkinWrite = true;
+                        try { lock (_skinFileLock) { File.WriteAllBytes(capePath, capeRawBytes); } }
+                        finally { _isInternalSkinWrite = false; }
                     }
                     else if (cResp.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
                         var capePath = IOPath.Combine(LauncherPaths.Root, "capes", $"{acc.Username}.png");
-                        if (File.Exists(capePath)) { lock (_skinFileLock) { File.Delete(capePath); } }
+                        if (File.Exists(capePath))
+                        {
+                            _isInternalSkinWrite = true;
+                            try { lock (_skinFileLock) { File.Delete(capePath); } }
+                            finally { _isInternalSkinWrite = false; }
+                        }
                         capeRawBytes = null;
                     }
 
@@ -200,7 +209,9 @@ public partial class MainWindow
                     var skinPath = _offlineSkins.AccountSkinPath(acc.Username);
                     var dir = System.IO.Path.GetDirectoryName(skinPath);
                     if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                    File.WriteAllBytes(skinPath, skinRawBytes);
+                    _isInternalSkinWrite = true;
+                    try { File.WriteAllBytes(skinPath, skinRawBytes); }
+                    finally { _isInternalSkinWrite = false; }
                 }
                 catch (Exception ex) { Log.Warn(ex.Message); }
             }

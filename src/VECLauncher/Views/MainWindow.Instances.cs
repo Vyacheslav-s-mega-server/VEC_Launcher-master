@@ -105,13 +105,13 @@ public partial class MainWindow
 
         UpdateSearchVisibility();
 
-        CbInstances.ItemsSource = null;
-        CbInstances.ItemsSource = ordered;
-        if (CbInstancesHome is not null)
+        if (CbInstancesHome != null)
         {
             CbInstancesHome.ItemsSource = null;
             CbInstancesHome.ItemsSource = ordered;
         }
+        CbInstances.ItemsSource = null;
+        CbInstances.ItemsSource = ordered;
         LstInstances.ItemsSource = null;
         LstInstances.ItemsSource = ordered;
 
@@ -135,8 +135,9 @@ public partial class MainWindow
             ?? ordered.FirstOrDefault();
         if (target is not null)
         {
+            if (CbInstancesHome is not null && !ReferenceEquals(CbInstancesHome.SelectedItem, target))
+                CbInstancesHome.SelectedItem = target;
             CbInstances.SelectedItem = target;
-            if (CbInstancesHome is not null) CbInstancesHome.SelectedItem = target;
             LstInstances.SelectedItem = target;
         }
         else
@@ -277,8 +278,6 @@ public partial class MainWindow
     {
         if (CbInstances.SelectedItem is not GameInstance inst) return;
         SelectInstance(inst);
-        if (CbInstancesHome is not null && !ReferenceEquals(CbInstancesHome.SelectedItem, inst))
-            CbInstancesHome.SelectedItem = inst;
         if (!ReferenceEquals(LstInstances.SelectedItem, inst)) LstInstances.SelectedItem = inst;
     }
 
@@ -294,6 +293,8 @@ public partial class MainWindow
     {
         if (LstInstances.SelectedItem is not GameInstance inst) return;
         SelectInstance(inst);
+        if (CbInstancesHome is not null && !ReferenceEquals(CbInstancesHome.SelectedItem, inst))
+            CbInstancesHome.SelectedItem = inst;
         if (!ReferenceEquals(CbInstances.SelectedItem, inst)) CbInstances.SelectedItem = inst;
     }
 
@@ -301,6 +302,9 @@ public partial class MainWindow
     {
         _selectedInstance = inst;
         _settings.LastInstanceId = inst.Id;
+
+        if (CbInstancesHome is not null && !ReferenceEquals(CbInstancesHome.SelectedItem, inst))
+            CbInstancesHome.SelectedItem = inst;
 
         TxtInstName.Text = inst.Name;
         TxtInstVersion.Text = "Minecraft " + inst.McVersion;
@@ -735,7 +739,7 @@ public partial class MainWindow
         RefreshInstanceLists();
         AppendLog($"Создана сборка «{inst.Name}» ({inst.McVersion}, {inst.LoaderDisplay}).");
 
-        NavInstances.IsChecked = true;
+        NavContent.IsChecked = true;
 
         if (!string.IsNullOrEmpty(dlg.ModpackPath))
             _ = InstallModpackAsync(inst, dlg.ModpackPath!);

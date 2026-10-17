@@ -76,15 +76,12 @@
                 <Grid Grid.Column="0">
 
                     <Grid x:Name="PageHome" Grid.Row="0">
-
-                        <!-- Full-Bleed Background Image -->
                         <Border>
                             <Border.Background>
-                                <ImageBrush ImageSource="pack://application:,,,/Assets/home_bg.jpg" Stretch="UniformToFill"/>
+                                <ImageBrush ImageSource="pack://application:,,,/Assets/home_bg.png" Stretch="UniformToFill"/>
                             </Border.Background>
                         </Border>
 
-                        <!-- Bottom gradient curtain (dark fade so elements pop) -->
                         <Border VerticalAlignment="Bottom" Height="340" IsHitTestVisible="False">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -96,11 +93,10 @@
                             </Border.Background>
                         </Border>
 
-                        <!-- Bottom progress bar (for downloads) -->
                         <Border x:Name="ProgressArea" VerticalAlignment="Bottom" HorizontalAlignment="Center"
                                 Margin="0,0,0,24" Visibility="{Binding ProgressVisible, Converter={StaticResource BoolToVis}}" Width="320"
                                 Background="#35161A28" BorderBrush="#38FFFFFF" BorderThickness="1"
-                                CornerRadius="12" Padding="14,8">
+                                CornerRadius="0" Padding="14,8">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.18" Color="White"/>
                             </Border.Effect>
@@ -124,71 +120,25 @@
                             </Grid>
                         </Border>
 
-                        <!-- Hidden legacy elements (kept for code-behind compatibility) -->
                         <Grid Visibility="Collapsed" IsHitTestVisible="False">
                             <ComboBox x:Name="CbInstances" Width="290"
                                       SelectionChanged="CbInstances_SelectionChanged"/>
                             <Button x:Name="BtnCancel" Content="Отмена" Command="{Binding CancelCommand}"/>
                             <Button x:Name="BtnStopGame" Content="ОСТАНОВИТЬ" Click="BtnStopGame_Click"/>
                             <Button x:Name="BtnPlay" Content="ИГРАТЬ" Click="BtnPlay_Click"/>
-                        </Grid>
-
-                        <!-- Left-side instance selector (Glassmorphism half-pill, flat left, round right) -->
-                        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                    Margin="40,0,0,70" Width="265">
-                            <!-- Decorative tag header -->
-                            <StackPanel Orientation="Horizontal" Margin="4,0,0,8" VerticalAlignment="Center">
-                                <Border Width="6" Height="6" CornerRadius="3" Background="#FFFFFF" Opacity="0.85" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                <TextBlock Text="ВЕРСИЯ / СБОРКА" FontSize="9" FontWeight="Bold" Foreground="#888899"/>
-                            </StackPanel>
-
-                            <!-- Version Selector Half-Pill (Height 46px, glassmorphic, opens upwards) -->
                             <ComboBox x:Name="CbInstancesHome"
                                       Style="{StaticResource HomeVersionComboStyle}"
-                                      SelectionChanged="CbInstancesHome_SelectionChanged"
-                                      ToolTip="Какая сборка запустится по кнопке «ИГРАТЬ»">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,3">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <!-- Round Mini Icon (no outer border) -->
-                                            <Border Grid.Column="0" Width="30" Height="30" CornerRadius="15"
-                                                    Background="Transparent" BorderThickness="0"
-                                                    VerticalAlignment="Center" Margin="0,0,10,0" ClipToBounds="True">
-                                                <Image Source="{Binding DisplayIcon}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                            </Border>
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                                <TextBlock FontSize="10" Foreground="#D0D0E0" Margin="0,1,0,0">
-                                                    <Run Text="{Binding LoaderDisplay, Mode=OneWay}"/>
-                                                    <Run Text=" · "/>
-                                                    <Run Text="{Binding McVersion, Mode=OneWay}"/>
-                                                </TextBlock>
-                                            </StackPanel>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
+                                      SelectionChanged="CbInstancesHome_SelectionChanged"/>
+                        </Grid>
 
-                        <!-- Right-side content frame -->
                         <Grid HorizontalAlignment="Right" Width="340" Margin="0,0,60,0">
-                            <!-- Thick vertical accent line -->
-                            <Border Width="4" Background="White" HorizontalAlignment="Right"
-                                    VerticalAlignment="Stretch" Margin="0,80,0,80" CornerRadius="2" Opacity="0.85"/>
-
-                            <!-- Content area -->
                             <StackPanel VerticalAlignment="Bottom" Margin="0,0,30,50" HorizontalAlignment="Right">
 
-                                <!-- Player count + PLAY button row -->
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
 
-                                    <!-- Server online badge (left of play button) -->
                                     <Border x:Name="ServerInfoBadge" VerticalAlignment="Center" Margin="0,0,14,0"
-                                            Background="#28FFFFFF" CornerRadius="10" Padding="12,6">
+                                            Background="#1408090D" BorderBrush="#25FFFFFF" BorderThickness="1"
+                                            CornerRadius="0" Padding="12,8">
                                         <StackPanel Orientation="Horizontal">
                                             <Ellipse Width="7" Height="7" Fill="#22C55E" VerticalAlignment="Center"/>
                                             <TextBlock Text=" " FontSize="5"/>
@@ -197,32 +147,31 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <!-- PLAY button (50% smaller than before) -->
-                                    <Button x:Name="BtnConnectVEC" Height="46" MinWidth="158"
+                                    <Button x:Name="BtnConnectVEC" Height="48" MinWidth="165"
                                             Click="BtnConnectVEC_Click" Cursor="Hand"
                                             Background="Transparent" BorderThickness="0"
                                             MouseEnter="BtnConnectVEC_MouseEnter"
                                             MouseLeave="BtnConnectVEC_MouseLeave">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
-                                                <Border x:Name="BtnHomeBd" Background="White" CornerRadius="23">
+                                                <Border x:Name="BtnHomeBd" Background="#F59E0B" BorderBrush="#FBBF24" BorderThickness="1" CornerRadius="0">
                                                     <Border.Effect>
-                                                        <DropShadowEffect x:Name="BtnHomeShadow" Color="White" BlurRadius="22"
-                                                                         ShadowDepth="0" Opacity="0.18"/>
+                                                        <DropShadowEffect x:Name="BtnHomeShadow" Color="#F59E0B" BlurRadius="16"
+                                                                         ShadowDepth="0" Opacity="0.3"/>
                                                     </Border.Effect>
-                                                    <TextBlock x:Name="BtnHomeText" Text="ИГРАТЬ" FontSize="17" FontWeight="Black"
-                                                               Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="BtnHomeText" Text="ИГРАТЬ" FontSize="18" FontWeight="Bold"
+                                                               FontFamily="{StaticResource FontMinecraft}"
+                                                               Foreground="#08090D" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="BtnHomeBd" Property="Background" Value="#F0F0F0"/>
+                                                        <Setter TargetName="BtnHomeBd" Property="Background" Value="#FBBF24"/>
                                                     </Trigger>
                                                     <Trigger Property="IsPressed" Value="True">
-                                                        <Setter TargetName="BtnHomeBd" Property="Background" Value="#D8D8D8"/>
+                                                        <Setter TargetName="BtnHomeBd" Property="Background" Value="#D97706"/>
                                                         <Setter TargetName="BtnHomeBd" Property="RenderTransform">
                                                             <Setter.Value>
-                                                                <ScaleTransform ScaleX="0.96" ScaleY="0.96"
-                                                                                CenterX="79" CenterY="23"/>
+                                                                <TranslateTransform Y="1"/>
                                                             </Setter.Value>
                                                         </Setter>
                                                     </Trigger>
@@ -232,17 +181,15 @@
                                     </Button>
                                 </StackPanel>
 
-                                <!-- Horizontal divider line (dialog style, wider) -->
                                 <Border Height="1" Background="White" Opacity="0.22"
-                                        Margin="14,16,14,0" CornerRadius="0.5"/>
+                                        Margin="14,16,14,0" CornerRadius="0"/>
 
-                                <!-- Naigrano (50% smaller) -->
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
                                             Margin="0,12,0,0">
-                                    <TextBlock Text="НАИГРАНО:  " FontSize="8.5" FontWeight="Bold"
+                                    <TextBlock Text="НАИГРАНО:  " FontSize="9" FontWeight="Bold"
                                                Foreground="White" Opacity="0.5"/>
-                                    <TextBlock x:Name="StatTotalTime" Text="0 ч" FontSize="8.5"
-                                               FontWeight="Black" Foreground="White" Opacity="0.85"/>
+                                    <TextBlock x:Name="StatTotalTime" Text="0 ч" FontSize="9"
+                                               FontWeight="Bold" Foreground="White" Opacity="0.85"/>
                                 </StackPanel>
                             </StackPanel>
                         </Grid>
@@ -1592,113 +1539,314 @@
                             <ImageBrush ImageSource="pack://application:,,,/Assets/rp_shader_bg.png" Stretch="UniformToFill" Opacity="0.15"/>
                         </Grid.Background>
                         <Grid Margin="20,14,20,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="0" Margin="0,0,0,14">
-                            <StackPanel>
-                                <TextBlock Text="Контент сборки" Style="{StaticResource H1}"/>
-                                <TextBlock x:Name="TxtContentSubtitle" Text="Управление модами, ресурспаками и шейдерами текущей сборки"
-                                           Foreground="#777788" FontSize="11.5" Margin="0,4,0,0"/>
+                            <Grid Grid.Row="0" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="СБОРКА VEC 1.21.11" Style="{StaticResource H1}"/>
+                                    <TextBlock x:Name="TxtContentSubtitle" Text="Официальные моды, ресурспаки и шейдеры сервера VEC"
+                                               Foreground="#777788" FontSize="11.5" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                    <Button Padding="18,8" Margin="0,0,8,0" Cursor="Hand" Click="BtnOpenContentFolder_Click">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="Bd" Background="#12151E" BorderBrush="#262D3D" BorderThickness="1" CornerRadius="0" Padding="{TemplateBinding Padding}">
+                                                    <TextBlock Text="Папка" FontFamily="{StaticResource FontMinecraft}" FontSize="12.5" Foreground="#E2E8F0"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="#1C2130"/>
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#3E4860"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                    <Button Padding="18,8" Cursor="Hand" Click="BtnRefreshContent_Click">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="Bd" Background="#12151E" BorderBrush="#262D3D" BorderThickness="1" CornerRadius="0" Padding="{TemplateBinding Padding}">
+                                                    <TextBlock Text="Обновить" FontFamily="{StaticResource FontMinecraft}" FontSize="12.5" Foreground="#E2E8F0"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="#1C2130"/>
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#3E4860"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+                                <RadioButton x:Name="CtMods" Style="{StaticResource SegmentToggle}" Content="Моды"
+                                             IsChecked="True" Checked="ContentKind_Checked" Tag="mods"/>
+                                <RadioButton x:Name="CtRp" Style="{StaticResource SegmentToggle}" Content="Ресурспаки"
+                                             Checked="ContentKind_Checked" Tag="rp"/>
+                                <RadioButton x:Name="CtShaders" Style="{StaticResource SegmentToggle}" Content="Шейдеры"
+                                             Checked="ContentKind_Checked" Tag="shaders"/>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                <Button Style="{StaticResource IconButton}" Content="Импорт" FontSize="11" Padding="10,5"
-                                        Margin="0,0,6,0" Click="BtnImportMod_Click"/>
-                                <Button Style="{StaticResource IconButton}" Content="Папка" FontSize="11" Padding="10,5"
-                                        Margin="0,0,6,0" Click="BtnOpenContentFolder_Click"/>
-                                <Button Style="{StaticResource IconButton}" Content="Обновить" FontSize="11" Padding="10,5"
-                                        Click="BtnRefreshContent_Click"/>
-                            </StackPanel>
-                        </Grid>
 
-                        <!-- Tabs -->
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
-                            <RadioButton x:Name="CtMods" Style="{StaticResource SegmentToggle}" Content="Моды"
-                                         IsChecked="True" Checked="ContentKind_Checked" Tag="mods"/>
-                            <RadioButton x:Name="CtRp" Style="{StaticResource SegmentToggle}" Content="Ресурспаки"
-                                         Checked="ContentKind_Checked" Tag="rp"/>
-                            <RadioButton x:Name="CtShaders" Style="{StaticResource SegmentToggle}" Content="Шейдеры"
-                                         Checked="ContentKind_Checked" Tag="shaders"/>
-                        </StackPanel>
-
-                        <!-- Content list -->
-                        <Border Grid.Row="2" Background="Transparent">
-                            <Grid>
-                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                    <StackPanel Margin="0,0,6,10">
-                                        <TextBlock x:Name="TxtContentStatus" Text="" Foreground="#777788" FontSize="11.5" Margin="2,0,0,10"/>
-
-                                        <ItemsControl x:Name="ItemsContent">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="#111116" CornerRadius="8" Padding="10,8"
-                                                            Margin="0,0,0,6" BorderBrush="#1F1F28" BorderThickness="1">
-                                                        <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                            </Grid.ColumnDefinitions>
-
-                                                            <!-- Icon -->
-                                                            <Border Grid.Column="0" Width="38" Height="38" CornerRadius="6"
-                                                                    Background="#16161E" BorderThickness="0" ClipToBounds="True">
+                            <Border Grid.Row="2" Background="Transparent">
+                                <Grid>
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <StackPanel Margin="0,0,6,10">
+                                            <StackPanel x:Name="SecRequired" Margin="0,0,0,18">
+                                                <TextBlock Text="ОБЯЗАТЕЛЬНЫЕ" FontFamily="{StaticResource FontMinecraft}" FontSize="12" FontWeight="Bold" Foreground="#94A3B8" Margin="2,0,0,12"/>
+                                                <ItemsControl x:Name="ItemsRequired">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <UniformGrid Columns="2"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Background="#10131B" CornerRadius="0" HorizontalAlignment="Stretch" MinHeight="310" Margin="0,0,16,16"
+                                                                    BorderBrush="#1E2536" BorderThickness="1">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Background" Value="#10131B"/>
+                                                                        <Setter Property="BorderBrush" Value="#1E2536"/>
+                                                                        <Style.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter Property="Background" Value="#141822"/>
+                                                                                <Setter Property="BorderBrush" Value="#2F3950"/>
+                                                                            </Trigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
                                                                 <Grid>
-                                                                    <Image Source="{Binding IconImage}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                                    <Image Source="pack://application:,,,/Assets/default_content_icon.jpg"
-                                                                           Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"
-                                                                           Visibility="{Binding DefaultIconVisibility}"/>
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="118"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="*"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                    </Grid.RowDefinitions>
+
+                                                                    <Border Grid.Row="0" Height="118" BorderBrush="#1C2333" BorderThickness="0,0,0,1" ClipToBounds="True">
+                                                                        <Grid>
+                                                                            <Image Source="{Binding BannerImage}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                            <Border Visibility="{Binding DefaultBannerVisibility}">
+                                                                                <Border.Background>
+                                                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                                        <GradientStop Color="#1A212F" Offset="0"/>
+                                                                                        <GradientStop Color="#0F131C" Offset="1"/>
+                                                                                    </LinearGradientBrush>
+                                                                                </Border.Background>
+                                                                            </Border>
+                                                                            <Border>
+                                                                                <Border.Background>
+                                                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                                        <GradientStop Color="#20000000" Offset="0"/>
+                                                                                        <GradientStop Color="#60000000" Offset="0.5"/>
+                                                                                        <GradientStop Color="#E610131B" Offset="1"/>
+                                                                                    </LinearGradientBrush>
+                                                                                </Border.Background>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                    </Border>
+
+                                                                    <Grid Grid.Row="1" Margin="16,-34,16,0">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="62"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Border Grid.Column="0" Width="62" Height="62" CornerRadius="0"
+                                                                                Background="#0E1118" BorderBrush="#252F42" BorderThickness="1"
+                                                                                ClipToBounds="True" VerticalAlignment="Top">
+                                                                            <Grid>
+                                                                                <Image Source="{Binding IconImage}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                                <Border Visibility="{Binding DefaultIconVisibility}">
+                                                                                    <TextBlock Text="{Binding IconLetter}" FontFamily="{StaticResource FontMinecraftTitle}"
+                                                                                               FontSize="24" Foreground="#64748B"
+                                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                </Border>
+                                                                            </Grid>
+                                                                        </Border>
+                                                                        <StackPanel Grid.Column="1" Margin="14,34,0,0" VerticalAlignment="Center">
+                                                                            <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMinecraft}"
+                                                                                       FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"
+                                                                                       TextTrimming="CharacterEllipsis"/>
+                                                                            <TextBlock Text="{Binding Author}" FontSize="11" Foreground="#64748B" Margin="0,3,0,0"
+                                                                                       TextTrimming="CharacterEllipsis"/>
+                                                                        </StackPanel>
+                                                                    </Grid>
+
+                                                                    <TextBlock Grid.Row="2" Text="{Binding Description}" FontSize="11.5" Foreground="#94A3B8"
+                                                                               Margin="16,16,16,14" TextWrapping="Wrap" MaxHeight="54" LineHeight="19" TextTrimming="CharacterEllipsis"/>
+
+                                                                    <WrapPanel Grid.Row="3" Margin="16,0,16,14">
+                                                                        <Border Background="#141824" BorderBrush="#232C3E" BorderThickness="1" CornerRadius="0"
+                                                                                Padding="8,3" Margin="0,0,6,4">
+                                                                            <TextBlock Text="{Binding Category}" FontSize="10" FontWeight="SemiBold" Foreground="#94A3B8"/>
+                                                                        </Border>
+                                                                        <Border Background="#141824" BorderBrush="#232C3E" BorderThickness="1" CornerRadius="0"
+                                                                                Padding="8,3" Margin="0,0,6,4">
+                                                                            <TextBlock Text="{Binding VersionTag}" FontSize="10" Foreground="#64748B"/>
+                                                                        </Border>
+                                                                        <Border Background="#141824" BorderBrush="#232C3E" BorderThickness="1" CornerRadius="0"
+                                                                                Padding="8,3" Margin="0,0,6,4">
+                                                                            <TextBlock Text="{Binding SizeTag}" FontSize="10" Foreground="#64748B"/>
+                                                                        </Border>
+                                                                    </WrapPanel>
+
+                                                                    <Border Grid.Row="4" Background="#0C0E14" BorderBrush="#1C2333" BorderThickness="0,1,0,0" Padding="16,12">
+                                                                        <TextBlock Text="Серверный компонент" FontFamily="{StaticResource FontMinecraft}"
+                                                                                   FontSize="11" FontWeight="SemiBold" Foreground="#64748B" HorizontalAlignment="Center"/>
+                                                                    </Border>
                                                                 </Grid>
                                                             </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
 
-                                                            <StackPanel Grid.Column="1" Margin="11,0,10,0" VerticalAlignment="Center">
-                                                                <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
-                                                                           Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
-                                                                <TextBlock Text="{Binding Info}" FontSize="10.5" Foreground="#777788"
-                                                                           Margin="0,2,0,0"/>
-                                                            </StackPanel>
+                                            <StackPanel x:Name="SecOptional" Margin="0,0,0,18">
+                                                <TextBlock Text="ОПЦИОНАЛЬНЫЕ" FontFamily="{StaticResource FontMinecraft}" FontSize="12" FontWeight="Bold" Foreground="#94A3B8" Margin="2,0,0,12"/>
+                                                <ItemsControl x:Name="ItemsOptional">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <UniformGrid Columns="2"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Background="#10131B" CornerRadius="0" HorizontalAlignment="Stretch" MinHeight="310" Margin="0,0,16,16"
+                                                                    BorderBrush="#1E2536" BorderThickness="1">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Background" Value="#10131B"/>
+                                                                        <Setter Property="BorderBrush" Value="#1E2536"/>
+                                                                        <Style.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter Property="Background" Value="#141822"/>
+                                                                                <Setter Property="BorderBrush" Value="#2F3950"/>
+                                                                            </Trigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <Grid>
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="118"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="*"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                    </Grid.RowDefinitions>
 
-                                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                                                <Button FontSize="10.5" Padding="8,4" Style="{StaticResource IconButton}"
-                                                                        Click="ContentToggle_Click" Tag="{Binding Path}"
-                                                                        Visibility="{Binding ToggleVisibility}">
-                                                                    <TextBlock Text="{Binding ToggleText}" Foreground="#AAAAAA"/>
-                                                                </Button>
-                                                                <Button FontSize="10.5" Padding="8,4" Margin="4,0,0,0"
-                                                                        Style="{StaticResource IconButton}"
-                                                                        Click="ContentReveal_Click" Tag="{Binding Path}">
-                                                                    <TextBlock Text="📁" FontSize="11"/>
-                                                                </Button>
-                                                                <Button FontSize="10.5" Padding="8,4" Margin="4,0,0,0"
-                                                                        Style="{StaticResource DangerButton}"
-                                                                        Click="ContentDelete_Click" Tag="{Binding Path}">
-                                                                    <TextBlock Text="✕" FontSize="11"/>
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </Grid>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </ScrollViewer>
+                                                                    <Border Grid.Row="0" Height="118" BorderBrush="#1C2333" BorderThickness="0,0,0,1" ClipToBounds="True">
+                                                                        <Grid>
+                                                                            <Image Source="{Binding BannerImage}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                            <Border Visibility="{Binding DefaultBannerVisibility}">
+                                                                                <Border.Background>
+                                                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                                        <GradientStop Color="#1A212F" Offset="0"/>
+                                                                                        <GradientStop Color="#0F131C" Offset="1"/>
+                                                                                    </LinearGradientBrush>
+                                                                                </Border.Background>
+                                                                            </Border>
+                                                                            <Border>
+                                                                                <Border.Background>
+                                                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                                        <GradientStop Color="#20000000" Offset="0"/>
+                                                                                        <GradientStop Color="#60000000" Offset="0.5"/>
+                                                                                        <GradientStop Color="#E610131B" Offset="1"/>
+                                                                                    </LinearGradientBrush>
+                                                                                </Border.Background>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                    </Border>
 
-                                <!-- Drop hint -->
-                                <Border x:Name="DropHint" Visibility="Collapsed" CornerRadius="10"
-                                        Background="#EE0B0B0E" BorderThickness="1.5" BorderBrush="#333344">
-                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                        <TextBlock Text="📥" FontSize="32" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Перетащите файлы сюда" FontSize="13" FontWeight="Bold"
-                                                   Margin="0,8,0,0" Foreground="#FFFFFF"/>
-                                        <TextBlock x:Name="TxtDropTarget" Text="" FontSize="11" Margin="0,4,0,0"
-                                                   HorizontalAlignment="Center" Foreground="#777788"/>
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
-                        </Border>
+                                                                    <Grid Grid.Row="1" Margin="16,-34,16,0">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="62"/>
+                                                                            <ColumnDefinition Width="*"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <Border Grid.Column="0" Width="62" Height="62" CornerRadius="0"
+                                                                                Background="#0E1118" BorderBrush="#252F42" BorderThickness="1"
+                                                                                ClipToBounds="True" VerticalAlignment="Top">
+                                                                            <Grid>
+                                                                                <Image Source="{Binding IconImage}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                                                <Border Visibility="{Binding DefaultIconVisibility}">
+                                                                                    <TextBlock Text="{Binding IconLetter}" FontFamily="{StaticResource FontMinecraftTitle}"
+                                                                                               FontSize="24" Foreground="#64748B"
+                                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                </Border>
+                                                                            </Grid>
+                                                                        </Border>
+                                                                        <StackPanel Grid.Column="1" Margin="14,34,0,0" VerticalAlignment="Center">
+                                                                            <TextBlock Text="{Binding Name}" FontFamily="{StaticResource FontMinecraft}"
+                                                                                       FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"
+                                                                                       TextTrimming="CharacterEllipsis"/>
+                                                                            <TextBlock Text="{Binding Author}" FontSize="11" Foreground="#64748B" Margin="0,3,0,0"
+                                                                                       TextTrimming="CharacterEllipsis"/>
+                                                                        </StackPanel>
+                                                                    </Grid>
+
+                                                                    <TextBlock Grid.Row="2" Text="{Binding Description}" FontSize="11.5" Foreground="#94A3B8"
+                                                                               Margin="16,16,16,14" TextWrapping="Wrap" MaxHeight="54" LineHeight="19" TextTrimming="CharacterEllipsis"/>
+
+                                                                    <WrapPanel Grid.Row="3" Margin="16,0,16,14">
+                                                                        <Border Background="#141824" BorderBrush="#232C3E" BorderThickness="1" CornerRadius="0"
+                                                                                Padding="8,3" Margin="0,0,6,4">
+                                                                            <TextBlock Text="{Binding Category}" FontSize="10" FontWeight="SemiBold" Foreground="#94A3B8"/>
+                                                                        </Border>
+                                                                        <Border Background="#141824" BorderBrush="#232C3E" BorderThickness="1" CornerRadius="0"
+                                                                                Padding="8,3" Margin="0,0,6,4">
+                                                                            <TextBlock Text="{Binding VersionTag}" FontSize="10" Foreground="#64748B"/>
+                                                                        </Border>
+                                                                        <Border Background="#141824" BorderBrush="#232C3E" BorderThickness="1" CornerRadius="0"
+                                                                                Padding="8,3" Margin="0,0,6,4">
+                                                                            <TextBlock Text="{Binding SizeTag}" FontSize="10" Foreground="#64748B"/>
+                                                                        </Border>
+                                                                    </WrapPanel>
+
+                                                                    <Border Grid.Row="4" Background="#0C0E14" BorderBrush="#1C2333" BorderThickness="0,1,0,0" Padding="16,12">
+                                                                        <Button HorizontalAlignment="Stretch" Padding="0,9" Cursor="Hand" Click="ContentToggle_Click" Tag="{Binding Path}">
+                                                                            <Button.Template>
+                                                                                <ControlTemplate TargetType="Button">
+                                                                                    <Border x:Name="BtnBd" Background="#161B26" BorderBrush="#2D3548" BorderThickness="1" CornerRadius="0" Padding="{TemplateBinding Padding}">
+                                                                                        <TextBlock Text="{Binding ToggleText}" FontFamily="{StaticResource FontMinecraft}" FontSize="11.5" FontWeight="Bold" Foreground="#CBD5E1" HorizontalAlignment="Center"/>
+                                                                                    </Border>
+                                                                                    <ControlTemplate.Triggers>
+                                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                                            <Setter TargetName="BtnBd" Property="Background" Value="#222A3B"/>
+                                                                                            <Setter TargetName="BtnBd" Property="BorderBrush" Value="#4B5875"/>
+                                                                                            <Setter TargetName="BtnBd" Property="TextElement.Foreground" Value="#FFFFFF"/>
+                                                                                        </Trigger>
+                                                                                    </ControlTemplate.Triggers>
+                                                                                </ControlTemplate>
+                                                                            </Button.Template>
+                                                                        </Button>
+                                                                    </Border>
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </ScrollViewer>
+
+                                    <Border x:Name="DropHint" Visibility="Collapsed" CornerRadius="0"
+                                            Background="#EE0B0B0E" BorderThickness="1" BorderBrush="#2D3548">
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                            <TextBlock Text="Перетащите файлы сюда" FontFamily="{StaticResource FontMinecraft}" FontSize="13" FontWeight="Bold"
+                                                       Margin="0,8,0,0" Foreground="#FFFFFF"/>
+                                            <TextBlock x:Name="TxtDropTarget" Text="" FontSize="11" Margin="0,4,0,0"
+                                                       HorizontalAlignment="Center" Foreground="#777788"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
                         </Grid>
                     </Grid>
 
@@ -1797,18 +1945,6 @@
                                     <StackPanel Orientation="Horizontal">
                                         <Image Source="pack://application:,,,/Assets/main_page.png" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         <TextBlock Text="Главная" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </RadioButton>
-                                <RadioButton x:Name="NavInstances" Style="{StaticResource NavToggleDiscord}" Checked="Nav_Checked" Tag="1">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Image Source="pack://application:,,,/Assets/version_page.png" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                        <TextBlock Text="Сборки / Версия" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </RadioButton>
-                                <RadioButton x:Name="NavMods" Style="{StaticResource NavToggleDiscord}" Checked="Nav_Checked" Tag="6">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Image Source="pack://application:,,,/Assets/mods_page.png" Width="18" Height="18" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                        <TextBlock Text="Моды / Контент" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </RadioButton>
                                 <RadioButton x:Name="NavContent" Style="{StaticResource NavToggleDiscord}" Checked="Nav_Checked" Tag="7">

@@ -18,6 +18,9 @@ public sealed class VecAuthService
         {
             var env = Environment.GetEnvironmentVariable("VEC_SERVER_URL");
             if (!string.IsNullOrWhiteSpace(env)) return env.TrimEnd('/');
+#if DEBUG
+            return LauncherConfig.DefaultWebServerUrl;
+#else
             try
             {
                 var s = SettingsService.Load();
@@ -25,6 +28,7 @@ public sealed class VecAuthService
             }
             catch { }
             return LauncherConfig.DefaultWebServerUrl;
+#endif
         }
     }
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(3) };

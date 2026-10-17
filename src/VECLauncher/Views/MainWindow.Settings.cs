@@ -692,10 +692,7 @@ public partial class MainWindow
                 break;
 
             case Key.F when ctrl:
-                NavInstances.IsChecked = true;
-                TxtInstanceSearch.Visibility = Visibility.Visible;
-                TxtInstanceSearch.Focus();
-                TxtInstanceSearch.SelectAll();
+                NavContent.IsChecked = true;
                 e.Handled = true;
                 break;
 
@@ -718,7 +715,7 @@ public partial class MainWindow
 
     private void SwitchTab(int index)
     {
-        var navs = new[] { NavHome, NavInstances, NavMods, NavContent, NavAccount, NavSettings };
+        var navs = new[] { NavHome, NavContent, NavAccount, NavSettings };
         if (index >= 0 && index < navs.Length) navs[index].IsChecked = true;
     }
 

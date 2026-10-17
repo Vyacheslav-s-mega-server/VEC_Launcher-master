@@ -122,10 +122,11 @@ public partial class MainWindow : Window
     private FileSystemWatcher? _skinWatcher;
     private FileSystemWatcher? _capeWatcher;
     private DateTime _lastWatcherReload = DateTime.MinValue;
+    private bool _isInternalSkinWrite = false;
 
     private void MainWindow_Activated(object? sender, EventArgs e)
     {
-        if (_account != null && (DateTime.UtcNow - _lastWatcherReload).TotalSeconds > 1)
+        if (_account != null && (DateTime.UtcNow - _lastWatcherReload).TotalSeconds > 10)
         {
             _lastWatcherReload = DateTime.UtcNow;
             _ = LoadSkinImagesAsync(_account);
@@ -164,15 +165,15 @@ public partial class MainWindow : Window
 
     private void OnSkinFileChanged(object sender, FileSystemEventArgs e)
     {
-        if (_account == null) return;
+        if (_account == null || _isInternalSkinWrite) return;
         var name = System.IO.Path.GetFileNameWithoutExtension(e.Name);
         if (string.Equals(name, _account.Username, StringComparison.OrdinalIgnoreCase))
         {
             Dispatcher.InvokeAsync(async () =>
             {
-                if ((DateTime.UtcNow - _lastWatcherReload).TotalMilliseconds < 250) return;
+                if ((DateTime.UtcNow - _lastWatcherReload).TotalSeconds < 3) return;
                 _lastWatcherReload = DateTime.UtcNow;
-                await Task.Delay(100);
+                await Task.Delay(200);
                 await LoadSkinImagesAsync(_account);
             });
         }
@@ -443,7 +444,7 @@ public partial class MainWindow : Window
         if (_selectedInstance is null)
         {
             _dialog.ShowMessage("Сначала выберите или создайте сборку.", "Сборка не выбрана");
-            NavInstances.IsChecked = true;
+            NavContent.IsChecked = true;
             return;
         }
 
@@ -652,7 +653,7 @@ public partial class MainWindow : Window
         return (name, modId, icon);
     }
 
-    private static readonly Dictionary<string, (string? name, BitmapImage? icon)> _modrinthProjectCache = new();
+    private static readonly Dictionary<string, (string? title, BitmapImage? icon, BitmapImage? banner, string? description, string? author)> _modrinthProjectCache = new();
 
     private static readonly System.Text.RegularExpressions.Regex _rxVersionSuffix = new(
         @"[-_](mc)?(1\.|forge|fabric|neoforge|quilt|sl|babric|legacy)[^""]*",
@@ -758,17 +759,21 @@ public partial class MainWindow : Window
         ["quark_oddities"] = "Quark Oddities",
     };
 
-    private async Task<(string? title, BitmapImage? icon)> FetchModrinthProjectAsync(string query, string projectType = "mod")
+    private async Task<(string? title, BitmapImage? icon, BitmapImage? banner, string? description, string? author)> FetchModrinthProjectAsync(string query, string projectType = "mod")
     {
-        var cacheKey = $"{projectType}:{query}";
+        var cleanSlug = query.Trim().Replace('_', '-').Trim('-');
+        var cacheKey = $"{projectType}:{cleanSlug}";
         if (_modrinthProjectCache.TryGetValue(cacheKey, out var cached)) return cached;
 
         string? title = null;
         BitmapImage? icon = null;
+        BitmapImage? banner = null;
+        string? description = null;
+        string? author = null;
 
         try
         {
-            var url = $"https://api.modrinth.com/v2/project/{Uri.EscapeDataString(query)}";
+            var url = $"https://api.modrinth.com/v2/project/{Uri.EscapeDataString(cleanSlug)}";
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
             req.Headers.TryAddWithoutValidation("User-Agent", "VEC Launcher/1.0");
             using var resp = await _iconHttp.SendAsync(req);
@@ -778,13 +783,27 @@ public partial class MainWindow : Window
                 var json = await resp.Content.ReadAsStringAsync();
                 var doc = JsonNode.Parse(json);
                 title = doc?["title"]?.GetValue<string>();
+                description = doc?["description"]?.GetValue<string>();
                 var iconUrl = doc?["icon_url"]?.GetValue<string>();
                 if (!string.IsNullOrEmpty(iconUrl))
-                    icon = await DownloadIconAsync(iconUrl, cacheKey);
+                    icon = await DownloadIconAsync(iconUrl, cacheKey + ":icon");
+
+                var gallery = doc?["gallery"]?.AsArray();
+                string? bannerUrl = null;
+                if (gallery is not null && gallery.Count > 0)
+                {
+                    var featured = gallery.FirstOrDefault(g => g?["featured"]?.GetValue<bool>() == true);
+                    bannerUrl = (featured ?? gallery[0])?["url"]?.GetValue<string>();
+                }
+                if (!string.IsNullOrEmpty(bannerUrl))
+                    banner = await DownloadIconAsync(bannerUrl, cacheKey + ":banner");
+
+                author = doc?["organization"]?.GetValue<string>();
             }
             else
             {
-                var searchUrl = $"https://api.modrinth.com/v2/search?query={Uri.EscapeDataString(query)}&limit=1&facets=[[\"project_type:{projectType}\"]]&index=downloads";
+                var searchQuery = cleanSlug.Replace('-', ' ');
+                var searchUrl = $"https://api.modrinth.com/v2/search?query={Uri.EscapeDataString(searchQuery)}&limit=1&facets=[[\"project_type:{projectType}\"]]&index=downloads";
                 using var req2 = new HttpRequestMessage(HttpMethod.Get, searchUrl);
                 req2.Headers.TryAddWithoutValidation("User-Agent", "VEC Launcher/1.0");
                 using var resp2 = await _iconHttp.SendAsync(req2);
@@ -795,18 +814,27 @@ public partial class MainWindow : Window
                     var hits = doc2?["hits"]?.AsArray();
                     if (hits?.Count > 0)
                     {
-                        title = hits[0]?["title"]?.GetValue<string>();
-                        var iconUrl = hits[0]?["icon_url"]?.GetValue<string>();
+                        var firstHit = hits[0];
+                        title = firstHit?["title"]?.GetValue<string>();
+                        description = firstHit?["description"]?.GetValue<string>();
+                        author = firstHit?["author"]?.GetValue<string>();
+                        var iconUrl = firstHit?["icon_url"]?.GetValue<string>();
                         if (!string.IsNullOrEmpty(iconUrl))
-                            icon = await DownloadIconAsync(iconUrl, cacheKey);
+                            icon = await DownloadIconAsync(iconUrl, cacheKey + ":icon");
+
+                        var bannerUrl = firstHit?["featured_gallery"]?.GetValue<string>()
+                            ?? firstHit?["gallery"]?.AsArray()?.FirstOrDefault()?.GetValue<string>();
+                        if (!string.IsNullOrEmpty(bannerUrl))
+                            banner = await DownloadIconAsync(bannerUrl, cacheKey + ":banner");
                     }
                 }
             }
         }
         catch (Exception ex) { Log.Warn(ex.Message); }
 
-        _modrinthProjectCache[cacheKey] = (title, icon);
-        return (title, icon);
+        var result = (title, icon, banner, description, author);
+        _modrinthProjectCache[cacheKey] = result;
+        return result;
     }
 
     private (string name, string? slug) ExtractPackInfo(string zipPath)

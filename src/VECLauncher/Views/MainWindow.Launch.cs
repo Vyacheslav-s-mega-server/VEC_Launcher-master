@@ -32,10 +32,10 @@ public partial class MainWindow
         if (bd == null) return;
 
         if (_homeBtnState == HomeButtonState.Idle)
-            bd.Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0));
+            bd.Background = new SolidColorBrush(Color.FromRgb(0xFB, 0xBF, 0x24));
         else if (_homeBtnState == HomeButtonState.Busy)
             bd.Background = new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x44));
-        else // Running
+        else
             bd.Background = new SolidColorBrush(Color.FromRgb(0x25, 0x25, 0x25));
     }
 
@@ -46,10 +46,10 @@ public partial class MainWindow
         if (bd == null) return;
 
         if (_homeBtnState == HomeButtonState.Idle)
-            bd.Background = Brushes.White;
+            bd.Background = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
         else if (_homeBtnState == HomeButtonState.Busy)
             bd.Background = new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33));
-        else // Running
+        else
             bd.Background = new SolidColorBrush(Color.FromRgb(0x1A, 0x1A, 0x1A));
     }
 
@@ -308,9 +308,12 @@ public partial class MainWindow
         {
             _homeBtnState = HomeButtonState.Idle;
             txt.Text = "ИГРАТЬ";
-            txt.Foreground = Brushes.Black;
-            bd.Background = Brushes.White;
-            if (shadow != null) { shadow.Color = Colors.White; shadow.Opacity = 0.18; shadow.BlurRadius = 22; }
+            txt.Foreground = new SolidColorBrush(Color.FromRgb(0x08, 0x09, 0x0D));
+            bd.Background = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
+            bd.BorderBrush = new SolidColorBrush(Color.FromRgb(0xFB, 0xBF, 0x24));
+            bd.BorderThickness = new Thickness(1);
+            bd.CornerRadius = new CornerRadius(8);
+            if (shadow != null) { shadow.Color = Color.FromRgb(0xF5, 0x9E, 0x0B); shadow.Opacity = 0.3; shadow.BlurRadius = 16; }
             BtnConnectVEC.Cursor = Cursors.Hand;
         }
     }

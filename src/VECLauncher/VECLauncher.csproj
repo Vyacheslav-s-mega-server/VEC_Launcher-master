@@ -46,6 +46,7 @@
 
   <ItemGroup>
     <Resource Include="logo.ico" />
+    <Resource Include="Assets\home_bg.png" />
     <Resource Include="Assets\home_bg.jpg" />
     <Resource Include="Assets\default_instance_icon.jpg" />
     <Resource Include="Assets\version_menu_bg.jpg" />
@@ -53,9 +54,6 @@
     <Resource Include="Assets\rp_shader_bg.png" />
     <Resource Include="Assets\account_bg.jpg" />
     <Resource Include="Assets\default_content_icon.jpg" />
-    <Resource Include="Assets\steve_classic.png" />
-    <Resource Include="Assets\alex_slim.png" />
-    <Resource Include="Assets\cape_vec.png" />
     <Resource Include="Assets\slime.png" />
     <Resource Include="Assets\main_page.png" />
     <Resource Include="Assets\version_page.png" />
@@ -65,7 +63,9 @@
     <Resource Include="Assets\setting_page.png" />
     <Resource Include="Assets\icon_skin_exploler.png" />
     <Resource Include="Assets\icon_cape_button.png" />
-    <Resource Include="Assets\3D_Model.gltf" />
+    <Resource Include="Fonts\minecraft.ttf" />
+    <Resource Include="Fonts\minecraft_title.ttf" />
+    <Resource Include="Fonts\OCR A Regular.ttf" />
   </ItemGroup>
 
   <ItemGroup>

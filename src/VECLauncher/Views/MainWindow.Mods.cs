@@ -432,9 +432,40 @@ public partial class MainWindow
         catch { return null; }
     }
 
-    private async Task<List<BuildManifestFile>> FetchBuildManifestAsync()
+    private static List<BuildManifestFile> _cachedServerManifest = new();
+    private static DateTime _lastManifestFetch = DateTime.MinValue;
+    private DispatcherTimer? _contentPollingTimer;
+
+    public static void SetPreloadedManifest(List<BuildManifestFile> files)
     {
-        if (_approvedCatalog.Count > 0) return _approvedCatalog;
+        if (files != null && files.Count > 0)
+        {
+            _cachedServerManifest = files;
+            _lastManifestFetch = DateTime.UtcNow;
+        }
+    }
+
+    private void StartContentPolling()
+    {
+        if (_contentPollingTimer != null) return;
+        _contentPollingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+        _contentPollingTimer.Tick += (s, e) =>
+        {
+            if (PageContent?.Visibility == Visibility.Visible && _selectedInstance != null)
+            {
+                RefreshContent(false);
+            }
+        };
+        _contentPollingTimer.Start();
+    }
+
+    private async Task<List<BuildManifestFile>> FetchBuildManifestAsync(bool force = false)
+    {
+        if (!force && _cachedServerManifest.Count > 0 && (DateTime.UtcNow - _lastManifestFetch).TotalSeconds < 25)
+        {
+            _approvedCatalog = _cachedServerManifest;
+            return _approvedCatalog;
+        }
 
         var candidates = new List<string> { VecAuthService.DefaultVecServerUrl };
         if (!string.IsNullOrWhiteSpace(_account?.ServerUrl))
@@ -442,7 +473,7 @@ public partial class MainWindow
         candidates.Add(LauncherConfig.DevelopmentWebServerUrl);
         candidates.Add(LauncherConfig.ProductionWebServerUrl);
 
-        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(4) };
         foreach (var serverUrl in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
         {
             try
@@ -451,7 +482,9 @@ public partial class MainWindow
                 var res = System.Text.Json.JsonSerializer.Deserialize<BuildManifestResponse>(json);
                 if (res?.Files != null && res.Files.Count > 0)
                 {
-                    _approvedCatalog = res.Files;
+                    _cachedServerManifest = res.Files;
+                    _lastManifestFetch = DateTime.UtcNow;
+                    _approvedCatalog = _cachedServerManifest;
                     return _approvedCatalog;
                 }
             }
@@ -461,10 +494,14 @@ public partial class MainWindow
             }
         }
 
+        if (_cachedServerManifest.Count > 0)
+        {
+            _approvedCatalog = _cachedServerManifest;
+        }
         return _approvedCatalog;
     }
 
-    private async void RefreshContent()
+    private async void RefreshContent(bool force = false)
     {
         if (_selectedInstance is null)
         {
@@ -510,7 +547,7 @@ public partial class MainWindow
             }
             else
             {
-                var manifestFiles = await FetchBuildManifestAsync();
+                var manifestFiles = await FetchBuildManifestAsync(force);
                 var handledNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 if (manifestFiles.Count > 0)
@@ -784,7 +821,7 @@ public partial class MainWindow
         }
     }
 
-    private void BtnRefreshContent_Click(object sender, RoutedEventArgs e) => RefreshContent();
+    private void BtnRefreshContent_Click(object sender, RoutedEventArgs e) => RefreshContent(true);
 
     private void BtnOpenContentFolder_Click(object sender, RoutedEventArgs e)
     {

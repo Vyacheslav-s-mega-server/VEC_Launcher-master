@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
@@ -242,25 +244,47 @@ public partial class SplashWindow : Window
         try
         {
             SetSplashProgress(15, "Инициализация VEC Engine...", "Загрузка конфигурации и темы...");
-            await Task.Delay(150);
+            await Task.Delay(80);
 
             SetSplashProgress(35, "Сканирование Java окружения...", "Обнаружение установленных JVM...");
-            await Task.Delay(150);
+            await Task.Delay(80);
 
             SetSplashProgress(55, "Синхронизация профилей...", "Загрузка сохранённых аккаунтов и скинов...");
-            await Task.Delay(150);
+            await Task.Delay(80);
 
-            SetSplashProgress(75, "Проверка версий Minecraft...", "Синхронизация манифеста версий...");
-            await Task.Delay(150);
+            SetSplashProgress(75, "Синхронизация сборки VEC...", "Загрузка манифеста с сервера...");
+            try
+            {
+                var candidates = new List<string> { VecAuthService.DefaultVecServerUrl, LauncherConfig.DevelopmentWebServerUrl, LauncherConfig.ProductionWebServerUrl };
+                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+                foreach (var serverUrl in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        var json = await http.GetStringAsync($"{serverUrl}/api/builds/vec-fabric-1-21-11/manifest");
+                        var res = System.Text.Json.JsonSerializer.Deserialize<BuildManifestResponse>(json);
+                        if (res?.Files != null && res.Files.Count > 0)
+                        {
+                            MainWindow.SetPreloadedManifest(res.Files);
+                            break;
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("Splash manifest preload: " + ex.Message);
+            }
 
-            SetSplashProgress(90, "Загрузка сборок и модов...", "Подготовка установленных модпаков...");
-            await Task.Delay(150);
+            SetSplashProgress(95, "Подготовка интерфейса...", "Загрузка панелей и плиток...");
+            await Task.Delay(80);
 
             SetSplashProgress(100, "Добро пожаловать!", "Открытие лаунчера...");
-            await Task.Delay(100);
+            await Task.Delay(80);
 
             _isExitingSplash = true;
-            await Task.Delay(100);
+            await Task.Delay(60);
 
             Log.Info("Opening MainWindow from splash...");
             var mainWindow = App.Services.GetRequiredService<MainWindow>();

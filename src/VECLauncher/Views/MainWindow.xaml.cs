@@ -117,6 +117,7 @@ public partial class MainWindow : Window
         KeyDown += Window_KeyDown;
         Activated += MainWindow_Activated;
         InitSkinDirectoryWatchers();
+        StartContentPolling();
     }
 
     private FileSystemWatcher? _skinWatcher;
@@ -130,6 +131,10 @@ public partial class MainWindow : Window
         {
             _lastWatcherReload = DateTime.UtcNow;
             _ = LoadSkinImagesAsync(_account);
+        }
+        if (PageContent?.Visibility == Visibility.Visible && _selectedInstance != null)
+        {
+            RefreshContent(false);
         }
     }
 

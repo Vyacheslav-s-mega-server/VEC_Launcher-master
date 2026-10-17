@@ -800,35 +800,6 @@ public partial class MainWindow : Window
 
                 author = doc?["organization"]?.GetValue<string>();
             }
-            else
-            {
-                var searchQuery = cleanSlug.Replace('-', ' ');
-                var searchUrl = $"https://api.modrinth.com/v2/search?query={Uri.EscapeDataString(searchQuery)}&limit=1&facets=[[\"project_type:{projectType}\"]]&index=downloads";
-                using var req2 = new HttpRequestMessage(HttpMethod.Get, searchUrl);
-                req2.Headers.TryAddWithoutValidation("User-Agent", "VEC Launcher/1.0");
-                using var resp2 = await _iconHttp.SendAsync(req2);
-                if (resp2.IsSuccessStatusCode)
-                {
-                    var json2 = await resp2.Content.ReadAsStringAsync();
-                    var doc2 = JsonNode.Parse(json2);
-                    var hits = doc2?["hits"]?.AsArray();
-                    if (hits?.Count > 0)
-                    {
-                        var firstHit = hits[0];
-                        title = firstHit?["title"]?.GetValue<string>();
-                        description = firstHit?["description"]?.GetValue<string>();
-                        author = firstHit?["author"]?.GetValue<string>();
-                        var iconUrl = firstHit?["icon_url"]?.GetValue<string>();
-                        if (!string.IsNullOrEmpty(iconUrl))
-                            icon = await DownloadIconAsync(iconUrl, cacheKey + ":icon");
-
-                        var bannerUrl = firstHit?["featured_gallery"]?.GetValue<string>()
-                            ?? firstHit?["gallery"]?.AsArray()?.FirstOrDefault()?.GetValue<string>();
-                        if (!string.IsNullOrEmpty(bannerUrl))
-                            banner = await DownloadIconAsync(bannerUrl, cacheKey + ":banner");
-                    }
-                }
-            }
         }
         catch (Exception ex) { Log.Warn(ex.Message); }
 

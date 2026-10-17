@@ -31,6 +31,8 @@ public sealed class BuildManifestFile
     [JsonPropertyName("category")] public string Category { get; set; } = "Core";
     [JsonPropertyName("displayName")] public string DisplayName { get; set; } = string.Empty;
     [JsonPropertyName("description")] public string Description { get; set; } = string.Empty;
+    [JsonPropertyName("iconUrl")] public string? IconUrl { get; set; }
+    [JsonPropertyName("source")] public string? Source { get; set; }
 }
 
 public sealed class BuildManifestResponse
@@ -146,6 +148,7 @@ public static class IntegrityService
                             : $"{cleanServerUrl}{manifestMod.DownloadUrl}";
 
                         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+                        http.DefaultRequestHeaders.UserAgent.ParseAdd("VEC_Launcher/3.0 (contact@vec.kpvk.edu.kz)");
                         var bytes = await http.GetByteArrayAsync(url, ct);
                         await File.WriteAllBytesAsync(targetFile, bytes, ct);
                         log?.Invoke($"Установлен компонент: {manifestMod.FileName}");

@@ -562,6 +562,21 @@ public partial class MainWindow
                         toggleText = "Скачать";
                     }
 
+                    BitmapImage? directIcon = null;
+                    if (!string.IsNullOrWhiteSpace(srv.IconUrl))
+                    {
+                        try
+                        {
+                            directIcon = new BitmapImage();
+                            directIcon.BeginInit();
+                            directIcon.UriSource = new Uri(srv.IconUrl);
+                            directIcon.CacheOption = BitmapCacheOption.OnLoad;
+                            directIcon.EndInit();
+                            directIcon.Freeze();
+                        }
+                        catch { directIcon = null; }
+                    }
+
                     var item = new ContentTileItem
                     {
                         Name = displayName,
@@ -573,6 +588,8 @@ public partial class MainWindow
                         SizeTag = Human(srv.Size),
                         Path = targetPath,
                         IsRequired = srv.IsRequired,
+                        IsServerItem = true,
+                        IconImage = directIcon,
                         ToggleText = toggleText,
                         IconLetter = displayName.Length > 0 ? displayName[..1].ToUpperInvariant() : "V"
                     };
@@ -701,6 +718,19 @@ public partial class MainWindow
                     if (!string.IsNullOrEmpty(author)) remoteAuthor = $"от {author}";
                 }
 
+                if (item.IsServerItem)
+                {
+                    if (remoteIcon is not null && item.IconImage is null)
+                    {
+                        item.IconImage = remoteIcon;
+                    }
+                    if (remoteBanner is not null && item.BannerImage is null)
+                    {
+                        item.BannerImage = remoteBanner;
+                    }
+                    continue;
+                }
+
                 if (remoteName is not null && remoteName != item.Name)
                 {
                     item.Name = remoteName;
@@ -756,6 +786,7 @@ public partial class MainWindow
                         : $"{serverUrl}/builds/vec-fabric-1-21-11/{srv.Path.TrimStart('/')}";
 
                     using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(2) };
+                    http.DefaultRequestHeaders.UserAgent.ParseAdd("VEC_Launcher/3.0 (contact@vec.kpvk.edu.kz)");
                     var bytes = await http.GetByteArrayAsync(downloadUrl);
 
                     var folder = IOPath.GetDirectoryName(path);
@@ -1033,6 +1064,7 @@ public class ContentTileItem : System.ComponentModel.INotifyPropertyChanged
     public string SizeTag { get; set; } = "";
     public string Path { get; set; } = "";
     public bool IsRequired { get; set; }
+    public bool IsServerItem { get; set; }
     public string ToggleText { get; set; } = "";
     public string IconLetter { get; set; } = "V";
 

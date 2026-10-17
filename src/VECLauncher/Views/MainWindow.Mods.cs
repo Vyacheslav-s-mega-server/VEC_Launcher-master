@@ -577,6 +577,21 @@ public partial class MainWindow
                         catch { directIcon = null; }
                     }
 
+                    BitmapImage? directBanner = null;
+                    if (!string.IsNullOrWhiteSpace(srv.BannerUrl))
+                    {
+                        try
+                        {
+                            directBanner = new BitmapImage();
+                            directBanner.BeginInit();
+                            directBanner.UriSource = new Uri(srv.BannerUrl);
+                            directBanner.CacheOption = BitmapCacheOption.OnLoad;
+                            directBanner.EndInit();
+                            directBanner.Freeze();
+                        }
+                        catch { directBanner = null; }
+                    }
+
                     var item = new ContentTileItem
                     {
                         Name = displayName,
@@ -589,7 +604,9 @@ public partial class MainWindow
                         Path = targetPath,
                         IsRequired = srv.IsRequired,
                         IsServerItem = true,
+                        ModrinthSlug = srv.ModrinthSlug,
                         IconImage = directIcon,
+                        BannerImage = directBanner,
                         ToggleText = toggleText,
                         IconLetter = displayName.Length > 0 ? displayName[..1].ToUpperInvariant() : "V"
                     };
@@ -667,6 +684,11 @@ public partial class MainWindow
             var filePath = item.Path;
             if (string.IsNullOrEmpty(filePath)) continue;
 
+            if (item.IsServerItem && item.IconImage is not null && item.BannerImage is not null)
+            {
+                continue;
+            }
+
             BitmapImage? remoteIcon = item.IconImage;
             BitmapImage? remoteBanner = item.BannerImage;
             string? remoteName = null;
@@ -678,7 +700,9 @@ public partial class MainWindow
                 if (_contentKind == ContentKind.Mods)
                 {
                     _modIdCache.TryGetValue(filePath, out var modId);
-                    var query = !string.IsNullOrEmpty(modId) ? modId : CleanSlugFromFilename(filePath);
+                    var query = !string.IsNullOrEmpty(item.ModrinthSlug)
+                        ? item.ModrinthSlug
+                        : (!string.IsNullOrEmpty(modId) ? modId : CleanSlugFromFilename(filePath));
                     var (title, icon, banner, description, author) = await FetchModrinthProjectAsync(query, "mod");
                     if (icon is not null) remoteIcon = icon;
                     if (banner is not null) remoteBanner = banner;
@@ -699,7 +723,9 @@ public partial class MainWindow
                         }
                     }
                     catch (Exception ex) { Log.Warn(ex.Message); }
-                    var query = CleanSlugFromFilename(filePath);
+                    var query = !string.IsNullOrEmpty(item.ModrinthSlug)
+                        ? item.ModrinthSlug
+                        : CleanSlugFromFilename(filePath);
                     var (title, icon, banner, description, author) = await FetchModrinthProjectAsync(query, "resourcepack");
                     if (icon is not null && remoteIcon is null) remoteIcon = icon;
                     if (banner is not null) remoteBanner = banner;
@@ -709,7 +735,9 @@ public partial class MainWindow
                 }
                 else if (_contentKind == ContentKind.Shaders)
                 {
-                    var query = CleanSlugFromFilename(filePath);
+                    var query = !string.IsNullOrEmpty(item.ModrinthSlug)
+                        ? item.ModrinthSlug
+                        : CleanSlugFromFilename(filePath);
                     var (title, icon, banner, description, author) = await FetchModrinthProjectAsync(query, "shader");
                     if (icon is not null) remoteIcon = icon;
                     if (banner is not null) remoteBanner = banner;
@@ -1065,6 +1093,7 @@ public class ContentTileItem : System.ComponentModel.INotifyPropertyChanged
     public string Path { get; set; } = "";
     public bool IsRequired { get; set; }
     public bool IsServerItem { get; set; }
+    public string? ModrinthSlug { get; set; }
     public string ToggleText { get; set; } = "";
     public string IconLetter { get; set; } = "V";
 

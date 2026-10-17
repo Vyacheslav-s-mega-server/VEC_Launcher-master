@@ -32,6 +32,8 @@ public sealed class BuildManifestFile
     [JsonPropertyName("displayName")] public string DisplayName { get; set; } = string.Empty;
     [JsonPropertyName("description")] public string Description { get; set; } = string.Empty;
     [JsonPropertyName("iconUrl")] public string? IconUrl { get; set; }
+    [JsonPropertyName("bannerUrl")] public string? BannerUrl { get; set; }
+    [JsonPropertyName("modrinthSlug")] public string? ModrinthSlug { get; set; }
     [JsonPropertyName("source")] public string? Source { get; set; }
 }
 

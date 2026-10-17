@@ -106,16 +106,15 @@
                 <!-- Progress Bar & Status Details -->
                 <StackPanel Grid.Row="2" Width="360" HorizontalAlignment="Center" Margin="0,0,0,6">
                     <Grid Margin="0,0,0,6">
-                        <TextBlock x:Name="TxtSplashStatus" Text="Загрузка модулей..." FontSize="11.5" FontWeight="SemiBold"
+                        <TextBlock x:Name="TxtSplashStatus" Text="{Binding StatusText}" FontSize="11.5" FontWeight="SemiBold"
                                    Foreground="#BBBBCC" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock x:Name="TxtSplashPercent" Text="0%" FontSize="11.5" FontWeight="Bold"
+                        <TextBlock x:Name="TxtSplashPercent" Text="{Binding ProgressPercentText}" FontSize="11.5" FontWeight="Bold"
                                    Foreground="{DynamicResource Accent}" HorizontalAlignment="Right"/>
                     </Grid>
 
-                    <!-- Custom Progress Bar -->
                     <Border Height="6" Background="#14141E" CornerRadius="3" ClipToBounds="True" BorderBrush="#1F1F2C" BorderThickness="1">
                         <Grid HorizontalAlignment="Left">
-                            <Border x:Name="SplashProgressBar" Width="0" CornerRadius="3">
+                            <Border x:Name="SplashProgressBar" Width="{Binding ProgressBarWidth}" CornerRadius="3">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                         <GradientStop Color="#22C55E" Offset="0"/>
@@ -126,7 +125,7 @@
                         </Grid>
                     </Border>
 
-                    <TextBlock x:Name="TxtSplashTip" Text="Проверка библиотек и профилей Minecraft..."
+                    <TextBlock x:Name="TxtSplashTip" Text="{Binding TipText}"
                                FontSize="10" Foreground="#666677" HorizontalAlignment="Center" Margin="0,7,0,0"/>
                 </StackPanel>
             </Grid>

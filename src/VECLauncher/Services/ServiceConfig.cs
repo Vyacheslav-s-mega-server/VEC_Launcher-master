@@ -55,15 +55,17 @@ public static class ServiceConfig
         services.AddSingleton<ISettingsService, SettingsServiceDI>();
         services.AddSingleton(sp => sp.GetRequiredService<ISettingsService>().Settings);
 
-        // ── ViewModels ──
+        services.AddSingleton<IPreloadService, PreloadService>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<IAccountState>(sp => sp.GetRequiredService<MainWindowViewModel>());
         services.AddSingleton<AccountViewModel>();
         services.AddSingleton<InstancesViewModel>();
         services.AddSingleton<ModsViewModel>();
         services.AddSingleton<SettingsViewModel>();
+        services.AddTransient<SplashViewModel>();
 
         // ── View ──
+        services.AddTransient<Views.SplashWindow>();
         services.AddTransient<Views.MainWindow>();
 
         return services.BuildServiceProvider();

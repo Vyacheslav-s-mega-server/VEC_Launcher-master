@@ -12,6 +12,7 @@ using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using VECLauncher.Services;
+using VECLauncher.ViewModels;
 
 namespace VECLauncher.Views;
 
@@ -29,6 +30,7 @@ public partial class SplashWindow : Window
         public double Size { get; set; }
     }
 
+    private readonly SplashViewModel _viewModel;
     private DispatcherTimer? _splashSlimeTimer;
     private double _slimeTime = 0;
     private bool _isExitingSplash = false;
@@ -38,16 +40,22 @@ public partial class SplashWindow : Window
     private readonly Random _rand = new();
     private readonly List<SlimeParticle> _particles = new();
 
-    public SplashWindow()
+    public SplashWindow(SplashViewModel viewModel)
     {
         InitializeComponent();
+        _viewModel = viewModel;
+        DataContext = _viewModel;
         Loaded += SplashWindow_Loaded;
     }
 
-    private void SplashWindow_Loaded(object sender, RoutedEventArgs e)
+    public SplashWindow() : this(App.Services.GetRequiredService<SplashViewModel>())
+    {
+    }
+
+    private async void SplashWindow_Loaded(object sender, RoutedEventArgs e)
     {
         InitSplashSlimeAnimation();
-        _ = RunLoadingSequenceAsync();
+        await RunLoadingSequenceAsync();
     }
 
     private void InitSplashSlimeAnimation()
@@ -229,65 +237,17 @@ public partial class SplashWindow : Window
         }
     }
 
-    private void SetSplashProgress(double percent, string status, string tip)
-    {
-        TxtSplashStatus.Text = status;
-        TxtSplashTip.Text = tip;
-        TxtSplashPercent.Text = $"{(int)percent}%";
-
-        double barWidth = 360.0 * Math.Clamp(percent / 100.0, 0, 1.0);
-        SplashProgressBar.Width = barWidth;
-    }
-
     private async Task RunLoadingSequenceAsync()
     {
         try
         {
-            SetSplashProgress(15, "Инициализация VEC Engine...", "Загрузка конфигурации и темы...");
-            await Task.Delay(80);
-
-            SetSplashProgress(35, "Сканирование Java окружения...", "Обнаружение установленных JVM...");
-            await Task.Delay(80);
-
-            SetSplashProgress(55, "Синхронизация профилей...", "Загрузка сохранённых аккаунтов и скинов...");
-            await Task.Delay(80);
-
-            SetSplashProgress(75, "Синхронизация сборки VEC...", "Загрузка манифеста с сервера...");
-            try
-            {
-                var candidates = new List<string> { VecAuthService.DefaultVecServerUrl, LauncherConfig.DevelopmentWebServerUrl, LauncherConfig.ProductionWebServerUrl };
-                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
-                foreach (var serverUrl in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
-                {
-                    try
-                    {
-                        var json = await http.GetStringAsync($"{serverUrl}/api/builds/vec-fabric-1-21-11/manifest");
-                        var res = System.Text.Json.JsonSerializer.Deserialize<BuildManifestResponse>(json);
-                        if (res?.Files != null && res.Files.Count > 0)
-                        {
-                            MainWindow.SetPreloadedManifest(res.Files);
-                            break;
-                        }
-                    }
-                    catch { }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warn("Splash manifest preload: " + ex.Message);
-            }
-
-            SetSplashProgress(95, "Подготовка интерфейса...", "Загрузка панелей и плиток...");
-            await Task.Delay(80);
-
-            SetSplashProgress(100, "Добро пожаловать!", "Открытие лаунчера...");
-            await Task.Delay(80);
+            var result = await _viewModel.RunPipelineAsync();
 
             _isExitingSplash = true;
-            await Task.Delay(60);
+            await Task.Delay(80);
 
-            Log.Info("Opening MainWindow from splash...");
             var mainWindow = App.Services.GetRequiredService<MainWindow>();
+            mainWindow.ApplyPreloadResult(result);
             Application.Current.MainWindow = mainWindow;
             mainWindow.Opacity = 1;
             mainWindow.Show();

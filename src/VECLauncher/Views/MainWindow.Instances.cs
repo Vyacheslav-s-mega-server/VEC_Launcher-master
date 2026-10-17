@@ -22,9 +22,12 @@ public partial class MainWindow
     {
         try
         {
-            SetStage("Загружаю манифест версий Mojang...");
-            ShowProgress(indeterminate: true);
-            _manifest = await _versions.GetManifestAsync();
+            if (_manifest is null)
+            {
+                SetStage("Загружаю манифест версий Mojang...");
+                ShowProgress(indeterminate: true);
+                _manifest = await _versions.GetManifestAsync();
+            }
 
             var supported = VersionService.FilterSupported(_manifest, _settings.ShowSnapshots);
             AppendLog($"Манифест загружен: {_manifest.Versions.Count} версий, доступно {supported.Count} (≥1.16.5).");
@@ -38,7 +41,10 @@ public partial class MainWindow
 
     private void LoadInstances()
     {
-        _instances = _instancesService.LoadAll();
+        if (_instances is null || _instances.Count == 0)
+        {
+            _instances = _instancesService.LoadAll();
+        }
 
         if (!_instancesService.Loaded)
         {

@@ -95,7 +95,7 @@ public partial class App : Application
         }
 
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
-        var splash = new Views.SplashWindow();
+        var splash = Services.GetRequiredService<Views.SplashWindow>();
         splash.Show();
     }
 

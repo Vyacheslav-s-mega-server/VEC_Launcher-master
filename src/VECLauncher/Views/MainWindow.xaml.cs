@@ -42,8 +42,25 @@ public partial class MainWindow : Window
     private readonly IImageCacheService _imageCache;
     private readonly object _skinFileLock = new();
     private SkinInfo? _selectedSkin;
+    private PreloadResult? _preloadedData;
 
-    // ── Compatibility shims: old field names → VM properties ──
+    public void ApplyPreloadResult(PreloadResult result)
+    {
+        _preloadedData = result;
+        if (result.ServerManifest.Count > 0)
+        {
+            SetPreloadedManifest(result.ServerManifest);
+        }
+        if (result.VersionManifest != null)
+        {
+            _manifest = result.VersionManifest;
+        }
+        if (result.Instances.Count > 0)
+        {
+            _instances = result.Instances;
+        }
+    }
+
     private LauncherSettings _settings { get => Vm.Settings; set => Vm.Settings = value; }
     private MinecraftAccount? _account { get => Vm.Account; set => Vm.Account = value; }
     private VersionManifest? _manifest { get => Vm.Manifest; set => Vm.Manifest = value; }
@@ -206,9 +223,16 @@ public partial class MainWindow : Window
             _uptimeTimer.Tick += (_, _) => UpdateUptimeBadge();
             _uptimeTimer.Start();
 
-            _ = Task.Run(DetectJava);
+            if (_preloadedData?.JavaInstallations != null && _preloadedData.JavaInstallations.Count > 0)
+            {
+                TxtJavaList.Text = "Найдено:\n" + string.Join("\n", _preloadedData.JavaInstallations.Select(j => "  • " + j));
+            }
+            else
+            {
+                _ = Task.Run(DetectJava);
+            }
 
-            var saved = Vm.Accounts.GetActive();
+            var saved = _preloadedData?.ActiveAccount ?? Vm.Accounts.GetActive();
             if (saved is not null)
             {
                 SetAccount(saved, refreshSkin: true);

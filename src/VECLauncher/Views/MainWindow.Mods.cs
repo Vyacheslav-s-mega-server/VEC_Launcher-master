@@ -448,7 +448,7 @@ public partial class MainWindow
     private void StartContentPolling()
     {
         if (_contentPollingTimer != null) return;
-        _contentPollingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+        _contentPollingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
         _contentPollingTimer.Tick += (s, e) =>
         {
             if (PageContent?.Visibility == Visibility.Visible && _selectedInstance != null)
@@ -461,7 +461,7 @@ public partial class MainWindow
 
     private async Task<List<BuildManifestFile>> FetchBuildManifestAsync(bool force = false)
     {
-        if (!force && _cachedServerManifest.Count > 0 && (DateTime.UtcNow - _lastManifestFetch).TotalSeconds < 25)
+        if (!force && _cachedServerManifest.Count > 0 && (DateTime.UtcNow - _lastManifestFetch).TotalSeconds < 8)
         {
             _approvedCatalog = _cachedServerManifest;
             return _approvedCatalog;

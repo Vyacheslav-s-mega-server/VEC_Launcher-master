@@ -108,12 +108,6 @@ public partial class MainWindow : Window
 
         Vm.RamMonitor.OnUpdate += RamMonitor_OnUpdate;
 
-        _capeTransitionTimer = new System.Windows.Threading.DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(16)
-        };
-        _capeTransitionTimer.Tick += CapeTransitionTimer_Tick;
-
         ToastNotification.Initialize(this);
 
         _downloads.Progress += OnProgress;
@@ -262,20 +256,14 @@ public partial class MainWindow : Window
                         catch (Exception rex)
                         {
                             AppendLog("Повторный вход не удался: " + rex.Message);
-                            TxtAuthState.Text = "Сессия истекла — войдите заново.";
                         }
                     }
                     catch (Exception ex)
                     {
                         AppendLog("Не удалось обновить сессию: " + ex.Message);
-                        TxtAuthState.Text = "Сессия истекла — войдите заново.";
                     }
                     finally { HideProgress(); }
                 }
-            }
-            else
-            {
-                RefreshSavedAccountsListUI();
             }
 
             await LoadVersionsAsync();
@@ -310,12 +298,6 @@ public partial class MainWindow : Window
     private DispatcherTimer? _skinRotateTimer;    private readonly RotateTransform3D _skinRotY = new(new AxisAngleRotation3D(new Vector3D(0, 1, 0), 205));
     private readonly RotateTransform3D _skinRotX = new(new AxisAngleRotation3D(new Vector3D(1, 0, 0), 10));
 
-    private bool _isCapeMode = false;
-    private List<CapeItem> _capeCarouselCapes = new();
-    private int _capeCarouselIndex = 0;
-    private double _savedCamYaw, _savedCamPitch;
-    private Point3D _savedCamPos;
-    private Vector3D _savedCamLookDir;
 
     private ModelVisual3D? _groundVisual;
 
@@ -355,7 +337,6 @@ public partial class MainWindow : Window
 
     private void SkinViewport_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (_isCapeMode) return;
         if (e.LeftButton == MouseButtonState.Pressed)
         {
             _isDraggingSkin = true;
@@ -430,27 +411,6 @@ public partial class MainWindow : Window
         return ts.TotalHours >= 1 ? $"{(int)ts.TotalHours} ч {ts.Minutes} мин" : $"{ts.Minutes} мин";
     }
 
-    private void InstMem2_Click(object s, RoutedEventArgs e) => SetInstMemory(2048);
-    private void InstMem4_Click(object s, RoutedEventArgs e) => SetInstMemory(4096);
-    private void InstMem8_Click(object s, RoutedEventArgs e) => SetInstMemory(8192);
-    private void InstMemAuto_Click(object s, RoutedEventArgs e) => SetInstMemory(0);
-    private void SetInstMemory(int mb)
-    {
-        TxtInstMemory.Text = mb.ToString();
-        if (SldInstMemory != null) SldInstMemory.Value = mb > 0 ? mb : 4096;
-        InstSetting_Changed(this, new RoutedEventArgs());
-    }
-
-    private void InstWin720_Click(object s, RoutedEventArgs e) => SetInstWindow(1280, 720);
-    private void InstWin900_Click(object s, RoutedEventArgs e) => SetInstWindow(1600, 900);
-    private void InstWin1080_Click(object s, RoutedEventArgs e) => SetInstWindow(1920, 1080);
-    private void SetInstWindow(int w, int h)
-    {
-        TxtInstWidth.Text = w.ToString();
-        TxtInstHeight.Text = h.ToString();
-        InstSetting_Changed(this, new RoutedEventArgs());
-    }
-
     private static string Plural(int n, string one, string few, string many)
     {
         var mod10 = n % 10;
@@ -492,20 +452,6 @@ public partial class MainWindow : Window
             : $"{u[..8]}-{u.Substring(8, 4)}-{u.Substring(12, 4)}-{u.Substring(16, 4)}-{u.Substring(20)}";
     }
 
-    private readonly System.Windows.Threading.DispatcherTimer _capeTransitionTimer;
-    private byte[]? _capeTransitionTarget;
-    private double _capeTransitionAlpha = 0;
-
-    private void ApplyCapePreview(int index)
-    {
-        if (index < 0 || index >= _capeCarouselCapes.Count) return;
-        var cape = _capeCarouselCapes[index];
-
-        _capeTransitionTimer.Stop();
-        _capeTransitionTarget = cape.RawTextureBytes;
-        _capeTransitionAlpha = 0;
-        _capeTransitionTimer.Start();
-    }
 
     private void SettingsSection_Checked(object sender, RoutedEventArgs e)
     {
@@ -516,10 +462,8 @@ public partial class MainWindow : Window
         SecPanelGame.Visibility = tag == "game" ? Visibility.Visible : Visibility.Collapsed;
         SecPanelJava.Visibility = tag == "java" ? Visibility.Visible : Visibility.Collapsed;
         SecPanelStorage.Visibility = tag == "storage" ? Visibility.Visible : Visibility.Collapsed;
-        SecPanelVersions.Visibility = tag == "versions" ? Visibility.Visible : Visibility.Collapsed;
         SecPanelMaint.Visibility = tag == "maint" ? Visibility.Visible : Visibility.Collapsed;
 
-        if (tag == "versions" && ItemsVersions.ItemsSource is null) ScanVersions();
         if (tag == "maint" && ItemsMaint.ItemsSource is null) ScanMaintenance();
         if (tag == "storage") RefreshPortableState();
     }

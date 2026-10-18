@@ -20,35 +20,6 @@ namespace VECLauncher.Views;
 /// </summary>
 public partial class MainWindow
 {
-    private void BtnOfflineLogin_Click(object sender, RoutedEventArgs e)
-    {
-        var name = TxtOfflineName.Text.Trim();
-
-        if (!OfflineAccountService.TryValidateName(name, out var error))
-        {
-            TxtOfflineHint.Text = error;
-            TxtOfflineHint.Foreground = (Brush)FindResource("Danger");
-            TxtOfflineName.Focus();
-            return;
-        }
-
-        try
-        {
-            var acc = OfflineAccountService.Create(name);
-            Vm.Accounts.Save(acc);
-            Vm.SetAccount(acc, refreshSkin: true);
-            SetAccount(acc, refreshSkin: true);
-
-            TxtOfflineHint.Text = "Оффлайн-профиль создан.";
-            TxtOfflineHint.Foreground = (Brush)FindResource("Accent");
-            AppendLog($"Создан оффлайн-аккаунт: {acc.Username} ({acc.DashedUuid})");
-        }
-        catch (Exception ex)
-        {
-            TxtOfflineHint.Text = ex.Message;
-            TxtOfflineHint.Foreground = (Brush)FindResource("Danger");
-        }
-    }
 
     private async Task<MinecraftAccount> ReloginMicrosoftAsync()
     {
@@ -66,29 +37,11 @@ public partial class MainWindow
         return acc;
     }
 
-    private async void BtnLogin_Click(object sender, RoutedEventArgs e)
-    {
-        BtnLogin.IsEnabled = false;
-        try
-        {
-            await Vm.LoginMicrosoftCommand.ExecuteAsync(null);
-        }
-        finally
-        {
-            BtnLogin.IsEnabled = true;
-            if (Vm.Account != null)
-                SetAccount(Vm.Account, refreshSkin: true);
-            RefreshSavedAccountsListUI();
-            RefreshSidebarAccounts();
-        }
-    }
-
     private async void BtnVecLogin_Click(object sender, RoutedEventArgs e)
     {
         await Vm.LoginVecCommand.ExecuteAsync(null);
         if (Vm.Account != null)
             SetAccount(Vm.Account, refreshSkin: true);
-        RefreshSavedAccountsListUI();
         RefreshSidebarAccounts();
     }
 
@@ -306,37 +259,25 @@ public partial class MainWindow
 
     private void BtnLogout_Click(object sender, RoutedEventArgs e)
     {
-        // Delegate data logic to VM
         Vm.LogoutCommand.Execute(null);
 
-        // UI cleanup (only things VM can't touch)
         _currentSkinRawBytes = null;
         TxtAccName.Text = "—";
-        TxtAccUuid.Text = "";
         TxtAccType.Text = "";
-        TxtAuthState.Text = "Вы не вошли в аккаунт.";
         TxtSideName.SetCurrentValue(TextBlock.TextProperty, "Не выполнен вход");
         TxtSideStatus.SetCurrentValue(TextBlock.TextProperty, "Оффлайн");
-        ImgSkinPreview.Source = null;
         ImgAvatar.Source = null;
         ImgAvatarLarge.Source = null;
         ReloadSkin3DModel();
-        TxtSkinPlaceholder.Visibility = Visibility.Visible;
         if (BorderProfileCard != null) BorderProfileCard.Visibility = Visibility.Collapsed;
         if (BorderLoginCard != null) BorderLoginCard.Visibility = Visibility.Visible;
         if (CapesWrapPanel != null) CapesWrapPanel.Children.Clear();
         if (TxtSelectedSkinFileName != null) TxtSelectedSkinFileName.Text = "";
 
         BtnLogout.IsEnabled = false;
-        BtnUploadSkin.IsEnabled = false;
         BtnResetSkin.IsEnabled = false;
-
-        TxtOfflineName.Clear();
-        TxtOfflineHint.Text = "Введите никнейм (3-16 символов).";
-        TxtOfflineHint.Foreground = (Brush)FindResource("FgMuted");
         TxtSkinStatus.Text = "";
 
-        RefreshSavedAccountsListUI();
         RefreshSidebarAccounts();
     }
 

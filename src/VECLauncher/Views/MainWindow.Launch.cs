@@ -238,12 +238,6 @@ public partial class MainWindow
             {
                 inst.AddSession(seconds);
                 _instancesService.SaveAll(_instances);
-                if (ReferenceEquals(inst, _selectedInstance))
-                {
-                    TxtInstPlaytime.Text = "В игре: " + inst.PlayTimeDisplay;
-                    RefreshInstanceStats();
-                    LoadScreenshots();
-                }
             }
 
             StatTotalTime.Text = _stats.GetFormattedTotalTime();
@@ -280,7 +274,6 @@ public partial class MainWindow
                 : "ИГРАТЬ";
 
         RunningBadge.Visibility = Visibility.Collapsed;
-        BtnDeleteInstance.IsEnabled = !thisRunning;
 
         UpdateUptimeBadge();
         UpdateHomePlayButton(anyRunning);

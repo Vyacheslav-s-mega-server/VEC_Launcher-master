@@ -28,13 +28,11 @@ public partial class MainWindow
         TxtWidth.Text = _settings.WindowWidth.ToString();
         TxtHeight.Text = _settings.WindowHeight.ToString();
         ChkFullscreen.IsChecked = _settings.Fullscreen;
-        ChkSnapshots.IsChecked = _settings.ShowSnapshots;
         ChkCloseOnLaunch.IsChecked = _settings.CloseLauncherOnStart;
         ChkShowConsole.IsChecked = _settings.ShowConsole;
         ChkAllowMultiple.IsChecked = _settings.AllowMultipleInstances;
         ChkMinimizeOnLaunch.IsChecked = _settings.MinimizeOnLaunch;
         ChkConfirmStop.IsChecked = _settings.ConfirmGameStop;
-        ChkDefaultIsolated.IsChecked = _settings.DefaultIsolated;
         ChkAutoLanguage.IsChecked = _settings.AutoSetGameLanguage;
         RbLangRu.IsChecked = _settings.GameLanguage != "en";
         RbLangEn.IsChecked = _settings.GameLanguage == "en";
@@ -54,13 +52,11 @@ public partial class MainWindow
         _settings.WindowWidth = ParseIntOr(TxtWidth.Text, 1280);
         _settings.WindowHeight = ParseIntOr(TxtHeight.Text, 720);
         _settings.Fullscreen = ChkFullscreen.IsChecked == true;
-        _settings.ShowSnapshots = ChkSnapshots.IsChecked == true;
         _settings.CloseLauncherOnStart = ChkCloseOnLaunch.IsChecked == true;
         _settings.ShowConsole = ChkShowConsole.IsChecked == true;
         _settings.AllowMultipleInstances = ChkAllowMultiple.IsChecked == true;
         _settings.MinimizeOnLaunch = ChkMinimizeOnLaunch.IsChecked == true;
         _settings.ConfirmGameStop = ChkConfirmStop.IsChecked == true;
-        _settings.DefaultIsolated = ChkDefaultIsolated.IsChecked == true;
         _settings.AutoSetGameLanguage = ChkAutoLanguage.IsChecked == true;
         _settings.ExtraJvmArgs = TxtJvmArgs.Text.Trim();
         _settings.CustomJavaPath = TxtJavaPath.Text.Trim();
@@ -142,8 +138,6 @@ public partial class MainWindow
         ShowSavedHint();
     }
 
-    private List<InstalledVersion> _installedVersions = new();
-
     private string _currentSettingsSection = "game";
 
     private DispatcherTimer? _autoSaveTimer;
@@ -174,12 +168,6 @@ public partial class MainWindow
     {
         if (!IsLoaded || _initializing) return;
         ScheduleAutoSave(() => { PersistSettings(); ShowSavedHint(); });
-    }
-
-    private void InstSettingText_Changed(object sender, TextChangedEventArgs e)
-    {
-        if (!IsLoaded || _initializing || _loadingInstSettings) return;
-        ScheduleAutoSave(() => InstSetting_Changed(sender, e));
     }
 
     private void ShowSavedHint()
@@ -253,100 +241,7 @@ public partial class MainWindow
 
         AppendLog($"Раздел {sectionName} сброшен.");
     }
-    private void BtnScanVersions_Click(object sender, RoutedEventArgs e) => ScanVersions();
 
-    private void ScanVersions()
-    {
-        TxtVersionsSummary.Text = "Сканирую…";
-
-        try
-        {
-            _installedVersions = VersionManagerService.Scan(_instances);
-
-            var total = _installedVersions.Sum(v => v.SizeBytes);
-            TxtVersionsSummary.Text = _installedVersions.Count == 0
-                ? "Версии ещё не установлены. Они появятся после первого запуска игры."
-                : $"Всего версий: {_installedVersions.Count}  ·  занято {Human(total)}";
-
-            var defaultIcon = new BitmapImage(new Uri("pack://application:,,,/Assets/default_instance_icon.jpg"));
-            ItemsVersions.ItemsSource = _installedVersions.Select(v =>
-            {
-                var parts = new List<string> { v.SizeDisplay };
-                if (v.IsIsolated) parts.Add($"изолированная · {v.OwnerInstance}");
-                if (!v.HasJar) parts.Add("клиент не загружен");
-                if (v.InheritsFrom is not null) parts.Add($"на базе {v.InheritsFrom}");
-                parts.Add(v.InUse ? "используется: " + string.Join(", ", v.UsedBy) : "не используется");
-
-                ImageSource icon = defaultIcon;
-                var owner = _instances.FirstOrDefault(i => string.Equals(i.Id, v.OwnerInstance, StringComparison.OrdinalIgnoreCase) ||
-                                                           string.Equals(i.Name, v.OwnerInstance, StringComparison.OrdinalIgnoreCase));
-                if (owner != null && !string.IsNullOrEmpty(owner.IconPath) && File.Exists(owner.IconPath))
-                {
-                    try { icon = new BitmapImage(new Uri(owner.IconPath)); } catch (Exception ex) { Log.Warn(ex.Message); }
-                }
-
-                return new
-                {
-                    v.Id,
-                    v.Kind,
-                    Dir = v.Directory,
-                    Info = string.Join("  ·  ", parts),
-                    IconSource = icon
-                };
-            }).ToList();
-        }
-        catch (Exception ex)
-        {
-            TxtVersionsSummary.Text = "Ошибка сканирования: " + ex.Message;
-        }
-    }
-
-    private void VersionOpen_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement fe || fe.Tag is not string dir) return;
-        try { _instancesService.OpenFolder(dir); }
-        catch (Exception ex) { AppendLog(ex.Message); }
-    }
-
-    private void VersionDelete_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement fe || fe.Tag is not string id) return;
-
-        var version = _installedVersions.FirstOrDefault(v => v.Id == id);
-        if (version is null) return;
-
-        if (_sessions.AnyRunning)
-        {
-            _dialog.ShowMessage("Сначала остановите игру — файлы версии сейчас заняты.", "Игра запущена", MessageSeverity.Warning);
-            return;
-        }
-
-        var warn = version.InUse
-            ? $"\n\nВНИМАНИЕ: версию используют сборки: {string.Join(", ", version.UsedBy)}.\n" +
-              "После удаления они скачают файлы заново при запуске."
-            : "";
-
-        var r = _dialog.ConfirmAsync(
-            "Удаление версии",
-            $"Удалить версию «{version.Id}»?\n\n" +
-            $"Освободится {version.SizeDisplay}.\n" +
-            "Моды, миры и настройки сборок затронуты не будут." + warn).GetAwaiter().GetResult();
-
-        if (!r) return;
-
-        try
-        {
-            var freed = VersionManagerService.Delete(version);
-            AppendLog($"Версия {version.Id} удалена, освобождено {Human(freed)}.");
-            ScanVersions();
-        }
-        catch (Exception ex)
-        {
-            _dialog.ShowMessage("Не удалось удалить: " + ex.Message + "\n\n" +
-                            "Возможно, файлы заняты другой программой.",
-                "Ошибка", MessageSeverity.Error);
-        }
-    }
     private void BtnCalcSize_Click(object sender, RoutedEventArgs e)
     {
         TxtStorageInfo.Text = "Считаю…";
@@ -460,50 +355,7 @@ public partial class MainWindow
         AppendLog("Настройки сброшены к значениям по умолчанию.");
     }
 
-    private async void BtnRedeemPromo_Click(object sender, RoutedEventArgs e)
-    {
-        var code = TxtPromoCode?.Text?.Trim();
-        if (string.IsNullOrEmpty(code))
-        {
-            TxtPromoStatus.Text = "Введите промо-код.";
-            TxtPromoStatus.Foreground = (Brush)FindResource("FgMuted");
-            return;
-        }
 
-        if (_account is null)
-        {
-            TxtPromoStatus.Text = "Войдите в аккаунт для активации кода.";
-            TxtPromoStatus.Foreground = (Brush)FindResource("FgMuted");
-            return;
-        }
-
-        BtnRedeemPromo.IsEnabled = false;
-        TxtPromoStatus.Text = "Активирую...";
-        TxtPromoStatus.Foreground = (Brush)FindResource("FgMuted");
-
-        try
-        {
-            var srvUrl = !string.IsNullOrEmpty(_account.ServerUrl)
-                ? _account.ServerUrl
-                : await VecAuthService.GetActiveServerUrlAsync();
-
-            var msg = await _skins.RedeemPromoCodeAsync(srvUrl, _account.Username, code);
-            TxtPromoStatus.Text = msg;
-            TxtPromoStatus.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x4A, 0xDE, 0x80));
-            TxtPromoCode.Text = "";
-            AppendLog($"Промо-код активирован: {code}");
-        }
-        catch (Exception ex)
-        {
-            TxtPromoStatus.Text = ex.Message;
-            TxtPromoStatus.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0xEF, 0x44, 0x44));
-            Log.Warn($"Ошибка активации промо-кода: {ex.Message}");
-        }
-        finally
-        {
-            BtnRedeemPromo.IsEnabled = true;
-        }
-    }
 
     private void SldMemory_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
@@ -584,7 +436,7 @@ public partial class MainWindow
     {
         var pages = new Dictionary<string, Grid>
         {
-            ["0"] = PageHome, ["1"] = PageInstances,
+            ["0"] = PageHome,
             ["3"] = PageAccount, ["4"] = PageSettings, ["5"] = PageConsole,
             ["6"] = PageMods, ["7"] = PageContent, ["9"] = PageSkins
         };
@@ -594,23 +446,11 @@ public partial class MainWindow
             kvp.Value.Visibility = kvp.Key == tag ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        if (tag == "1")
-        {
-            ShowInstanceGalleryView();
-            RefreshInstanceLists();
-        }
-
 
     }
 
     private string _instanceFilter = "";
-    private void UpdateSearchVisibility()
-    {
-        if (TxtInstanceSearch is null) return;
 
-        var show = _instances.Count >= 5 || _instanceFilter.Length > 0;
-        TxtInstanceSearch.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-    }
 
     private List<GameInstance> ApplyInstanceFilter(List<GameInstance> source)
     {
@@ -690,11 +530,6 @@ public partial class MainWindow
                 e.Handled = true;
                 break;
 
-            case Key.N when ctrl:
-                BtnNewInstance_Click(sender, e);
-                e.Handled = true;
-                break;
-
             case Key.F when ctrl:
                 NavContent.IsChecked = true;
                 e.Handled = true;
@@ -725,14 +560,7 @@ public partial class MainWindow
 
     private void RefreshCurrentPage()
     {
-        if (PageInstances.Visibility == Visibility.Visible)
-        {
-            RefreshInstanceLists();
-            RefreshInstanceStats();
-            LoadScreenshots();
-            AppendLog("Список сборок обновлён.");
-        }
-        else if (PageContent.Visibility == Visibility.Visible)
+        if (PageContent.Visibility == Visibility.Visible)
         {
             RefreshContent();
         }
@@ -742,13 +570,8 @@ public partial class MainWindow
         }
         else if (PageSettings.Visibility == Visibility.Visible)
         {
-            if (SecPanelVersions.Visibility == Visibility.Visible) ScanVersions();
-            else if (SecPanelMaint.Visibility == Visibility.Visible) ScanMaintenance();
+            if (SecPanelMaint.Visibility == Visibility.Visible) ScanMaintenance();
             else _ = Task.Run(DetectJava);
-        }
-        else
-        {
-            RefreshInstanceStats();
         }
     }
 
@@ -793,8 +616,7 @@ public partial class MainWindow
             Width = _restoreWidth;
             Height = _restoreHeight;
             WindowState = WindowState.Normal;
-            WindowBorder.Margin = new Thickness(0);
-            WindowBorder.CornerRadius = new CornerRadius(14);
+            WindowBorder.CornerRadius = new CornerRadius(0);
             _isMaximized = false;
             MaximizeIcon.Data = System.Windows.Media.Geometry.Parse("M 0,0 L 10,0 L 10,10 L 0,10 Z");
         }
@@ -820,10 +642,7 @@ public partial class MainWindow
 
     private void WindowBorder_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        var w = WindowBorder.ActualWidth;
-        var h = WindowBorder.ActualHeight;
-        var clip = new RectangleGeometry(new Rect(0, 0, w, h), 14, 14);
-        WindowBorder.Clip = clip;
+        WindowBorder.Clip = null;
     }
 
     private void OnProgress(DownloadProgress p)
@@ -862,8 +681,6 @@ public partial class MainWindow
         Vm.SetBusy(busy);
         Dispatcher.Invoke(() =>
         {
-            CbInstances.IsEnabled = !busy;
-            BtnNewInstance.IsEnabled = !busy;
             BtnCancel.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
             UpdateRunStateUi();
         });

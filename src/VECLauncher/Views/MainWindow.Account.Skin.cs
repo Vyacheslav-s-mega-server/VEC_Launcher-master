@@ -126,8 +126,6 @@ public partial class MainWindow
                             TxtSkinModelBadge.Text = isSlim ? "Slim" : "Classic";
                         if (TxtToggleModelBadge != null)
                             TxtToggleModelBadge.Text = isSlim ? "Slim" : "Classic";
-                        if (TxtSkinModel != null)
-                            TxtSkinModel.Text = isSlim ? "Slim" : "Classic";
                     });
                 }
                 catch (Exception exVec)
@@ -174,8 +172,6 @@ public partial class MainWindow
                                 TxtSkinModelBadge.Text = isSlim ? "Slim" : "Classic";
                             if (TxtToggleModelBadge != null)
                                 TxtToggleModelBadge.Text = isSlim ? "Slim" : "Classic";
-                            if (TxtSkinModel != null)
-                                TxtSkinModel.Text = isSlim ? "Slim" : "Classic";
                         });
                     }
                     Vm.Accounts.Save(acc);
@@ -241,7 +237,6 @@ public partial class MainWindow
 
             Dispatcher.Invoke(() =>
             {
-                TxtSkinPlaceholder.Visibility = Visibility.Collapsed;
                 var finalAvatar = localAvatar ?? (avatarBytes != null ? ToImage(avatarBytes) : null);
                 ImgAvatar.Source = finalAvatar;
                 if (ImgAvatarLarge != null) ImgAvatarLarge.Source = finalAvatar;
@@ -267,101 +262,7 @@ public partial class MainWindow
         return bmp;
     }
 
-    private void BtnToggleModel_Click(object sender, RoutedEventArgs e)
-    {
-        _currentSkinModel = _currentSkinModel.Equals("slim", StringComparison.OrdinalIgnoreCase) ? "classic" : "slim";
-        var isSlim = _currentSkinModel.Equals("slim", StringComparison.OrdinalIgnoreCase);
-        var badge = isSlim ? "Slim" : "Classic";
 
-        if (TxtToggleModelBadge != null) TxtToggleModelBadge.Text = badge;
-        if (TxtSkinModelBadge != null) TxtSkinModelBadge.Text = badge;
-        if (TxtSkinModel != null) TxtSkinModel.Text = badge;
-
-        if (_account != null)
-        {
-            _account.SkinModel = _currentSkinModel;
-            Vm.Accounts.Save(_account);
-            if (_account.IsVec)
-            {
-                VecAccountDatabase.UpdateSkinModel(_account.Username, _currentSkinModel);
-            }
-
-            var skinFile = _offlineSkins.FindAccountSkin(_account.Username);
-            bool hasCustomSkin = skinFile != null && File.Exists(skinFile);
-
-            if (hasCustomSkin)
-            {
-                var modelEnum = isSlim ? SkinService.SkinModel.Slim : SkinService.SkinModel.Classic;
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        var srvUrl = !string.IsNullOrEmpty(_account.ServerUrl) ? _account.ServerUrl : await VecAuthService.GetActiveServerUrlAsync();
-                        var skinBytes = await File.ReadAllBytesAsync(skinFile!);
-                        Log.Info($"[Slim/Classic] Uploading skin to VEC: model={modelEnum}, user={_account.Username}, server={srvUrl}, size={skinBytes.Length}");
-                        var uploadOk = await _skins.UploadSkinToVecServerAsync(srvUrl, _account.Username, skinBytes, modelEnum, _account.Uuid);
-                        if (uploadOk)
-                            Log.Info($"[Slim/Classic] Skin upload OK for {_account.Username}");
-                        else
-                            Log.Warn($"[Slim/Classic] Skin upload FAILED for {_account.Username}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Warn($"Не удалось обновить модель скина на сервере VEC: {ex.Message}");
-                    }
-                });
-
-
-            }
-            else
-            {
-                var username = _account.Username;
-                var defaultSkinBytes = DefaultSkinService.GetDefaultSkin(username, isSlim);
-                _currentSkinRawBytes = defaultSkinBytes;
-
-                if (defaultSkinBytes != null && defaultSkinBytes.Length > 0)
-                {
-                    try
-                    {
-                        var slotPath = _offlineSkins.AccountSkinPath(username);
-                        var dir = System.IO.Path.GetDirectoryName(slotPath);
-                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                        File.WriteAllBytes(slotPath, defaultSkinBytes);
-
-
-                    }
-                    catch (Exception ex) { Log.Warn(ex.Message); }
-
-                    var avatar = SkinService.CreateCrispHeadAvatar(defaultSkinBytes, 64);
-                    ImgAvatar.Source = avatar;
-                    if (ImgAvatarLarge != null) ImgAvatarLarge.Source = avatar;
-                }
-
-                if (_account.IsVec)
-                {
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            var srvUrl = !string.IsNullOrEmpty(_account.ServerUrl) ? _account.ServerUrl : await VecAuthService.GetActiveServerUrlAsync();
-                            await _skins.ResetSkinOnVecServerAsync(srvUrl, username, defaultSkinBytes, _currentSkinModel);
-                        }
-                        catch (Exception ex)
-                        {
-                            Log.Warn($"Не удалось сбросить скин на сервере VEC: {ex.Message}");
-                        }
-                    });
-                }
-            }
-        }
-
-        ReloadSkin3DModel();
-
-        if (_isCapeMode && _capeCarouselIndex >= 0 && _capeCarouselIndex < _capeCarouselCapes.Count)
-        {
-            _gltfSkinModel.UpdateCapeTexture(_capeCarouselCapes[_capeCarouselIndex].RawTextureBytes);
-        }
-    }
 
     private async void BtnRefreshSkin_Click(object sender, RoutedEventArgs e)
     {
@@ -520,7 +421,6 @@ public partial class MainWindow
                     });
                 }
 
-                TxtSkinPath.Text = "Файл не выбран";
                 TxtSkinStatus.Text = "";
                 await LoadSkinImagesAsync(_account);
             }
@@ -531,7 +431,6 @@ public partial class MainWindow
                 Vm.Accounts.Save(_account);
 
                 _currentSkinRawBytes = null;
-                TxtSkinPath.Text = "Файл не выбран";
                 TxtSkinStatus.Text = "";
                 await Task.Delay(1000);
                 await LoadSkinImagesAsync(_account);
@@ -901,8 +800,6 @@ if (dialog.ShowDialog() == true)
         _currentSkinModel = isSlim ? "slim" : "classic";
         var badge = isSlim ? "Slim" : "Classic";
         if (TxtToggleModelBadge != null) TxtToggleModelBadge.Text = badge;
-        if (TxtSkinModelBadge != null) TxtSkinModelBadge.Text = badge;
-        if (TxtSkinModel != null) TxtSkinModel.Text = badge;
 
         if (_account != null)
         {
@@ -939,13 +836,5 @@ if (dialog.ShowDialog() == true)
         {
             _gltfSkinModel.UpdateCapeTexture(_currentCapeRawBytes);
         }
-    }
-
-    private void ToggleElytraSwitch_Click(object sender, RoutedEventArgs e)
-    {
-        var isElytra = ToggleElytraSwitch.IsChecked == true;
-        _gltfSkinModel.IsElytraMode = isElytra;
-        if (TxtElytraStatus != null) TxtElytraStatus.Text = isElytra ? "Вкл" : "Выкл";
-        ReloadSkin3DModel();
     }
 }

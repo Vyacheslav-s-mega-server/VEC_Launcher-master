@@ -16,7 +16,7 @@
         Foreground="{DynamicResource Fg}"
         TextOptions.TextFormattingMode="Display">
 
-    <Border x:Name="WindowBorder" Background="{DynamicResource BgDeep}" CornerRadius="14"
+    <Border x:Name="WindowBorder" Background="{DynamicResource BgDeep}" CornerRadius="0"
             BorderBrush="{DynamicResource BorderBrushDark}" BorderThickness="1"
             SizeChanged="WindowBorder_SizeChanged">
         <Grid>
@@ -192,429 +192,6 @@
                                                FontWeight="Bold" Foreground="White" Opacity="0.85"/>
                                 </StackPanel>
                             </StackPanel>
-                        </Grid>
-                    </Grid>
-
-                    <Grid x:Name="PageInstances" Grid.Row="0" Margin="0" Visibility="Collapsed">
-                        <Grid.Background>
-                            <ImageBrush ImageSource="pack://application:,,,/Assets/version_menu_bg.jpg" Stretch="UniformToFill" Opacity="0.15"/>
-                        </Grid.Background>
-                        <Grid Margin="20,14,20,0">
-                            <Grid x:Name="PanelInstancesGallery" Visibility="Visible">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-
-                                <!-- Header -->
-                                <Grid Grid.Row="0" Margin="0,0,0,16">
-                                    <StackPanel>
-                                        <TextBlock Text="Сборки / Версия" Style="{StaticResource H1}"/>
-                                        <TextBlock Text="Управление вашими сборками и версиями игры" Foreground="#777788" FontSize="11.5" Margin="0,4,0,0"/>
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                        <Button Style="{StaticResource IconButton}" Content="Папка сборок" FontSize="11" Padding="12,5"
-                                                Margin="0,0,8,0" Click="BtnOpenAllInstancesFolder_Click"/>
-                                        <Button x:Name="BtnNewInstance" Style="{StaticResource AccentButton}" Content="+  Новая сборка"
-                                                Height="34" MinWidth="135" Padding="16,0" FontSize="12"
-                                                Click="BtnNewInstance_Click"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Content: Empty State or Grid of Cards -->
-                                <Grid Grid.Row="1">
-                                    <!-- Empty State -->
-                                    <Border x:Name="PanelInstancesEmpty" Visibility="Collapsed"
-                                            Background="#111116" BorderBrush="#1F1F28" BorderThickness="1"
-                                            CornerRadius="14" Padding="40,60" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Border Width="56" Height="56" CornerRadius="12" Background="#161622" BorderBrush="#252536" BorderThickness="1"
-                                                    HorizontalAlignment="Center" Margin="0,0,0,16">
-                                                <Path Data="M 12 18 L 28 8 L 44 18 L 28 28 Z M 12 21 L 28 31 L 28 46 L 12 36 Z M 44 21 L 28 31 L 28 46 L 44 36 Z"
-                                                      Stroke="#666677" StrokeThickness="1.5" Fill="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                            <TextBlock Text="У вас пока нет установленных сборок" FontSize="15" FontWeight="Bold"
-                                                       Foreground="#FFFFFF" Margin="0,4,0,0" HorizontalAlignment="Center"/>
-                                            <TextBlock Text="Создайте новую сборку или выберите версию Minecraft" FontSize="12"
-                                                       Foreground="#777788" Margin="0,4,0,20" HorizontalAlignment="Center"/>
-                                            <Button Style="{StaticResource AccentButton}" Content="+  Создать первую сборку"
-                                                    Padding="20,9" FontSize="12.5" HorizontalAlignment="Center"
-                                                    Click="BtnNewInstance_Click"/>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Grid Cards ScrollViewer -->
-                                    <ScrollViewer x:Name="ScrollInstancesCards" VerticalScrollBarVisibility="Auto">
-                                        <ListBox x:Name="LstInstances" Background="Transparent" BorderThickness="0"
-                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                                 SelectionChanged="LstInstances_SelectionChanged">
-                                            <ListBox.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <WrapPanel Orientation="Horizontal"/>
-                                                </ItemsPanelTemplate>
-                                            </ListBox.ItemsPanel>
-                                            <ListBox.ItemContainerStyle>
-                                                <Style TargetType="ListBoxItem">
-                                                    <Setter Property="Padding" Value="0"/>
-                                                    <Setter Property="Margin" Value="0,0,16,16"/>
-                                                    <Setter Property="Background" Value="Transparent"/>
-                                                    <Setter Property="BorderThickness" Value="0"/>
-                                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                                                    <Setter Property="Template">
-                                                        <Setter.Value>
-                                                            <ControlTemplate TargetType="ListBoxItem">
-                                                                <ContentPresenter/>
-                                                            </ControlTemplate>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </Style>
-                                            </ListBox.ItemContainerStyle>
-                                            <ListBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border x:Name="CardBd" Width="220" Height="265" Background="#111116"
-                                                            BorderBrush="#1F1F28" BorderThickness="1" CornerRadius="12"
-                                                            Cursor="Hand" MouseLeftButtonUp="InstanceCard_Click">
-                                                        <Border.ContextMenu>
-                                                            <ContextMenu Template="{DynamicResource DarkContextMenuTemplate}">
-                                                                <MenuItem Header="Играть" Click="CardPlay_Click" FontWeight="Bold" FontSize="12.5" Padding="14,8"/>
-                                                                <Separator Background="#22222E" Margin="4,2"/>
-                                                                <MenuItem Header="Настройки сборки" Click="CardSettings_Click" FontSize="12" Padding="14,8"/>
-                                                                <MenuItem Header="Контент сборки" Click="CardContent_Click" FontSize="12" Padding="14,8"/>
-                                                                <Separator Background="#22222E" Margin="4,2"/>
-                                                                <MenuItem Header="Папка модов" Click="CardOpenMods_Click" FontSize="12" Padding="14,8"/>
-                                                                <MenuItem Header="Корень сборки" Click="CardOpenRoot_Click" FontSize="12" Padding="14,8"/>
-                                                                <Separator Background="#22222E" Margin="4,2"/>
-                                                                <MenuItem Header="Дублировать" Click="CardDuplicate_Click" FontSize="12" Padding="14,8"/>
-                                                                <MenuItem Header="Удалить сборку" Click="CardDelete_Click" FontSize="12" Padding="14,8" Foreground="#EF4444"/>
-                                                            </ContextMenu>
-                                                        </Border.ContextMenu>
-                                                        <Grid>
-                                                            <Grid.RowDefinitions>
-                                                                <RowDefinition Height="150"/>
-                                                                <RowDefinition Height="*"/>
-                                                            </Grid.RowDefinitions>
-
-                                                            <!-- Top Banner / Cover Area -->
-                                                            <Border Grid.Row="0" CornerRadius="11,11,0,0" ClipToBounds="True" Background="#14141C">
-                                                                <Grid>
-                                                                    <Image Source="{Binding DisplayIcon}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-
-                                                                    <!-- Top Right Version Badge -->
-                                                                    <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
-                                                                            Background="#D908080C" BorderBrush="#33FFFFFF" BorderThickness="1"
-                                                                            CornerRadius="5" Padding="7,3">
-                                                                        <TextBlock FontSize="10" FontWeight="Bold" Foreground="#FFFFFF">
-                                                                            <Run Text="{Binding LoaderDisplay, Mode=OneWay}"/>
-                                                                            <Run Text=" · "/>
-                                                                            <Run Text="{Binding McVersion, Mode=OneWay}"/>
-                                                                        </TextBlock>
-                                                                    </Border>
-
-                                                                    <!-- Hover Overlay with Actions -->
-                                                                    <Border x:Name="HoverOverlay" Background="#E60A0A0E" Opacity="0">
-                                                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                                            <Button Style="{StaticResource AccentButton}" Content="Играть"
-                                                                                    Padding="20,7" FontSize="12"
-                                                                                    Click="CardPlay_Click" Tag="{Binding}"/>
-                                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
-                                                                                <Button Style="{StaticResource IconButton}" Content="Настройки"
-                                                                                        FontSize="11" Padding="10,5"
-                                                                                        Click="CardSettings_Click" Tag="{Binding}"/>
-                                                                                <Button Style="{StaticResource IconButton}" Content="Папка"
-                                                                                        FontSize="11" Padding="10,5" Margin="6,0,0,0"
-                                                                                        ToolTip="Папка модов"
-                                                                                        Click="CardOpenMods_Click" Tag="{Binding}"/>
-                                                                            </StackPanel>
-                                                                        </StackPanel>
-                                                                    </Border>
-                                                                </Grid>
-                                                            </Border>
-
-                                                            <!-- Bottom Details Area -->
-                                                            <Border Grid.Row="1" Padding="12,10,12,12">
-                                                                <StackPanel VerticalAlignment="Center">
-                                                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13.5"
-                                                                               Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
-                                                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                                                        <TextBlock FontSize="11" Foreground="#777788">
-                                                                            <Run Text="Minecraft "/>
-                                                                            <Run Text="{Binding McVersion, Mode=OneWay}"/>
-                                                                        </TextBlock>
-                                                                    </StackPanel>
-                                                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                                        <TextBlock FontSize="10" Foreground="#555566" Text="{Binding PlayTimeDisplay}"/>
-                                                                    </StackPanel>
-                                                                </StackPanel>
-                                                            </Border>
-                                                        </Grid>
-                                                    </Border>
-                                                    <DataTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="CardBd" Property="BorderBrush" Value="#38384E"/>
-                                                            <Setter TargetName="CardBd" Property="Background" Value="#14141C"/>
-                                                            <Setter TargetName="HoverOverlay" Property="Opacity" Value="1"/>
-                                                        </Trigger>
-                                                    </DataTemplate.Triggers>
-                                                </DataTemplate>
-                                            </ListBox.ItemTemplate>
-                                        </ListBox>
-                                    </ScrollViewer>
-                                </Grid>
-                            </Grid>
-
-                            <Grid x:Name="PanelInstanceConfig" Visibility="Collapsed">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-
-                                <!-- Config Header -->
-                                <Grid Grid.Row="0" Margin="0,0,0,16">
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Button Style="{StaticResource IconButton}" Content="←  К сборкам"
-                                                FontSize="11.5" Padding="12,5" Margin="0,0,14,0"
-                                                Click="BtnBackToGallery_Click"/>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock x:Name="TxtInstName" Text="{Binding InstName}" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF"/>
-                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                                <TextBlock x:Name="TxtInstVersion" Text="{Binding InstVersion}" FontSize="11" Foreground="#777788"/>
-                                                <TextBlock Text=" · " FontSize="11" Foreground="#555566"/>
-                                                <TextBlock x:Name="TxtInstLoader" Text="{Binding InstLoader}" FontSize="11" Foreground="#777788"/>
-                                                <TextBlock Text=" · " FontSize="11" Foreground="#555566"/>
-                                                <TextBlock x:Name="TxtInstPlaytime" Text="{Binding InstPlaytime}" FontSize="11" Foreground="#555566"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </StackPanel>
-
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                        <Button Style="{StaticResource AccentButton}" Content="Играть" FontSize="11.5"
-                                                Padding="18,6" Margin="0,0,8,0" Click="InstConfigPlay_Click"/>
-                                        <Button Style="{StaticResource IconButton}" Content="Папка модов" FontSize="11"
-                                                Padding="10,5" Margin="0,0,6,0" Click="OpenMods_Click"/>
-                                        <Button Style="{StaticResource IconButton}" Content="Корень" FontSize="11"
-                                                Padding="10,5" Margin="0,0,6,0" Click="OpenInstanceRoot_Click"/>
-                                        <Button Style="{StaticResource DangerButton}" Content="Удалить" FontSize="11"
-                                                Padding="10,5" Click="BtnDeleteInstance_Click"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Config Content -->
-                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                                    <StackPanel x:Name="PanelInstanceDetails" Margin="0,0,6,16">
-
-                                        <!-- Card: Folders Quick Access -->
-                                        <Border CornerRadius="10" Padding="14" Margin="0,0,0,12" Background="#111116"
-                                                BorderBrush="#1F1F28" BorderThickness="1">
-                                            <StackPanel>
-                                                <TextBlock Text="КОНТЕНТ СБОРКИ" Style="{StaticResource Caption}"/>
-                                                <Grid Margin="0,4,0,0">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="8"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="8"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <Button Grid.Column="0" Style="{StaticResource IconButton}" Padding="12,10"
-                                                            Click="OpenMods_Click">
-                                                        <StackPanel>
-                                                            <TextBlock x:Name="TxtFolderMods" Text="Моды" FontWeight="SemiBold" FontSize="12"/>
-                                                            <TextBlock x:Name="TxtCountMods" Text="{Binding InstCountMods}" FontSize="10" Foreground="#777788" Margin="0,2,0,0"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                    <Button Grid.Column="2" Style="{StaticResource IconButton}" Padding="12,10"
-                                                            Click="OpenResourcePacks_Click">
-                                                        <StackPanel>
-                                                            <TextBlock Text="Ресурспаки" FontWeight="SemiBold" FontSize="12"/>
-                                                            <TextBlock x:Name="TxtCountRp" Text="{Binding InstCountRp}" FontSize="10" Foreground="#777788" Margin="0,2,0,0"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                    <Button Grid.Column="4" Style="{StaticResource IconButton}" Padding="12,10"
-                                                            Click="OpenShaders_Click">
-                                                        <StackPanel>
-                                                            <TextBlock Text="Шейдеры" FontWeight="SemiBold" FontSize="12"/>
-                                                            <TextBlock x:Name="TxtCountShaders" Text="{Binding InstCountShaders}" FontSize="10" Foreground="#777788" Margin="0,2,0,0"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                </Grid>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <!-- Card: Main Settings -->
-                                        <Border CornerRadius="10" Padding="16" Margin="0,0,0,12" Background="#111116"
-                                                BorderBrush="#1F1F28" BorderThickness="1">
-                                            <StackPanel>
-                                                <TextBlock Text="ПАРАМЕТРЫ СБОРКИ" Style="{StaticResource Caption}"/>
-
-                                                <!-- Name -->
-                                                <Grid Margin="0,4,0,12">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="185"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Название сборки" VerticalAlignment="Center" FontSize="11.5" Foreground="#AAAAAA"/>
-                                                    <TextBox x:Name="TxtInstEditName" Grid.Column="1" Height="36" FontSize="12"
-                                                             LostFocus="InstSetting_Changed" TextChanged="InstSettingText_Changed"/>
-                                                </Grid>
-
-                                                <!-- Icon -->
-                                                <Grid Margin="0,0,0,14">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="185"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Иконка сборки" VerticalAlignment="Center" FontSize="11.5" Foreground="#AAAAAA"/>
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                        <Border Height="40" Width="40" CornerRadius="8" Background="#16161E" ClipToBounds="True">
-                                                            <Grid>
-                                                                <Image x:Name="ImgInstIcon" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                                <Border x:Name="InstIconDot" Width="10" Height="10" CornerRadius="3"/>
-                                                            </Grid>
-                                                        </Border>
-                                                        <Button Style="{StaticResource IconButton}" Content="Выбрать файл..." FontSize="11" Padding="12,5"
-                                                                Margin="10,0,0,0" Click="BtnInstIcon_Click"/>
-                                                        <Button Style="{StaticResource IconButton}" Content="Сбросить" FontSize="11" Padding="10,5"
-                                                                Margin="6,0,0,0" Click="BtnInstIconClear_Click"/>
-                                                    </StackPanel>
-                                                </Grid>
-
-                                                <!-- RAM slider + presets -->
-                                                <Grid Margin="0,0,0,6">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="185"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Оперативная память" VerticalAlignment="Center" FontSize="11.5" Foreground="#AAAAAA"/>
-                                                    <Slider x:Name="SldInstMemory" Grid.Column="1" Minimum="1024" Maximum="16384"
-                                                            TickFrequency="512" IsSnapToTickEnabled="True" Value="4096"
-                                                            ValueChanged="SldInstMemory_ValueChanged" VerticalAlignment="Center"/>
-                                                    <TextBlock x:Name="TxtInstMemory" Grid.Column="2" Text="4096 МБ" Width="70"
-                                                               TextAlignment="Right" VerticalAlignment="Center" FontSize="11.5" FontWeight="Bold"
-                                                               Foreground="#FFFFFF"/>
-                                                </Grid>
-                                                <StackPanel Orientation="Horizontal" Margin="185,0,0,14">
-                                                    <Button Style="{StaticResource IconButton}" Content="2 ГБ" FontSize="10.5" Padding="10,4"
-                                                            Margin="0,0,4,0" Command="{Binding SetInstanceMemoryCommand}" CommandParameter="2048"/>
-                                                    <Button Style="{StaticResource IconButton}" Content="4 ГБ" FontSize="10.5" Padding="10,4"
-                                                            Margin="0,0,4,0" Command="{Binding SetInstanceMemoryCommand}" CommandParameter="4096"/>
-                                                    <Button Style="{StaticResource IconButton}" Content="8 ГБ" FontSize="10.5" Padding="10,4"
-                                                            Margin="0,0,4,0" Command="{Binding SetInstanceMemoryCommand}" CommandParameter="8192"/>
-                                                    <Button Style="{StaticResource IconButton}" Content="Авто" FontSize="10.5" Padding="10,4"
-                                                            Command="{Binding SetInstanceMemoryCommand}" CommandParameter="0"/>
-                                                </StackPanel>
-
-                                                <!-- Window resolution -->
-                                                <Grid Margin="0,0,0,12">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="185"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Разрешение окна" VerticalAlignment="Center" FontSize="11.5" Foreground="#AAAAAA"/>
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                        <Button Style="{StaticResource IconButton}" Content="1280×720 (HD)" FontSize="10.5" Padding="10,4"
-                                                                Margin="0,0,6,0" Command="{Binding SetInstanceWindowCommand}" CommandParameter="1280x720"/>
-                                                        <Button Style="{StaticResource IconButton}" Content="1600×900" FontSize="10.5" Padding="10,4"
-                                                                Margin="0,0,6,0" Command="{Binding SetInstanceWindowCommand}" CommandParameter="1600x900"/>
-                                                        <Button Style="{StaticResource IconButton}" Content="1920×1080 (FHD)" FontSize="10.5" Padding="10,4"
-                                                                Margin="0,0,8,0" Command="{Binding SetInstanceWindowCommand}" CommandParameter="1920x1080"/>
-                                                        <TextBox x:Name="TxtInstWidth" Width="60" Height="30" FontSize="11" Text="1280"
-                                                                 LostFocus="InstSetting_Changed" TextChanged="InstSettingText_Changed"/>
-                                                        <TextBlock Text="✕" VerticalAlignment="Center" Margin="6,0" Foreground="#666677" FontSize="10"/>
-                                                        <TextBox x:Name="TxtInstHeight" Width="60" Height="30" FontSize="11" Text="720"
-                                                                 LostFocus="InstSetting_Changed" TextChanged="InstSettingText_Changed"/>
-                                                    </StackPanel>
-                                                </Grid>
-
-                                                <!-- Auto Server -->
-                                                <Grid Margin="0,0,0,4">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="185"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Сервер подключения" VerticalAlignment="Center" FontSize="11.5" Foreground="#AAAAAA"/>
-                                                    <TextBox x:Name="TxtInstServer" Grid.Column="1" Height="36" FontSize="11.5"
-                                                             LostFocus="InstSetting_Changed" TextChanged="InstSettingText_Changed"/>
-                                                </Grid>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <!-- Card: Java & JVM -->
-                                        <Border CornerRadius="10" Padding="16" Margin="0,0,0,12" Background="#111116"
-                                                BorderBrush="#1F1F28" BorderThickness="1">
-                                            <StackPanel>
-                                                <TextBlock Text="JAVA И ПАРАМЕТРЫ ЗАПУСКА" Style="{StaticResource Caption}"/>
-
-                                                <!-- Java Path -->
-                                                <Grid Margin="0,4,0,10">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="185"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Исполняемый файл Java" VerticalAlignment="Center" FontSize="11.5" Foreground="#AAAAAA"/>
-                                                    <TextBox x:Name="TxtInstJava" Grid.Column="1" Height="36" IsReadOnly="True" FontSize="11.5"/>
-                                                    <Button Grid.Column="2" Style="{StaticResource IconButton}" Content="Обзор..."
-                                                            FontSize="11" Padding="12,0" Height="36" Margin="8,0,0,0" Click="BtnInstJava_Click"/>
-                                                </Grid>
-
-                                                <!-- JVM Preset -->
-                                                <Grid Margin="0,0,0,10">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="185"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Пресет оптимизации" VerticalAlignment="Center" FontSize="11.5" Foreground="#AAAAAA"/>
-                                                    <ComboBox x:Name="CbJvmPreset" Grid.Column="1" Height="36" FontSize="11.5"
-                                                              SelectionChanged="CbJvmPreset_Changed"/>
-                                                    <TextBlock x:Name="TxtJvmPresetInfo" Grid.Column="2" Text="" FontSize="10.5"
-                                                               Foreground="#777788" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" MaxWidth="180"/>
-                                                </Grid>
-
-                                                <!-- JVM Args -->
-                                                <Grid Margin="0,0,0,4">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="185"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="Аргументы JVM" VerticalAlignment="Center" FontSize="11.5" Foreground="#AAAAAA"/>
-                                                    <TextBox x:Name="TxtInstJvm" Grid.Column="1" Height="36" FontSize="11.5"
-                                                             LostFocus="InstSetting_Changed" TextChanged="InstSettingText_Changed"/>
-                                                </Grid>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <!-- Duplicate / Reset buttons -->
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Style="{StaticResource IconButton}" Content="Дублировать сборку" FontSize="11.5" Padding="14,7"
-                                                    Margin="0,0,8,0" Click="BtnDuplicateInstance_Click"/>
-                                            <Button Style="{StaticResource IconButton}" Content="Сбросить настройки" FontSize="11.5" Padding="14,7"
-                                                    Click="BtnResetInstance_Click"/>
-                                        </StackPanel>
-
-                                        <!-- Hidden legacy compatibility items for code-behind bindings -->
-                                        <Grid Visibility="Collapsed" IsHitTestVisible="False">
-                                            <StackPanel>
-                                                <TextBox x:Name="TxtInstanceSearch"/>
-                                                <Button x:Name="BtnDeleteInstance"/>
-                                                <TextBlock x:Name="TxtInstHealth" Text=""/>
-                                                <TextBlock x:Name="TxtStatTotal" Text=""/>
-                                                <TextBlock x:Name="TxtStatSessions" Text=""/>
-                                                <TextBlock x:Name="TxtStatAvg" Text=""/>
-                                                <TextBlock x:Name="TxtNoShots" Text=""/>
-                                                <TextBlock x:Name="TxtCountWorlds" Text="{Binding InstCountWorlds}"/>
-                                                <TextBlock x:Name="TxtInstSize" Text="{Binding InstSize}"/>
-                                                <TextBlock x:Name="TxtProfileInfo" Text=""/>
-                                                <ItemsControl x:Name="ItemsChart"/>
-                                                <ItemsControl x:Name="ItemsScreenshots"/>
-                                                <ItemsControl x:Name="ItemsColors"/>
-                                                <ComboBox x:Name="CbModProfile"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </StackPanel>
-                                </ScrollViewer>
-                            </Grid>
                         </Grid>
                     </Grid>
 
@@ -818,26 +395,41 @@
 
                                         <Border x:Name="BorderLoginCard" Background="#161922" BorderBrush="#232730" BorderThickness="2"
                                                 CornerRadius="0" Padding="20" Margin="0,0,0,16" Visibility="Visible">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
-                                                    <TextBlock Text="ЕДИНЫЙ ВХОД VEC ID" FontSize="11" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,4"/>
-                                                    <TextBlock Text="Авторизуйтесь через единый студенческий аккаунт VEC ID." FontWeight="SemiBold" FontSize="13" Foreground="White"/>
-                                                    <TextBlock Text="Привязанная лицензия Microsoft, скины и плащи синхронизируются автоматически." Foreground="#777" FontSize="11" Margin="0,3,0,0"/>
-                                                </StackPanel>
-                                                <Button x:Name="BtnVecLogin" Grid.Column="1" Style="{StaticResource AccentButton}"
-                                                        Content="Войти через VEC ID" Padding="20,10" FontSize="12.5" VerticalAlignment="Center"
-                                                        Click="BtnVecLogin_Click">
-                                                    <Button.Resources>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="CornerRadius" Value="0"/>
-                                                        </Style>
-                                                    </Button.Resources>
-                                                </Button>
-                                            </Grid>
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,14">
+                                                    <TextBlock Text="АВТОРИЗАЦИЯ" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                                </Grid>
+                                                <Border Height="1" Background="#232730" Margin="0,0,0,16"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Border Grid.Column="0" Width="48" Height="48" CornerRadius="0" Background="#111319" BorderBrush="#232730" BorderThickness="1">
+                                                        <Path Data="M 12 14 L 24 34 L 36 14 L 30 14 L 24 26 L 18 14 Z"
+                                                              Fill="#F59E0B" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+
+                                                    <StackPanel Grid.Column="1" Margin="16,0,16,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="ЕДИНЫЙ ВХОД VEC ID" FontSize="11" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,3"/>
+                                                        <TextBlock Text="Авторизуйтесь через единый аккаунт платформы VEC" FontWeight="SemiBold" FontSize="13.5" Foreground="White" Margin="0,0,0,3"/>
+                                                        <TextBlock Text="Авторизация через веб-браузер. Лицензия Mojang, скины и гардероб плащей синхронизируются автоматически."
+                                                                   Foreground="#777" FontSize="11.5" TextWrapping="Wrap"/>
+                                                    </StackPanel>
+
+                                                    <Button x:Name="BtnVecLogin" Grid.Column="2" Style="{StaticResource AccentButton}"
+                                                            Content="Войти через VEC ID" Padding="20,10" FontSize="12.5" VerticalAlignment="Center"
+                                                            Click="BtnVecLogin_Click">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="0"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+                                                </Grid>
+                                            </StackPanel>
                                         </Border>
                                     </StackPanel>
                                 </Grid>
@@ -894,30 +486,6 @@
                                 </Grid>
                             </StackPanel>
                         </ScrollViewer>
-
-                        <!-- Hidden compatibility elements for code-behind bindings -->
-                        <Grid Visibility="Collapsed">
-                            <TextBlock x:Name="TxtAccUuid"/>
-                            <TextBlock x:Name="TxtAccUuidShort"/>
-                            <TextBlock x:Name="TxtSkinModel"/>
-                            <TextBlock x:Name="TxtAuthState"/>
-                            <Image x:Name="ImgSkinPreview"/>
-                            <TextBlock x:Name="TxtSkinPlaceholder"/>
-                            <TextBox x:Name="TxtSkinPath"/>
-                            <Button x:Name="BtnUploadSkin"/>
-                            <Button x:Name="BtnLogin"/>
-                            <Button x:Name="BtnWardrobe"/>
-                            <Button x:Name="BtnToggleModel"/>
-                            <Border x:Name="CapeModeOverlay"/>
-                            <TextBlock x:Name="TxtCapeConfirmLabel"/>
-                            <TextBox x:Name="TxtOfflineName"/>
-                            <TextBlock x:Name="TxtOfflineHint"/>
-                            <StackPanel x:Name="StackSavedAccountsList"/>
-                            <TextBlock x:Name="TxtSavedAccountsCount"/>
-                            <CheckBox x:Name="ToggleElytraSwitch"/>
-                            <TextBlock x:Name="TxtElytraStatus"/>
-                            <Border x:Name="BadgeLicense"><Ellipse x:Name="DotLicense"/></Border>
-                        </Grid>
                         </Grid>
                     </Grid>
 
@@ -946,8 +514,6 @@
                                          Checked="SettingsSection_Checked" Tag="java"/>
                             <RadioButton x:Name="SecStorage" Style="{StaticResource SegmentToggle}" Content="Хранилище"
                                          Checked="SettingsSection_Checked" Tag="storage"/>
-                            <RadioButton x:Name="SecVersions" Style="{StaticResource SegmentToggle}" Content="Версии игры"
-                                         Checked="SettingsSection_Checked" Tag="versions"/>
                             <RadioButton x:Name="SecMaint" Style="{StaticResource SegmentToggle}" Content="Обслуживание"
                                          Checked="SettingsSection_Checked" Tag="maint"/>
                         </StackPanel>
@@ -1014,9 +580,6 @@
                                             <CheckBox x:Name="ChkShowConsole" Margin="0,12,0,0"
                                                       Checked="Setting_Changed" Unchecked="Setting_Changed"
                                                       Content="Показывать консоль Java (для отладки)"/>
-                                            <CheckBox x:Name="ChkSnapshots" Margin="0,12,0,0"
-                                                      Checked="ChkSnapshots_Changed" Unchecked="ChkSnapshots_Changed"
-                                                      Content="Показывать снапшоты в списке версий"/>
                                         </StackPanel>
                                     </Border>
 
@@ -1036,18 +599,6 @@
                                                 <RadioButton x:Name="RbLangEn" Style="{StaticResource SegmentToggle}"
                                                              Content="English" Checked="GameLang_Checked" Tag="en"/>
                                             </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <Border Style="{StaticResource Card}" Margin="0,12,0,0">
-                                        <StackPanel>
-                                            <TextBlock Text="НОВЫЕ СБОРКИ" Style="{StaticResource Caption}"/>
-                                            <CheckBox x:Name="ChkDefaultIsolated" Checked="Setting_Changed"
-                                                      Unchecked="Setting_Changed"
-                                                      Content="Создавать изолированными по умолчанию"/>
-                                            <TextBlock Text="Изолированная сборка хранит свои библиотеки, ассеты и версии внутри своей папки. Надёжнее, но занимает больше места."
-                                                       Foreground="{DynamicResource FgMuted}" FontSize="11"
-                                                       Margin="27,4,0,0" TextWrapping="Wrap"/>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
@@ -1207,71 +758,6 @@
                                     </Border>
                                 </StackPanel>
 
-                                <StackPanel x:Name="SecPanelVersions" Visibility="Collapsed">
-                                    <Border Style="{StaticResource Card}">
-                                        <StackPanel>
-                                            <Grid>
-                                                <TextBlock Text="УСТАНОВЛЕННЫЕ ВЕРСИИ" Style="{StaticResource Caption}"/>
-                                                <Button Style="{StaticResource IconButton}" Content="Обновить список"
-                                                        HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                        Margin="0,-4,0,0" Click="BtnScanVersions_Click"/>
-                                            </Grid>
-                                            <TextBlock x:Name="TxtVersionsSummary" Text="Нажмите «Обновить список»"
-                                                        Foreground="#777788" FontSize="11.5"
-                                                        Margin="0,0,0,10"/>
-
-                                            <ItemsControl x:Name="ItemsVersions">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border Background="#111116" CornerRadius="8"
-                                                                Padding="10,8" Margin="0,0,0,6" BorderThickness="1"
-                                                                BorderBrush="#1F1F28">
-                                                            <Grid>
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                </Grid.ColumnDefinitions>
-
-                                                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="6"
-                                                                        Background="#16161E" BorderThickness="0" ClipToBounds="True">
-                                                                    <Image Source="{Binding IconSource}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                                </Border>
-
-                                                                <StackPanel Grid.Column="1" Margin="11,0,10,0"
-                                                                            VerticalAlignment="Center">
-                                                                    <StackPanel Orientation="Horizontal">
-                                                                        <TextBlock Text="{Binding Id}" FontSize="12"
-                                                                                   FontWeight="SemiBold"
-                                                                                   Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                                                                        <Border Margin="6,0,0,0" CornerRadius="4" Padding="5,1.5" Background="#1A1A24" BorderBrush="#2A2A38" BorderThickness="1" VerticalAlignment="Center">
-                                                                            <TextBlock Text="{Binding Kind}" FontSize="9" FontWeight="SemiBold" Foreground="#AAAAAA"/>
-                                                                        </Border>
-                                                                    </StackPanel>
-                                                                    <TextBlock Text="{Binding Info}" FontSize="10.5"
-                                                                               Foreground="#777788"
-                                                                               Margin="0,2,0,0" TextWrapping="Wrap"/>
-                                                                </StackPanel>
-
-                                                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                                                    <Button Content="Папка"
-                                                                            Style="{StaticResource IconButton}" Padding="9,5" FontSize="11"
-                                                                            Click="VersionOpen_Click"
-                                                                            Tag="{Binding Dir}"/>
-                                                                    <Button Content="Удалить"
-                                                                            Style="{StaticResource DangerButton}"
-                                                                            Margin="6,0,0,0" Padding="9,5" FontSize="11"
-                                                                            Click="VersionDelete_Click"
-                                                                            Tag="{Binding Id}"/>
-                                                                </StackPanel>
-                                                            </Grid>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
 
                                 <StackPanel x:Name="SecPanelStorage" Visibility="Collapsed">
                                     <Border Style="{StaticResource Card}">
@@ -1320,24 +806,6 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Style="{StaticResource Card}" Margin="0,12,0,0">
-                                        <StackPanel>
-                                            <TextBlock Text="ПРОМО-КОД (ПЛАЩ)" Style="{StaticResource Caption}"/>
-                                            <TextBlock Text="Введите код для получения плаща." FontSize="11"
-                                                       Foreground="{DynamicResource FgMuted}" Margin="0,0,0,8"/>
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBox x:Name="TxtPromoCode" Grid.Column="0" Margin="0,0,8,0" VerticalContentAlignment="Center"/>
-                                                <Button x:Name="BtnRedeemPromo" Grid.Column="1" Style="{StaticResource IconButton}" Content="Активировать"
-                                                        Click="BtnRedeemPromo_Click" Padding="14,6" VerticalAlignment="Center"/>
-                                            </Grid>
-                                            <TextBlock x:Name="TxtPromoStatus" Text="" Margin="0,8,0,0"
-                                                       Foreground="{DynamicResource FgMuted}" FontSize="11.5" TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                    </Border>
 
                                     <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                                         <StackPanel>

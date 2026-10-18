@@ -173,7 +173,6 @@ public partial class MainWindow
 
     private void SkinViewport_MouseMove(object sender, MouseEventArgs e)
     {
-        if (_isCapeMode) return;
         if (_isDraggingSkin)
         {
             var cur = e.GetPosition(SkinViewerHost);
@@ -197,7 +196,6 @@ public partial class MainWindow
     }
     private void SkinViewport_MouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (_isCapeMode) return;
         var pos = SkinCamera.Position;
         var newZ = Math.Clamp(pos.Z - (e.Delta > 0 ? 3 : -3), 16, 80);
         SkinCamera.Position = new Point3D(pos.X, pos.Y, newZ);
@@ -226,33 +224,4 @@ public partial class MainWindow
             }
         });
     }
-
-    private byte[]? _savedOriginalCapeBytes;
-
-    private void ExitCapeMode()
-    {
-        _isCapeMode = false;
-        _capeTransitionTimer.Stop();
-        CapeModeOverlay.Visibility = Visibility.Collapsed;
-
-        if (BtnWardrobe.Content is TextBlock wtb) wtb.Text = "🎽";
-
-        SkinCamera.Position = _savedCamPos;
-        SkinCamera.LookDirection = _savedCamLookDir;
-        _rotAngleY = _savedCamYaw;
-        _rotAngleX = _savedCamPitch;
-        ApplySkin3DTransforms();
-        _gltfSkinModel.StartAnimation();
-    }
-
-    private void CapeTransitionTimer_Tick(object? sender, EventArgs e)
-    {
-        _capeTransitionAlpha += 0.15;
-        if (_capeTransitionAlpha >= 0.5)
-        {
-            _capeTransitionTimer.Stop();
-            _gltfSkinModel.UpdateCapeTexture(_capeTransitionTarget);
-        }
-    }
-
 }

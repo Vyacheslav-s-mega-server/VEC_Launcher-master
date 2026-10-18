@@ -189,13 +189,8 @@ public partial class MainWindow : Window
             _initializing = true;
             _settings = SettingsService.Load();
 
-            ThemeService.ApplyTheme(_settings.Theme);
             ThemeService.ApplyAccent(_settings.AccentColor);
             ApplySettingsToUi();
-            BuildThemeCards();
-            BuildAccentSwatches();
-            BuildBackgroundStyleButtons();
-            ApplyBanner();
             ApplyWindowBackground();
 
             AppendLog("VEC Launcher запущен. Папка: " + _settings.GameDir);

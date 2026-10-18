@@ -105,10 +105,6 @@ public partial class MainWindow
         }
     }
 
-    private void BuildThemeCards()
-    {
-    }
-
     private void ApplyWindowBackground()
     {
         var brush = ThemeService.BuildWindowBackground(
@@ -123,24 +119,6 @@ public partial class MainWindow
 
         _settings.GameLanguage = (sender as FrameworkElement)?.Tag?.ToString() ?? "ru";
         SettingsService.Save(_settings);
-    }
-
-    private void BuildAccentSwatches()
-    {
-    }
-
-    private static SolidColorBrush FrozenBrush(Color c)
-    {
-        var b = new SolidColorBrush(c);
-        b.Freeze();
-        return b;
-    }
-    private void BuildBackgroundStyleButtons()
-    {
-    }
-
-    private void ApplyBanner()
-    {
     }
 
     private void Setting_Changed(object sender, RoutedEventArgs e)
@@ -244,13 +222,8 @@ public partial class MainWindow
         };
 
         SettingsService.Save(_settings);
-        ThemeService.ApplyTheme(_settings.Theme);
         ThemeService.ApplyAccent(_settings.AccentColor);
         ApplySettingsToUi();
-        BuildThemeCards();
-        BuildAccentSwatches();
-        BuildBackgroundStyleButtons();
-        ApplyBanner();
         ApplyWindowBackground();
 
         TxtMaintenance.Text = "Настройки сброшены.";
@@ -541,10 +514,10 @@ public partial class MainWindow
             Checked = _maintChecked.Contains(t.Target),
             TitleColor = new SolidColorBrush(t.Dangerous
                 ? (Color)ColorConverter.ConvertFromString("#F87171")
-                : (Color)ColorConverter.ConvertFromString(ThemeService.CurrentTheme.Text)),
+                : (Color)ColorConverter.ConvertFromString("#FFFFFF")),
             RowBorder = new SolidColorBrush(t.Dangerous
                 ? (Color)ColorConverter.ConvertFromString("#3A2428")
-                : (Color)ColorConverter.ConvertFromString(ThemeService.CurrentTheme.Border))
+                : (Color)ColorConverter.ConvertFromString("#2A2A2A"))
         }).ToList();
     }
 

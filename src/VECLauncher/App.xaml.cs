@@ -83,7 +83,6 @@ public partial class App : Application
         {
             Services = ServiceConfig.Configure();
             var s = Services.GetRequiredService<LauncherSettings>();
-            ThemeService.ApplyTheme(s.Theme);
             ThemeService.ApplyAccent(s.AccentColor);
         }
         catch (Exception ex)

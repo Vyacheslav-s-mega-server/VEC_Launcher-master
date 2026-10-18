@@ -97,18 +97,6 @@ public partial class MainWindowViewModel : ObservableObject
     private MinecraftAccount? _account;
 
     [ObservableProperty]
-    private string _accountDisplayName = "—";
-
-    [ObservableProperty]
-    private string _accountUuid = "";
-
-    [ObservableProperty]
-    private string _accountType = "";
-
-    [ObservableProperty]
-    private string _authState = "Вы не вошли в аккаунт.";
-
-    [ObservableProperty]
     private string _sideName = "Не выполнен вход";
 
     [ObservableProperty]
@@ -117,36 +105,18 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _isAccountLoggedIn;
 
-    [ObservableProperty]
-    private string _skinModel = "Classic";
-
-    [ObservableProperty]
-    private ImageSource? _avatar;
-
-    [ObservableProperty]
-    private ImageSource? _avatarLarge;
-
-    [ObservableProperty]
-    private bool _skinPlaceholderVisible = true;
-
     public void SetAccount(MinecraftAccount acc, bool refreshSkin)
     {
         Account = acc;
-        AccountDisplayName = acc.Username;
-        AccountUuid = acc.DashedUuid;
         IsAccountLoggedIn = true;
 
         if (acc.IsVec)
         {
-            AccountType = "VEC ID (КПВК)";
-            AuthState = acc.Username;
             SideName = acc.Username;
             SideStatus = "VEC Platform";
         }
         else
         {
-            AccountType = "Microsoft";
-            AuthState = acc.Username;
             SideName = acc.Username;
             SideStatus = "Microsoft";
         }
@@ -155,15 +125,9 @@ public partial class MainWindowViewModel : ObservableObject
     public void ClearAccount()
     {
         Account = null;
-        AccountDisplayName = "—";
-        AccountUuid = "";
-        AuthState = "Вы не вошли в аккаунт.";
         SideName = "Не выполнен вход";
         SideStatus = "Оффлайн";
         IsAccountLoggedIn = false;
-        SkinPlaceholderVisible = true;
-        Avatar = null;
-        AvatarLarge = null;
     }
 
     public byte[]? CurrentSkinRawBytes { get; set; }
@@ -211,32 +175,16 @@ public partial class MainWindowViewModel : ObservableObject
     private bool _progressIndeterminate;
 
     [ObservableProperty]
-    private double _progressValue;
-
-    [ObservableProperty]
-    private double _progressMax = 100;
-
-    [ObservableProperty]
-    private string _progressText = "";
-
-    [ObservableProperty]
     private string _progressStage = "";
 
     [ObservableProperty]
     private string _progressPercent = "";
-
-    [ObservableProperty]
-    private string _progressDetail = "";
-
-    [ObservableProperty]
-    private bool _cancelVisible;
 
     public CancellationTokenSource? Cts { get; set; }
 
     public void SetBusy(bool busy, bool keepProgress = false)
     {
         Busy = busy;
-        CancelVisible = busy;
         if (!busy && !keepProgress)
         {
             ProgressIndeterminate = false;

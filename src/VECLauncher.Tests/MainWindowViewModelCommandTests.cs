@@ -20,7 +20,6 @@ public class MainWindowViewModelCommandTests
             new GameLauncher(),
             new ModLoaderService(s_http),
             new ServerPingService(),
-            new ModpackService(s_http),
             new LaunchService(
                 new VersionService(s_http),
                 new DownloadManager(s_http),

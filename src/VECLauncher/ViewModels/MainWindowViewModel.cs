@@ -23,7 +23,6 @@ public partial class MainWindowViewModel : ObservableObject
     public readonly GameLauncher Game;
     public readonly ModLoaderService Loaders;
     public readonly ServerPingService Ping;
-    public readonly ModpackService Modpacks;
 
     public readonly GameSessionManager Sessions = new();
     public readonly GameStatistics Stats;
@@ -39,7 +38,6 @@ public partial class MainWindowViewModel : ObservableObject
         GameLauncher game,
         ModLoaderService loaders,
         ServerPingService ping,
-        ModpackService modpacks,
         LaunchService launch,
         GameStatistics stats,
         IAccountRepository accounts)
@@ -51,7 +49,6 @@ public partial class MainWindowViewModel : ObservableObject
         Game = game;
         Loaders = loaders;
         Ping = ping;
-        Modpacks = modpacks;
         Stats = stats;
         Accounts = accounts;
         Launch = launch;

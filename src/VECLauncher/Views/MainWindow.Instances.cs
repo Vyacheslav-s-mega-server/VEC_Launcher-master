@@ -117,34 +117,6 @@ public partial class MainWindow
         UpdateRunStateUi();
     }
 
-    private async Task InstallModpackAsync(GameInstance inst, string packPath)
-    {
-        SetBusy(true);
-
-        try
-        {
-            SetStage("Устанавливаю модпак...");
-            var info = await _modpacks.InstallAsync(packPath, inst);
-
-            RefreshContent();
-
-            _dialog.ShowMessage(
-                $"Модпак «{info.Name}» установлен в сборку «{inst.Name}».\n\n" +
-                $"Версия: {info.McVersion} {info.Loader.Display()}\n" +
-                $"Файлов: {info.FileCount}\n\n" +
-                "Загрузчик установится при первом запуске.", "Модпак готов");
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Установка модпака", ex);
-            _dialog.ShowMessage("Не удалось установить модпак:\n\n" + ex.Message, "Ошибка", MessageSeverity.Error);
-        }
-        finally
-        {
-            SetBusy(false);
-            HideProgress();
-        }
-    }
 
     private enum HomeButtonState { Idle, Busy, Running }
 }

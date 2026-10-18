@@ -585,12 +585,7 @@ public partial class MainWindow
                         ? _instancesService.ShaderPacksDir(inst)
                         : _instancesService.ResourcePacksDir(inst);
                 }
-                else if (ext == ".mrpack")
-                {
-                    _ = InstallModpackAsync(inst, src);
-                    ok++;
-                    continue;
-                }
+
                 else
                 {
                     skipped.Add(name + " (неизвестный тип)");

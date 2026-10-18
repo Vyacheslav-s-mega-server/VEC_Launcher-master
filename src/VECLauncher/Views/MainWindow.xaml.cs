@@ -27,7 +27,6 @@ public partial class MainWindow : Window
     private GameLauncher _game;
     private ModLoaderService _loaders;
     private ServerPingService _ping;
-    private ModpackService _modpacks;
     private GameSessionManager _sessions => Vm.Sessions;
     private GameStatistics _stats => Vm.Stats;
     private readonly IDialogService _dialog;
@@ -88,15 +87,12 @@ public partial class MainWindow : Window
         _game = Vm.Game;
         _loaders = Vm.Loaders;
         _ping = Vm.Ping;
-        _modpacks = Vm.Modpacks;
 
         ToastNotification.Initialize(this);
 
         _downloads.Progress += OnProgress;
         _java.Progress += OnProgress;
         _loaders.Status += s => Dispatcher.Invoke(() => SetStage(s));
-        _modpacks.Status += s => Dispatcher.Invoke(() => SetStage(s));
-        _modpacks.Progress += OnProgress;
         _game.GameOutput += line => Vm.AppendLog(line);
         Log.LineWritten += line => Vm.AppendLog(line);
 

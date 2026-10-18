@@ -19,7 +19,6 @@ public static class ServiceConfig
         services.AddSingleton<GameLauncher>();
         services.AddSingleton<ModLoaderService>();
         services.AddSingleton<ServerPingService>();
-        services.AddSingleton<ModpackService>();
         services.AddSingleton<WebAuthService>();
 
         services.AddSingleton<IInstanceService, InstanceServiceAdapter>();

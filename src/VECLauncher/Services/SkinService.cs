@@ -36,9 +36,7 @@ public sealed class SkinService
             var cleanUrl = string.IsNullOrWhiteSpace(serverUrl) ? VecAuthService.DefaultVecServerUrl : serverUrl.TrimEnd('/');
             using var content = new MultipartFormDataContent();
             content.Add(new StringContent(username), "username");
-            if (!string.IsNullOrEmpty(uuid))
-                content.Add(new StringContent(uuid), "uuid");
-            content.Add(new StringContent(model == SkinModel.Slim ? Constants.SkinModel.Slim : Constants.SkinModel.Classic), "model");
+            content.Add(new StringContent(model == SkinModel.Slim ? "slim" : "classic"), "model");
 
             var fileContent = new ByteArrayContent(skinBytes);
             fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");

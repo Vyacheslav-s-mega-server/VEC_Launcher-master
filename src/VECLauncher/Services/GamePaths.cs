@@ -1,4 +1,4 @@
-﻿using VECLauncher.Models;
+using VECLauncher.Models;
 
 namespace VECLauncher.Services;
 
@@ -57,22 +57,5 @@ public sealed class GamePaths
         {
             Directory.CreateDirectory(d);
         }
-    }
-
-    public long CalculateSize()
-    {
-        long total = 0;
-        foreach (var dir in new[] { VersionsDir, LibrariesDir, AssetsDir, NativesRoot })
-        {
-            try
-            {
-                if (!Directory.Exists(dir)) continue;
-                total += new DirectoryInfo(dir)
-                    .EnumerateFiles("*", SearchOption.AllDirectories)
-                    .Sum(f => f.Length);
-            }
-            catch (Exception ex) { Log.Warn(ex.Message); }
-        }
-        return total;
     }
 }

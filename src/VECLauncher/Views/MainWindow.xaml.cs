@@ -144,10 +144,14 @@ public partial class MainWindow : Window
 
     private void MainWindow_Activated(object? sender, EventArgs e)
     {
-        if (_account != null && (DateTime.UtcNow - _lastWatcherReload).TotalSeconds > 10)
+        if (_account != null && (DateTime.UtcNow - _lastWatcherReload).TotalSeconds > 2)
         {
             _lastWatcherReload = DateTime.UtcNow;
             _ = LoadSkinImagesAsync(_account);
+            if (PageAccount?.Visibility == Visibility.Visible)
+            {
+                _ = RefreshCapesGridUIAsync(_account);
+            }
         }
         if (PageContent?.Visibility == Visibility.Visible && _selectedInstance != null)
         {
@@ -193,10 +197,11 @@ public partial class MainWindow : Window
         {
             Dispatcher.InvokeAsync(async () =>
             {
-                if ((DateTime.UtcNow - _lastWatcherReload).TotalSeconds < 3) return;
+                if ((DateTime.UtcNow - _lastWatcherReload).TotalSeconds < 2) return;
                 _lastWatcherReload = DateTime.UtcNow;
                 await Task.Delay(200);
                 await LoadSkinImagesAsync(_account);
+                await RefreshCapesGridUIAsync(_account);
             });
         }
     }

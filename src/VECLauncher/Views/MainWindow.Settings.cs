@@ -565,7 +565,11 @@ public partial class MainWindow
         if (tag == "3")
         {
             UpdateSkinTabHeader();
-            if (_account != null) _ = LoadSkinImagesAsync(_account);
+            if (_account != null)
+            {
+                _ = LoadSkinImagesAsync(_account);
+                _ = RefreshCapesGridUIAsync(_account);
+            }
         }
         if (tag == "9" && _account != null) _ = LoadSkinImagesAsync(_account);
         if (tag == "6")

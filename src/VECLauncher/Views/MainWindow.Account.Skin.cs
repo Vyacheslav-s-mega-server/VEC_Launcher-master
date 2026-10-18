@@ -72,6 +72,27 @@ public partial class MainWindow
                         capeRawBytes = null;
                     }
 
+                    try
+                    {
+                        var metaUrl = $"{srvUrl}/api/skin/{Uri.EscapeDataString(acc.Username)}.json?t={DateTime.UtcNow.Ticks}";
+                        using var mResp = await App.Http.GetAsync(metaUrl);
+                        if (mResp.IsSuccessStatusCode)
+                        {
+                            var metaJson = await mResp.Content.ReadAsStringAsync();
+                            using var doc = System.Text.Json.JsonDocument.Parse(metaJson);
+                            if (doc.RootElement.TryGetProperty("model", out var mProp))
+                            {
+                                var m = mProp.GetString();
+                                if (!string.IsNullOrEmpty(m))
+                                {
+                                    _currentSkinModel = m.Equals("slim", StringComparison.OrdinalIgnoreCase) ? "slim" : "classic";
+                                    acc.SkinModel = _currentSkinModel;
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+
                     var metaFile = IOPath.Combine(LauncherPaths.Root, "skins", $"{acc.Username}.json");
                     if (File.Exists(metaFile))
                     {
@@ -99,6 +120,8 @@ public partial class MainWindow
                     isSlim = _currentSkinModel.Equals("slim", StringComparison.OrdinalIgnoreCase);
                     Dispatcher.Invoke(() =>
                     {
+                        if (ToggleModelSwitch != null)
+                            ToggleModelSwitch.IsChecked = isSlim;
                         if (TxtSkinModelBadge != null)
                             TxtSkinModelBadge.Text = isSlim ? "Slim" : "Classic";
                         if (TxtToggleModelBadge != null)
@@ -375,6 +398,7 @@ public partial class MainWindow
         {
             var bytes = await File.ReadAllBytesAsync(dlg.FileName);
             SkinService.ValidateSkinPng(bytes);
+            if (TxtSelectedSkinFileName != null) TxtSelectedSkinFileName.Text = IOPath.GetFileName(dlg.FileName);
 
             _currentSkinRawBytes = bytes;
             ReloadSkin3DModel();
@@ -871,4 +895,57 @@ if (dialog.ShowDialog() == true)
         LoadLocalSkins();
     }
 
+    private void ToggleModelSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        var isSlim = ToggleModelSwitch.IsChecked == true;
+        _currentSkinModel = isSlim ? "slim" : "classic";
+        var badge = isSlim ? "Slim" : "Classic";
+        if (TxtToggleModelBadge != null) TxtToggleModelBadge.Text = badge;
+        if (TxtSkinModelBadge != null) TxtSkinModelBadge.Text = badge;
+        if (TxtSkinModel != null) TxtSkinModel.Text = badge;
+
+        if (_account != null)
+        {
+            _account.SkinModel = _currentSkinModel;
+            Vm.Accounts.Save(_account);
+            if (_account.IsVec)
+            {
+                VecAccountDatabase.UpdateSkinModel(_account.Username, _currentSkinModel);
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var srvUrl = (!string.IsNullOrEmpty(_account.ServerUrl) && !_account.ServerUrl.Contains("95.59.233")) ? _account.ServerUrl : await VecAuthService.GetActiveServerUrlAsync();
+                        await _skins.UpdateSkinModelOnVecServerAsync(srvUrl, _account.Username, _currentSkinModel);
+
+                        var skinFile = _offlineSkins.FindAccountSkin(_account.Username);
+                        if (skinFile != null && File.Exists(skinFile))
+                        {
+                            var modelEnum = isSlim ? SkinService.SkinModel.Slim : SkinService.SkinModel.Classic;
+                            var skinBytes = await File.ReadAllBytesAsync(skinFile);
+                            await _skins.UploadSkinToVecServerAsync(srvUrl, _account.Username, skinBytes, modelEnum, _account.Uuid);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warn($"Sync model to server failed: {ex.Message}");
+                    }
+                });
+            }
+        }
+
+        ReloadSkin3DModel();
+        if (_currentCapeRawBytes != null)
+        {
+            _gltfSkinModel.UpdateCapeTexture(_currentCapeRawBytes);
+        }
+    }
+
+    private void ToggleElytraSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        var isElytra = ToggleElytraSwitch.IsChecked == true;
+        _gltfSkinModel.IsElytraMode = isElytra;
+        if (TxtElytraStatus != null) TxtElytraStatus.Text = isElytra ? "Вкл" : "Выкл";
+        ReloadSkin3DModel();
+    }
 }

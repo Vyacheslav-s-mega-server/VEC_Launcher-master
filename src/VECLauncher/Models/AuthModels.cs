@@ -22,6 +22,10 @@ public sealed class MinecraftAccount
     [JsonPropertyName("skinUrl")] public string? SkinUrl { get; set; }
     [JsonPropertyName("capeUrl")] public string? CapeUrl { get; set; }
     [JsonPropertyName("skinModel")] public string SkinModel { get; set; } = "classic";
+    [JsonPropertyName("hasMinecraftLicense")] public bool HasMinecraftLicense { get; set; }
+    [JsonPropertyName("microsoftGamertag")] public string? MicrosoftGamertag { get; set; }
+    [JsonPropertyName("microsoftUuid")] public string? MicrosoftUuid { get; set; }
+    [JsonPropertyName("sessionKey")] public string? SessionKey { get; set; }
 
     [JsonIgnore] public bool IsOffline => Type == AccountType.Offline;
     [JsonIgnore] public bool IsVec => Type == AccountType.Vec;

@@ -66,6 +66,10 @@ public sealed class WebAuthService
             string? sessionKey = request.QueryString["sessionKey"];
             string? username = request.QueryString["username"];
             string? skinModel = request.QueryString["skinModel"];
+            string? hasLicenseStr = request.QueryString["hasLicense"];
+            bool.TryParse(hasLicenseStr, out bool hasLicense);
+            string? mcGamertag = request.QueryString["mcGamertag"];
+            string? mcUuid = request.QueryString["mcUuid"];
 
             var srvUrl = VecAuthService.DefaultVecServerUrl;
             string safeUsername = WebUtility.HtmlEncode(username ?? "Игрок");
@@ -230,7 +234,10 @@ public sealed class WebAuthService
                 AccessToken = sessionKey,
                 ServerUrl = srvUrl,
                 SkinModel = model,
-                Uuid = Guid.NewGuid().ToString("D"),
+                HasMinecraftLicense = hasLicense,
+                MicrosoftGamertag = mcGamertag,
+                MicrosoftUuid = mcUuid,
+                Uuid = !string.IsNullOrEmpty(mcUuid) ? mcUuid : Guid.NewGuid().ToString("D"),
                 SkinUrl = $"{srvUrl}/api/skin/{username}.png",
                 CapeUrl = $"{srvUrl}/api/cape/{username}.png"
             };

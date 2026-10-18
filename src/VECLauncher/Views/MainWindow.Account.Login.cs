@@ -322,6 +322,10 @@ public partial class MainWindow
         ImgAvatarLarge.Source = null;
         ReloadSkin3DModel();
         TxtSkinPlaceholder.Visibility = Visibility.Visible;
+        if (BorderProfileCard != null) BorderProfileCard.Visibility = Visibility.Collapsed;
+        if (BorderLoginCard != null) BorderLoginCard.Visibility = Visibility.Visible;
+        if (CapesWrapPanel != null) CapesWrapPanel.Children.Clear();
+        if (TxtSelectedSkinFileName != null) TxtSelectedSkinFileName.Text = "";
 
         BtnLogout.IsEnabled = false;
         BtnUploadSkin.IsEnabled = false;

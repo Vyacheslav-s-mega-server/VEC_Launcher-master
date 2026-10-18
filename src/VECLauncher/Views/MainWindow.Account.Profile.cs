@@ -26,7 +26,6 @@ public partial class MainWindow
 
         TxtAccName.Text = acc.Username;
         TxtAccUuid.Text = acc.DashedUuid;
-
         TxtAccUuidShort.Text = acc.DashedUuid;
 
         if (acc.IsVec)
@@ -46,16 +45,51 @@ public partial class MainWindow
         if (TxtSkinModelBadge != null) TxtSkinModelBadge.Text = badge;
         if (TxtToggleModelBadge != null) TxtToggleModelBadge.Text = badge;
 
+        if (ToggleModelSwitch != null) ToggleModelSwitch.IsChecked = isSlim;
+        if (ToggleElytraSwitch != null) ToggleElytraSwitch.IsChecked = _gltfSkinModel.IsElytraMode;
+        if (TxtElytraStatus != null) TxtElytraStatus.Text = _gltfSkinModel.IsElytraMode ? "Вкл" : "Выкл";
+
         var accountType = acc.IsVec ? "VEC ID (КПВК)" : (acc.IsOffline ? "Оффлайн" : "Microsoft");
         var sideStatus = acc.IsVec ? "VEC ID" : (acc.IsOffline ? "Оффлайн" : "Microsoft");
 
-        // Use SetCurrentValue for bound elements to preserve WPF bindings
         TxtAuthState.SetCurrentValue(TextBlock.TextProperty, acc.Username);
         TxtSideName.SetCurrentValue(TextBlock.TextProperty, acc.Username);
         TxtSideStatus.SetCurrentValue(TextBlock.TextProperty, sideStatus);
-
-        // Hidden compatibility elements (not bound)
         TxtAccType.Text = accountType;
+
+        if (BorderProfileCard != null) BorderProfileCard.Visibility = Visibility.Visible;
+        if (BorderLoginCard != null) BorderLoginCard.Visibility = Visibility.Collapsed;
+
+        if (acc.HasMinecraftLicense)
+        {
+            if (BadgeLicense != null) BadgeLicense.Visibility = Visibility.Collapsed;
+            if (TxtLicenseBadge != null)
+            {
+                TxtLicenseBadge.Text = "Mojang";
+                TxtLicenseBadge.Foreground = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF));
+                TxtLicenseBadge.Visibility = Visibility.Visible;
+            }
+            if (TxtMinecraftNick != null)
+            {
+                TxtMinecraftNick.Text = !string.IsNullOrEmpty(acc.MicrosoftGamertag) ? $"Minecraft: {acc.MicrosoftGamertag}" : $"Minecraft: {acc.Username}";
+            }
+        }
+        else
+        {
+            if (BadgeLicense != null) BadgeLicense.Visibility = Visibility.Collapsed;
+            if (TxtLicenseBadge != null)
+            {
+                TxtLicenseBadge.Text = "";
+                TxtLicenseBadge.Visibility = Visibility.Collapsed;
+            }
+            if (TxtMinecraftNick != null)
+            {
+                TxtMinecraftNick.Text = $"ID: {acc.Username}";
+            }
+        }
+
+        var avatar = GetAccountAvatarImage(acc, 48);
+        if (avatar != null && ImgAvatarLarge != null) ImgAvatarLarge.Source = avatar;
 
         BtnLogout.IsEnabled = true;
         BtnUploadSkin.IsEnabled = true;
@@ -63,6 +97,7 @@ public partial class MainWindow
 
         RefreshSavedAccountsListUI();
         RefreshSidebarAccounts();
+        _ = RefreshCapesGridUIAsync(acc);
         if (refreshSkin) _ = LoadSkinImagesAsync(acc);
     }
 
@@ -108,7 +143,6 @@ public partial class MainWindow
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            // Badge
             var badgeText = acc.IsVec ? "V" : (acc.IsOffline ? "O" : "M");
             var badgeBg = acc.IsVec ? "#222" : (acc.IsOffline ? "#181818" : "#1E2A38");
             var badgeBorder = new Border

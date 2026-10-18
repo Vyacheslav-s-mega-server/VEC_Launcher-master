@@ -150,7 +150,7 @@ public static class CapeService
 
     public static ImageSource? CreateCapePreview(byte[]? capeBytes)
     {
-        if (capeBytes == null || capeBytes.Length == 0) return CreateEmptyPreview();
+        if (capeBytes == null || capeBytes.Length == 0) return null;
 
         try
         {
@@ -158,23 +158,54 @@ public static class CapeService
             var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
             var frame = decoder.Frames[0];
 
-            int cropX = 1;
-            int cropY = 1;
-            int cropW = 10;
-            int cropH = 16;
+            var formatConverted = new FormatConvertedBitmap(frame, PixelFormats.Bgra32, null, 0);
+            int srcW = formatConverted.PixelWidth;
+            int srcH = formatConverted.PixelHeight;
 
-            if (frame.PixelWidth >= 64 && frame.PixelHeight >= 32)
+            int scale = Math.Max(1, srcW / 64);
+            int cropX = 1 * scale;
+            int cropY = 1 * scale;
+            int cropW = 10 * scale;
+            int cropH = 16 * scale;
+
+            if (cropX + cropW > srcW || cropY + cropH > srcH)
             {
-                var cropped = new CroppedBitmap(frame, new System.Windows.Int32Rect(cropX, cropY, cropW, cropH));
-                
-                var scaled = new TransformedBitmap(cropped, new ScaleTransform(6, 6));
-                RenderOptions.SetBitmapScalingMode(scaled, BitmapScalingMode.NearestNeighbor);
-                scaled.Freeze();
-                return scaled;
+                cropX = 0; cropY = 0; cropW = srcW; cropH = srcH;
             }
 
-            frame.Freeze();
-            return frame;
+            int srcStride = srcW * 4;
+            byte[] srcPixels = new byte[srcH * srcStride];
+            formatConverted.CopyPixels(srcPixels, srcStride, 0);
+
+            int targetW = 44;
+            int targetH = 70;
+            int targetStride = targetW * 4;
+            byte[] targetPixels = new byte[targetH * targetStride];
+
+            for (int y = 0; y < targetH; y++)
+            {
+                int srcY = cropY + (y * cropH) / targetH;
+                if (srcY >= srcH) srcY = srcH - 1;
+
+                for (int x = 0; x < targetW; x++)
+                {
+                    int srcX = cropX + (x * cropW) / targetW;
+                    if (srcX >= srcW) srcX = srcW - 1;
+
+                    int srcOffset = (srcY * srcW + srcX) * 4;
+                    int targetOffset = (y * targetW + x) * 4;
+
+                    targetPixels[targetOffset + 0] = srcPixels[srcOffset + 0];
+                    targetPixels[targetOffset + 1] = srcPixels[srcOffset + 1];
+                    targetPixels[targetOffset + 2] = srcPixels[srcOffset + 2];
+                    targetPixels[targetOffset + 3] = srcPixels[srcOffset + 3];
+                }
+            }
+
+            var writeable = new WriteableBitmap(targetW, targetH, 96, 96, PixelFormats.Bgra32, null);
+            writeable.WritePixels(new System.Windows.Int32Rect(0, 0, targetW, targetH), targetPixels, targetStride, 0);
+            writeable.Freeze();
+            return writeable;
         }
         catch (Exception ex)
         {

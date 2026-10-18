@@ -619,6 +619,43 @@
                     </Grid>
 
                     <Grid x:Name="PageAccount" Grid.Row="0" Margin="0" Visibility="Collapsed">
+                        <Grid.Resources>
+                            <Style x:Key="MinecraftSwitchStyle" TargetType="CheckBox">
+                                <Setter Property="Width" Value="44"/>
+                                <Setter Property="Height" Value="22"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="CheckBox">
+                                            <Border x:Name="Track" Width="44" Height="22" Background="#141720" BorderBrush="#3C4250" BorderThickness="2" CornerRadius="0">
+                                                <Grid>
+                                                    <Border x:Name="Thumb" Width="14" Height="14" Background="#FFFFFF" CornerRadius="0"
+                                                            HorizontalAlignment="Left" Margin="2,0,0,0"/>
+                                                </Grid>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="Track" Property="Background" Value="#15803D"/>
+                                                    <Setter TargetName="Track" Property="BorderBrush" Value="#22C55E"/>
+                                                    <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Left"/>
+                                                    <Setter TargetName="Thumb" Property="Margin" Value="24,0,0,0"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Track" Property="BorderBrush" Value="#9CA3AF"/>
+                                                </Trigger>
+                                                <MultiTrigger>
+                                                    <MultiTrigger.Conditions>
+                                                        <Condition Property="IsChecked" Value="True"/>
+                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                    </MultiTrigger.Conditions>
+                                                    <Setter TargetName="Track" Property="BorderBrush" Value="#4ADE80"/>
+                                                </MultiTrigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Grid.Resources>
                         <Grid.Background>
                             <ImageBrush ImageSource="pack://application:,,,/Assets/account_bg.jpg" Stretch="UniformToFill" Opacity="0.12"/>
                         </Grid.Background>
@@ -628,255 +665,234 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Header -->
-                        <Grid Grid.Row="0" Margin="0,0,0,14">
+                        <Grid Grid.Row="0" Margin="0,0,0,16">
                             <StackPanel>
-                                <TextBlock Text="Профиль и Скин" FontSize="20" FontWeight="Bold" Foreground="White"/>
-                                <TextBlock Text="Авторизация, персонализация скина и 3D-рендер модели"
-                                           Foreground="#666" FontSize="11" Margin="0,3,0,0"/>
+                                <TextBlock Text="ПРОФИЛЬ И ГАРДЕРОБ" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                                <TextBlock Text="Единый аккаунт VEC ID, лицензия Minecraft, персонализация скина и гардероб плащей"
+                                           Foreground="#888" FontSize="11" Margin="0,3,0,0"/>
                             </StackPanel>
                         </Grid>
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                            <Grid Margin="0,0,6,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="340"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,6,20">
+                                <Grid Margin="0,0,0,24">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="320"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0" VerticalAlignment="Top">
-                                    <Border Background="#141418" BorderBrush="#26262E" BorderThickness="1"
-                                            CornerRadius="16" Padding="0" ClipToBounds="True">
-                                        <Grid>
-                                            <!-- Native 3D Viewport -->
-                                            <Grid x:Name="SkinViewerHost" Height="460" Background="#0A0A0E"
-                                                  MouseDown="SkinViewport_MouseDown" MouseMove="SkinViewport_MouseMove"
-                                                  MouseUp="SkinViewport_MouseUp" MouseWheel="SkinViewport_MouseWheel"
-                                                  Cursor="SizeAll">
-                                                <Viewport3D x:Name="SkinViewport3D" Visibility="Visible">
-                                                    <Viewport3D.Camera>
-                                                        <PerspectiveCamera x:Name="SkinCamera" Position="0, 0, 48" LookDirection="0, 0, -1" UpDirection="0, 1, 0" FieldOfView="45"/>
-                                                    </Viewport3D.Camera>
-                                                    <ModelVisual3D>
-                                                        <ModelVisual3D.Content>
-                                                            <Model3DGroup>
-                                                                <AmbientLight Color="#DDDDDD"/>
-                                                                <DirectionalLight Color="#666666" Direction="-1, -2, -3"/>
-                                                                <DirectionalLight Color="#444444" Direction="1, 1, 2"/>
-                                                            </Model3DGroup>
-                                                        </ModelVisual3D.Content>
-                                                    </ModelVisual3D>
-                                                    <ModelVisual3D x:Name="SkinModelVisual"/>
-                                                </Viewport3D>
+                                    <Border Grid.Column="0" Background="#111319" BorderBrush="#232730" BorderThickness="2" CornerRadius="0" Padding="14">
+                                        <StackPanel>
+                                            <Border Background="#0D0E13" BorderBrush="#1F232D" BorderThickness="1" CornerRadius="0" Height="380" Width="288">
+                                                <Grid x:Name="SkinViewerHost"
+                                                      MouseDown="SkinViewport_MouseDown" MouseMove="SkinViewport_MouseMove"
+                                                      MouseUp="SkinViewport_MouseUp" MouseWheel="SkinViewport_MouseWheel"
+                                                      Cursor="SizeAll">
+                                                    <Viewport3D x:Name="SkinViewport3D" Visibility="Visible">
+                                                        <Viewport3D.Camera>
+                                                            <PerspectiveCamera x:Name="SkinCamera" Position="0, 0, 48" LookDirection="0, 0, -1" UpDirection="0, 1, 0" FieldOfView="45"/>
+                                                        </Viewport3D.Camera>
+                                                        <ModelVisual3D>
+                                                            <ModelVisual3D.Content>
+                                                                <Model3DGroup>
+                                                                    <AmbientLight Color="#DDDDDD"/>
+                                                                    <DirectionalLight Color="#666666" Direction="-1, -2, -3"/>
+                                                                    <DirectionalLight Color="#444444" Direction="1, 1, 2"/>
+                                                                </Model3DGroup>
+                                                            </ModelVisual3D.Content>
+                                                        </ModelVisual3D>
+                                                        <ModelVisual3D x:Name="SkinModelVisual"/>
+                                                    </Viewport3D>
 
-                                                <Grid x:Name="SkinViewerPlaceholder" Visibility="Visible" IsHitTestVisible="False">
-                                                    <Grid.Background>
-                                                        <ImageBrush ImageSource="pack://application:,,,/Assets/account_bg.jpg" Stretch="UniformToFill" Opacity="0.08"/>
-                                                    </Grid.Background>
-                                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                                        <TextBlock Text="👤" FontSize="48" HorizontalAlignment="Center" Opacity="0.3"/>
-                                                        <TextBlock Text="Войдите, чтобы увидеть скин" FontSize="13" Foreground="#555"
-                                                                   TextAlignment="Center" Margin="0,8,0,0"/>
+                                                    <Grid x:Name="SkinViewerPlaceholder" Visibility="Visible" IsHitTestVisible="False">
+                                                        <Grid.Background>
+                                                            <ImageBrush ImageSource="pack://application:,,,/Assets/account_bg.jpg" Stretch="UniformToFill" Opacity="0.08"/>
+                                                        </Grid.Background>
+                                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                            <TextBlock Text="Войдите, чтобы увидеть скин" FontSize="13" Foreground="#666"
+                                                                       TextAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Grid>
+
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10">
+                                                        <Button x:Name="BtnRefreshSkin" Width="30" Height="30" Margin="0,0,6,0"
+                                                                Background="#141720" Foreground="White" BorderBrush="#3C4250" BorderThickness="1"
+                                                                Cursor="Hand" ToolTip="Синхронизировать скин и плащ с сервером VEC"
+                                                                Click="BtnRefreshSkin_Click">
+                                                            <Button.Resources>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="CornerRadius" Value="0"/>
+                                                                </Style>
+                                                            </Button.Resources>
+                                                            <TextBlock Text="↻" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Button>
+
+                                                        <Button x:Name="BtnResetSkin" Width="30" Height="30"
+                                                                Background="#141720" Foreground="#AAA" BorderBrush="#3C4250" BorderThickness="1"
+                                                                Cursor="Hand" ToolTip="Сбросить скин на стандартный"
+                                                                Click="BtnResetSkin_Click">
+                                                            <Button.Resources>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="CornerRadius" Value="0"/>
+                                                                </Style>
+                                                            </Button.Resources>
+                                                            <TextBlock Text="↺" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Button>
                                                     </StackPanel>
                                                 </Grid>
-
-                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12">
-                                                    <Button x:Name="BtnRefreshSkin" Width="34" Height="34" Margin="0,0,6,0"
-                                                            Background="#E616161C" Foreground="White" BorderBrush="#33FFFFFF" BorderThickness="1"
-                                                            Cursor="Hand" ToolTip="Синхронизировать скин и плащ с сервером VEC"
-                                                            Click="BtnRefreshSkin_Click">
-                                                        <Button.Resources>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="CornerRadius" Value="8"/>
-                                                            </Style>
-                                                        </Button.Resources>
-                                                        <TextBlock Text="🔄" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Button>
-
-                                                    <Button x:Name="BtnBrowseSkin" Width="34" Height="34" Margin="0,0,6,0"
-                                                            Background="#E616161C" Foreground="White" BorderBrush="#33FFFFFF" BorderThickness="1"
-                                                            Cursor="Hand" ToolTip="Сменить скин (выбрать PNG-файл)"
-                                                            Click="BtnBrowseSkin_Click">
-                                                        <Button.Resources>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="CornerRadius" Value="8"/>
-                                                            </Style>
-                                                        </Button.Resources>
-                                                        <Image Source="pack://application:,,,/Assets/icon_skin_exploler.png" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                    </Button>
-
-                                                    <!-- Model Toggle Button (Classic / Slim) -->
-                                                    <Button x:Name="BtnToggleModel" Height="34" Padding="10,0" Margin="0,0,6,0"
-                                                            Background="#E616161C" Foreground="White" BorderBrush="#33FFFFFF" BorderThickness="1"
-                                                            Cursor="Hand" ToolTip="Переключить модель Classic (4px) / Slim (3px)"
-                                                            Click="BtnToggleModel_Click">
-                                                        <Button.Resources>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="CornerRadius" Value="8"/>
-                                                            </Style>
-                                                        </Button.Resources>
-                                                        <TextBlock x:Name="TxtToggleModelBadge" Text="Classic" FontSize="11" FontWeight="Bold" Foreground="#ECECED" VerticalAlignment="Center"/>
-                                                    </Button>
-
-                                                    <!-- Wardrobe / Capes Button -->
-                                                    <Button x:Name="BtnWardrobe" Width="34" Height="34" Margin="0,0,6,0"
-                                                            Background="#E616161C" Foreground="White" BorderBrush="#33FFFFFF" BorderThickness="1"
-                                                            Cursor="Hand" ToolTip="Гардероб плащей (выбор плаща, промокоды)"
-                                                            Click="BtnWardrobe_Click">
-                                                        <Button.Resources>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="CornerRadius" Value="8"/>
-                                                            </Style>
-                                                        </Button.Resources>
-                                                        <Image Source="pack://application:,,,/Assets/icon_cape_button.png" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                    </Button>
-
-                                                    <!-- Reset Skin Button -->
-                                                    <Button x:Name="BtnResetSkin" Width="34" Height="34"
-                                                            Background="#E616161C" Foreground="#AAA" BorderBrush="#33FFFFFF" BorderThickness="1"
-                                                            Cursor="Hand" ToolTip="↺ Сбросить на стандартный Steve / Alex"
-                                                            Click="BtnResetSkin_Click">
-                                                        <Button.Resources>
-                                                            <Style TargetType="Border">
-                                                                <Setter Property="CornerRadius" Value="8"/>
-                                                            </Style>
-                                                        </Button.Resources>
-                                                        <TextBlock Text="↺" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Button>
-                                                </StackPanel>                                                <!-- Cape Mode Overlay (hidden by default) -->
-                                                <Grid x:Name="CapeModeOverlay" Visibility="Collapsed" IsHitTestVisible="True">
-                                                    <!-- Left arrow -->
-                                                    <Button x:Name="BtnCapePrev" Width="50" Height="50"
-                                                            HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0,0,0"
-                                                            Cursor="Hand" Click="BtnCapePrev_Click">
-                                                        <Button.Template>
-                                                            <ControlTemplate TargetType="Button">
-                                                                <TextBlock Text="‹" FontSize="30" FontWeight="Light" Foreground="#BBB"
-                                                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                                            </ControlTemplate>
-                                                        </Button.Template>
-                                                    </Button>
-
-                                                    <!-- Right arrow -->
-                                                    <Button x:Name="BtnCapeNext" Width="50" Height="50"
-                                                            HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"
-                                                            Cursor="Hand" Click="BtnCapeNext_Click">
-                                                        <Button.Template>
-                                                            <ControlTemplate TargetType="Button">
-                                                                <TextBlock Text="›" FontSize="30" FontWeight="Light" Foreground="#BBB"
-                                                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                                            </ControlTemplate>
-                                                        </Button.Template>
-                                                    </Button>
-
-                                                    <!-- Confirm button -->
-                                                    <Button x:Name="BtnCapeConfirm" Width="180" Height="36"
-                                                            HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,16"
-                                                            Background="White" Foreground="Black" FontWeight="600" FontSize="12"
-                                                            BorderThickness="0" Cursor="Hand"
-                                                            Click="BtnCapeConfirm_Click">
-                                                        <Button.Resources>
-                                                            <Style TargetType="Border"><Setter Property="CornerRadius" Value="4"/></Style>
-                                                        </Button.Resources>
-                                                        <TextBlock x:Name="TxtCapeConfirmLabel" Text="ВЫБРАТЬ"/>
-                                                    </Button>
-                                                </Grid>
-                                            </Grid>
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- Hidden elements for code-behind references -->
-                                    <StackPanel Visibility="Collapsed">
-                                        <TextBlock x:Name="TxtAccName"/>
-                                        <TextBlock x:Name="TxtAccType"/>
-                                        <TextBlock x:Name="TxtSkinModelBadge"/>
-                                    </StackPanel>
-                                    <TextBlock x:Name="TxtSkinStatus" Text="" FontSize="11" TextWrapping="Wrap"
-                                               Foreground="#888" Margin="0,8,0,0" HorizontalAlignment="Center"/>
-                                </StackPanel>
-
-                                <!-- RIGHT: Active Profile & Compact Auth Rows -->
-                                <StackPanel Grid.Column="1" Margin="20,0,0,0">
-
-                                    <!-- Active Account Card -->
-                                    <Border Background="#141418" BorderBrush="#26262E" BorderThickness="1"
-                                            CornerRadius="14" Padding="16" Margin="0,0,0,16">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8" Background="#1C1C24" BorderThickness="0" ClipToBounds="True">
-                                                <Image x:Name="ImgAvatarLarge" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderOptions.EdgeMode="Aliased"/>
                                             </Border>
 
-                                            <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
-                                                <TextBlock x:Name="TxtAuthState" Text="{Binding AuthState}" FontWeight="Bold" FontSize="13.5" Foreground="White" TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="Быстрое переключение профилей в меню снизу слева" Foreground="#666" FontSize="11" Margin="0,2,0,0"/>
+                                            <StackPanel Margin="0,14,0,0">
+                                                <Border Background="#0D0F14" BorderBrush="#1F232D" BorderThickness="1" CornerRadius="0" Padding="10,6" Margin="0,0,0,8">
+                                                    <Grid>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="РУКИ" FontSize="11" FontWeight="Bold" Foreground="#9CA3AF"/>
+                                                            <TextBlock x:Name="TxtToggleModelBadge" Text="Classic" FontSize="11" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                        <CheckBox x:Name="ToggleModelSwitch" HorizontalAlignment="Right"
+                                                                  Style="{StaticResource MinecraftSwitchStyle}"
+                                                                  Click="ToggleModelSwitch_Click" ToolTip="Переключить модель Classic (4px) / Slim (3px)"/>
+                                                    </Grid>
+                                                </Border>
+
+                                                <Button x:Name="BtnBrowseSkin" Height="36" Background="#23252D" BorderBrush="#374151" BorderThickness="1"
+                                                        Foreground="#FFFFFF" FontSize="11.5" FontWeight="SemiBold" Cursor="Hand" Click="BtnBrowseSkin_Click">
+                                                    <Button.Resources>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="CornerRadius" Value="0"/>
+                                                        </Style>
+                                                    </Button.Resources>
+                                                    <TextBlock Text="Загрузить скин (.png)" VerticalAlignment="Center"/>
+                                                </Button>
+                                                <TextBlock x:Name="TxtSelectedSkinFileName" FontSize="11" Foreground="#34D399" Margin="0,6,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
 
-                                            <Button x:Name="BtnLogout" Grid.Column="2" Content="Выйти"
-                                                    Background="Transparent" Foreground="#EF4444" BorderBrush="#3A2222" BorderThickness="1"
-                                                    Padding="14,6" FontSize="11.5" Cursor="Hand" Click="BtnLogout_Click" IsEnabled="False">
-                                                <Button.Resources>
-                                                    <Style TargetType="Border">
-                                                        <Setter Property="CornerRadius" Value="7"/>
-                                                    </Style>
-                                                </Button.Resources>
-                                            </Button>
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- Compact Auth Methods Container -->
-                                    <Border Background="#141418" BorderBrush="#26262E" BorderThickness="1" CornerRadius="14" Padding="16">
-                                        <StackPanel>
-                                            <TextBlock Text="ДОБАВИТЬ АККАУНТ" FontSize="10" FontWeight="Bold" Foreground="#555" Margin="0,0,0,14"/>
-
-                                            <!-- Method 1: Microsoft -->
-                                            <Grid Margin="0,0,0,12">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8" Background="#0078D4" VerticalAlignment="Center">
-                                                    <TextBlock Text="M" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                                    <TextBlock Text="Microsoft / Xbox Live" FontWeight="SemiBold" FontSize="13" Foreground="White"/>
-                                                    <TextBlock Text="Официальная лицензия Minecraft" Foreground="#777" FontSize="10.5" Margin="0,2,0,0"/>
-                                                </StackPanel>
-                                                <Button x:Name="BtnLogin" Grid.Column="2" Style="{StaticResource AccentButton}"
-                                                        Content="Войти" Padding="20,8" FontSize="12"
-                                                        Click="BtnLogin_Click" IsEnabled="True"/>
-                                            </Grid>
-
-                                            <!-- Divider -->
-                                            <Border Height="1" Background="#22222C" Margin="0,4,0,16"/>
-
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8" Background="#252530" BorderBrush="#3B3B48" BorderThickness="1" VerticalAlignment="Center">
-                                                    <TextBlock Text="V" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                                    <TextBlock Text="VEC ID (Колледж КПВК)" FontWeight="SemiBold" FontSize="13" Foreground="White"/>
-                                                    <TextBlock Text="Единый студенческий аккаунт сервера" Foreground="#777" FontSize="10.5" Margin="0,2,0,0"/>
-                                                </StackPanel>
-                                                <Button x:Name="BtnVecLogin" Grid.Column="2" Style="{StaticResource AccentButton}"
-                                                        Content="Войти" Padding="20,8" FontSize="12"
-                                                        Click="BtnVecLogin_Click"/>
-                                            </Grid>
+                                            <StackPanel Visibility="Collapsed">
+                                                <TextBlock x:Name="TxtAccType"/>
+                                                <TextBlock x:Name="TxtSkinModelBadge"/>
+                                            </StackPanel>
+                                            <TextBlock x:Name="TxtSkinStatus" Text="" FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="#888" Margin="0,8,0,0" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
-                                </StackPanel>
-                            </Grid>
+
+                                    <StackPanel Grid.Column="1" Margin="20,0,0,0">
+                                        <Border x:Name="BorderProfileCard" Background="#161922" BorderBrush="#232730" BorderThickness="2"
+                                                CornerRadius="0" Padding="20" Margin="0,0,0,16" Visibility="Collapsed">
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,14">
+                                                    <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                                </Grid>
+                                                <Border Height="1" Background="#232730" Margin="0,0,0,16"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Border Grid.Column="0" Width="48" Height="48" CornerRadius="0" Background="#111319" BorderBrush="#232730" BorderThickness="1" ClipToBounds="True">
+                                                        <Image x:Name="ImgAvatarLarge" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderOptions.EdgeMode="Aliased"/>
+                                                    </Border>
+
+                                                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock x:Name="TxtAccName" Text="Игрок" FontWeight="Bold" FontSize="16" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock x:Name="TxtLicenseBadge" Text="Mojang" FontSize="12" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                        <TextBlock x:Name="TxtMinecraftNick" Text="Minecraft: —" Foreground="#9CA3AF" FontSize="12" Margin="0,4,0,0"/>
+                                                    </StackPanel>
+
+                                                    <Button x:Name="BtnLogout" Grid.Column="2" Content="Выйти"
+                                                            Background="Transparent" Foreground="#EF4444" BorderBrush="#3A2222" BorderThickness="1"
+                                                            Padding="16,6" FontSize="11.5" Cursor="Hand" Click="BtnLogout_Click" IsEnabled="True" VerticalAlignment="Center">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="CornerRadius" Value="0"/>
+                                                            </Style>
+                                                        </Button.Resources>
+                                                    </Button>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border x:Name="BorderLoginCard" Background="#161922" BorderBrush="#232730" BorderThickness="2"
+                                                CornerRadius="0" Padding="20" Margin="0,0,0,16" Visibility="Visible">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                                                    <TextBlock Text="ЕДИНЫЙ ВХОД VEC ID" FontSize="11" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,4"/>
+                                                    <TextBlock Text="Авторизуйтесь через единый студенческий аккаунт VEC ID." FontWeight="SemiBold" FontSize="13" Foreground="White"/>
+                                                    <TextBlock Text="Привязанная лицензия Microsoft, скины и плащи синхронизируются автоматически." Foreground="#777" FontSize="11" Margin="0,3,0,0"/>
+                                                </StackPanel>
+                                                <Button x:Name="BtnVecLogin" Grid.Column="1" Style="{StaticResource AccentButton}"
+                                                        Content="Войти через VEC ID" Padding="20,10" FontSize="12.5" VerticalAlignment="Center"
+                                                        Click="BtnVecLogin_Click">
+                                                    <Button.Resources>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="CornerRadius" Value="0"/>
+                                                        </Style>
+                                                    </Button.Resources>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,10,0,0">
+                                    <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,-22,0,0" Background="#191B22" BorderBrush="#22C55E" BorderThickness="2" CornerRadius="0" Padding="12,3" Panel.ZIndex="2">
+                                        <TextBlock Text="ВЫБЕРИТЕ СВОЙ ПЛАЩ" FontSize="11" FontWeight="Bold" Foreground="#22C55E"/>
+                                    </Border>
+
+                                    <Border Background="#191B22" BorderBrush="#232730" BorderThickness="2" CornerRadius="0" Padding="24,20,24,20">
+                                        <StackPanel>
+                                            <Border Height="2" Background="#22C55E" Margin="-24,-20,-24,18"/>
+                                            <TextBlock Text="ПРИОБРЕТЕННЫЕ ПЛАЩИ" FontSize="12" FontWeight="ExtraBold" Foreground="#E5E7EB" Margin="0,0,0,6"/>
+                                            <TextBlock Text="Плащи — это особые награды, которые игроки могут разблокировать во время событий, кампаний и прочих веселых приключений."
+                                                       Foreground="#9CA3AF" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,18"/>
+
+                                            <WrapPanel x:Name="CapesWrapPanel" Margin="0,0,0,16"/>
+
+                                            <Border Height="1" Background="#232730" Margin="0,6,0,18"/>
+
+                                            <TextBlock Text="АКТИВАЦИЯ ПРОМОКОДА НА ПЛАЩ" FontSize="12" FontWeight="ExtraBold" Foreground="#E5E7EB" Margin="0,0,0,6"/>
+                                            <TextBlock Text="Введите полученный промокод для разблокировки и надевания плаща."
+                                                       Foreground="#9CA3AF" FontSize="12" Margin="0,0,0,12"/>
+
+                                            <Grid MaxWidth="500" HorizontalAlignment="Left">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox x:Name="TxtCapePromoCode" Grid.Column="0" Height="36" Width="280"
+                                                         Background="#111319" Foreground="White" BorderBrush="#2B303C" BorderThickness="1"
+                                                         Padding="12,0" VerticalContentAlignment="Center" FontFamily="Consolas, monospace"
+                                                         FontSize="13" TextWrapping="NoWrap" Margin="0,0,10,0"
+                                                         KeyDown="TxtCapePromoCode_KeyDown">
+                                                    <TextBox.Resources>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="CornerRadius" Value="0"/>
+                                                        </Style>
+                                                    </TextBox.Resources>
+                                                </TextBox>
+                                                <Button x:Name="BtnRedeemCapePromo" Grid.Column="1" Height="36" Content="Активировать"
+                                                        Background="#23252D" Foreground="White" BorderBrush="#374151" BorderThickness="1"
+                                                        Padding="20,0" FontSize="12" FontWeight="SemiBold" Cursor="Hand" Click="BtnRedeemCapePromo_Click">
+                                                    <Button.Resources>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="CornerRadius" Value="0"/>
+                                                        </Style>
+                                                    </Button.Resources>
+                                                </Button>
+                                            </Grid>
+                                            <TextBlock x:Name="TxtCapePromoStatus" FontSize="11.5" Margin="0,8,0,0" Visibility="Collapsed" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
                         </ScrollViewer>
 
                         <!-- Hidden compatibility elements for code-behind bindings -->
@@ -884,14 +900,23 @@
                             <TextBlock x:Name="TxtAccUuid"/>
                             <TextBlock x:Name="TxtAccUuidShort"/>
                             <TextBlock x:Name="TxtSkinModel"/>
+                            <TextBlock x:Name="TxtAuthState"/>
                             <Image x:Name="ImgSkinPreview"/>
                             <TextBlock x:Name="TxtSkinPlaceholder"/>
                             <TextBox x:Name="TxtSkinPath"/>
                             <Button x:Name="BtnUploadSkin"/>
+                            <Button x:Name="BtnLogin"/>
+                            <Button x:Name="BtnWardrobe"/>
+                            <Button x:Name="BtnToggleModel"/>
+                            <Border x:Name="CapeModeOverlay"/>
+                            <TextBlock x:Name="TxtCapeConfirmLabel"/>
                             <TextBox x:Name="TxtOfflineName"/>
                             <TextBlock x:Name="TxtOfflineHint"/>
                             <StackPanel x:Name="StackSavedAccountsList"/>
                             <TextBlock x:Name="TxtSavedAccountsCount"/>
+                            <CheckBox x:Name="ToggleElytraSwitch"/>
+                            <TextBlock x:Name="TxtElytraStatus"/>
+                            <Border x:Name="BadgeLicense"><Ellipse x:Name="DotLicense"/></Border>
                         </Grid>
                         </Grid>
                     </Grid>

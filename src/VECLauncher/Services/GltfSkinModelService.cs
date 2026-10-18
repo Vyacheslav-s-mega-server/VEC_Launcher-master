@@ -76,6 +76,7 @@ public class GltfSkinModelService
     private BoneNode? _capeNode;
     private bool _hasCape = false;
     public bool IsSlim { get; set; } = false;
+    public bool IsElytraMode { get; set; } = false;
 
     private byte[]? _currentSkinBytes;
     private byte[]? _currentCapeBytes;
@@ -1015,6 +1016,11 @@ public class GltfSkinModelService
         local.Scale(node.CurrentScale);
 
         local.Rotate(node.CurrentRotation);
+
+        if (node.IsCape && IsElytraMode)
+        {
+            local.Rotate(new Quaternion(new Vector3D(1, 0, 0), 45));
+        }
 
         local.Translate(node.CurrentTranslation);
 

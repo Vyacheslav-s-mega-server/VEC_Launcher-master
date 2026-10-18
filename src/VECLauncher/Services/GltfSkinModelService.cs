@@ -316,9 +316,6 @@ public class GltfSkinModelService
                 _rawMesh.Primitives.Add((indices, matIdx, isCape));
             }
 
-            _currentSkinBytes ??= DefaultSkinService.GetDefaultSkin("Steve", false);
-            _currentCapeBytes ??= DefaultSkinService.GetDefaultCape();
-
             var skinBmp = UpscaleNearestNeighbor(DecodeBitmap(_currentSkinBytes), 1024);
             _skinMaterial = CreateMaterial(skinBmp);
 
@@ -406,7 +403,7 @@ public class GltfSkinModelService
     {
         if (_rawMesh == null) return;
 
-        byte[] skinData = _currentSkinBytes ?? DefaultSkinService.GetDefaultSkin("Steve", IsSlim);
+        byte[]? skinData = _currentSkinBytes;
         var srcBmp = DecodeBitmap(skinData);
         var convertedBmp = new FormatConvertedBitmap(srcBmp, PixelFormats.Bgra32, null, 0);
         int w = convertedBmp.PixelWidth;
@@ -614,10 +611,6 @@ public class GltfSkinModelService
     public void UpdateSkinTexture(byte[]? skinRawBytes, bool isSlim = false)
     {
         IsSlim = isSlim;
-
-        if (skinRawBytes == null || skinRawBytes.Length == 0)
-            skinRawBytes = DefaultSkinService.GetDefaultSkin("Steve", isSlim);
-
         _currentSkinBytes = skinRawBytes;
         var skinBmp = UpscaleNearestNeighbor(DecodeBitmap(skinRawBytes), 1024);
 
@@ -680,8 +673,15 @@ public class GltfSkinModelService
         }
     }
 
-    private static BitmapSource DecodeBitmap(byte[] data)
+    private static BitmapSource DecodeBitmap(byte[]? data)
     {
+        if (data == null || data.Length == 0)
+        {
+            var wb = new WriteableBitmap(64, 64, 96, 96, PixelFormats.Bgra32, null);
+            wb.Freeze();
+            return wb;
+        }
+
         var bmp = new BitmapImage();
         using var ms = new MemoryStream(data);
         bmp.BeginInit();
@@ -721,10 +721,10 @@ public class GltfSkinModelService
                 int srcPixelOffset = srcRowOffset + srcX * 4;
                 int dstPixelOffset = dstRowOffset + x * 4;
 
-                dstPixels[dstPixelOffset + 0] = srcPixels[srcPixelOffset + 0]; // B
-                dstPixels[dstPixelOffset + 1] = srcPixels[srcPixelOffset + 1]; // G
-                dstPixels[dstPixelOffset + 2] = srcPixels[srcPixelOffset + 2]; // R
-                dstPixels[dstPixelOffset + 3] = srcPixels[srcPixelOffset + 3]; // A
+                dstPixels[dstPixelOffset + 0] = srcPixels[srcPixelOffset + 0];
+                dstPixels[dstPixelOffset + 1] = srcPixels[srcPixelOffset + 1];
+                dstPixels[dstPixelOffset + 2] = srcPixels[srcPixelOffset + 2];
+                dstPixels[dstPixelOffset + 3] = srcPixels[srcPixelOffset + 3];
             }
         }
 

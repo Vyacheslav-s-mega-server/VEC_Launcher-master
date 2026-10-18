@@ -5,10 +5,6 @@ using VECLauncher.Views;
 
 namespace VECLauncher.Services;
 
-/// <summary>
-/// WPF implementation of IDialogService. Holds a reference to the main Window
-/// for dialog ownership and window manipulation.
-/// </summary>
 public sealed class DialogService : IDialogService
 {
     private readonly Window _owner;
@@ -54,21 +50,6 @@ public sealed class DialogService : IDialogService
             CheckFileExists = true
         };
         return dlg.ShowDialog() == true ? dlg.FileName : null;
-    }
-
-    public async Task<(string? code, string? error)> ShowMicrosoftLoginAsync(string authUrl)
-    {
-        var dialog = new MicrosoftLoginDialog(authUrl) { Owner = _owner };
-        var result = dialog.ShowDialog();
-
-        if (result != true || string.IsNullOrEmpty(dialog.AuthorizationCode))
-        {
-            if (!string.IsNullOrEmpty(dialog.ErrorDescription))
-                return (null, dialog.ErrorDescription);
-            return (null, null); // cancelled
-        }
-
-        return (dialog.AuthorizationCode, null);
     }
 
     public async Task<MinecraftAccount?> ShowVecLoginAsync()

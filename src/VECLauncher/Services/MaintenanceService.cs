@@ -13,10 +13,7 @@ public static class MaintenanceService
         Versions,
         Libraries,
         Assets,
-        JavaRuntime,
-        Instances,
-        Settings,
-        Account
+        JavaRuntime
     }
 
     public sealed class TargetInfo
@@ -166,7 +163,7 @@ public static class MaintenanceService
         script.AppendLine("timeout /t 3 /nobreak >nul");
         script.AppendLine("del \"%~f0\" 2>nul");
 
-        var path = Path.Combine(Path.GetTempPath(), "mayslauncher_uninstall.bat");
+        var path = Path.Combine(Path.GetTempPath(), "veclauncher_uninstall.bat");
         File.WriteAllText(path, script.ToString(), Encoding.UTF8);
 
         return path;

@@ -97,17 +97,6 @@ public partial class MainWindow
     {
         var ordered = _instances.OrderByDescending(i => i.LastPlayed ?? i.Created).ToList();
 
-        if (CbInstancesHome != null)
-        {
-            CbInstancesHome.ItemsSource = null;
-            CbInstancesHome.ItemsSource = ordered;
-        }
-        if (CbInstances != null)
-        {
-            CbInstances.ItemsSource = null;
-            CbInstances.ItemsSource = ordered;
-        }
-
         var target = ordered.FirstOrDefault(i => i.Id == _settings.LastInstanceId)
             ?? ordered.FirstOrDefault(i => i.Name.Equals("VEC Fabric 1.21.11", StringComparison.OrdinalIgnoreCase))
             ?? ordered.FirstOrDefault();
@@ -121,29 +110,10 @@ public partial class MainWindow
         }
     }
 
-    private void CbInstances_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (CbInstances?.SelectedItem is not GameInstance inst) return;
-        SelectInstance(inst);
-    }
-
-    private void CbInstancesHome_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (CbInstancesHome?.SelectedItem is not GameInstance inst) return;
-        SelectInstance(inst);
-    }
-
     private void SelectInstance(GameInstance inst)
     {
         _selectedInstance = inst;
         _settings.LastInstanceId = inst.Id;
-
-        if (CbInstancesHome is not null && !ReferenceEquals(CbInstancesHome.SelectedItem, inst))
-            CbInstancesHome.SelectedItem = inst;
-
-        if (CbInstances is not null && !ReferenceEquals(CbInstances.SelectedItem, inst))
-            CbInstances.SelectedItem = inst;
-
         UpdateRunStateUi();
     }
 

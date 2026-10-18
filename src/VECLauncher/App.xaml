@@ -37,9 +37,9 @@
             <SolidColorBrush x:Key="Muted" Color="{StaticResource TextMutedColor}"/>
             <SolidColorBrush x:Key="Border" Color="{StaticResource BorderColor}"/>
 
-            <SolidColorBrush x:Key="GlassBackground" Color="#5A050505"/> <!-- Semi-transparent black -->
+            <SolidColorBrush x:Key="GlassBackground" Color="#5A050505"/>
             <SolidColorBrush x:Key="GlassBackgroundHover" Color="#7A050505"/>
-            <SolidColorBrush x:Key="GlassBorder" Color="#33FFFFFF"/> <!-- Thin bright border for rim light -->
+            <SolidColorBrush x:Key="GlassBorder" Color="#33FFFFFF"/>
             
             <Style x:Key="BentoCard" TargetType="Border">
                 <Setter Property="Background" Value="{DynamicResource GlassBackground}"/>

@@ -20,20 +20,16 @@ public partial class MainWindow : Window
 {
     public MainWindowViewModel Vm { get; }
 
-    // Services (thin shims — delegate to Vm)
     private VersionService _versions;
     private DownloadManager _downloads;
-    private MicrosoftAuthService _auth;
     private JavaService _java;
     private SkinService _skins;
     private GameLauncher _game;
     private ModLoaderService _loaders;
     private ServerPingService _ping;
-    private ModService _mods;
     private ModpackService _modpacks;
     private GameSessionManager _sessions => Vm.Sessions;
     private GameStatistics _stats => Vm.Stats;
-    private RamMonitor _ramMonitor => Vm.RamMonitor;
     private readonly IToastService _toast;
     private readonly IDialogService _dialog;
     private readonly IInstanceService _instancesService;
@@ -41,7 +37,6 @@ public partial class MainWindow : Window
     private readonly IMaintenanceService _maintenance;
     private readonly IImageCacheService _imageCache;
     private readonly object _skinFileLock = new();
-    private SkinInfo? _selectedSkin;
     private PreloadResult? _preloadedData;
 
     public void ApplyPreloadResult(PreloadResult result)
@@ -70,7 +65,6 @@ public partial class MainWindow : Window
     private bool _busy { get => Vm.Busy; set => Vm.Busy = value; }
     private bool _initializing = true;
     private DateTime _lastProgressUi = DateTime.MinValue;
-    private DispatcherTimer? _uptimeTimer;
 
     public MainWindow(MainWindowViewModel vm, IToastService toast,
         IInstanceService instancesService, IOfflineSkinService offlineSkins,
@@ -86,35 +80,25 @@ public partial class MainWindow : Window
 
         InitializeComponent();
 
-        // Inject UI service for VM dialogs
         _dialog = new DialogService(this);
         Vm.SetDialogService(_dialog);
 
-        // Inject launch callback — VM handles pre-flight, View handles UI
         Vm.LaunchAsyncCallback = LaunchAsync;
 
-        // Wire VM services to local shims for backward compat
         _versions = Vm.Versions;
         _downloads = Vm.Downloads;
-        _auth = Vm.Auth;
         _java = Vm.Java;
         _skins = Vm.Skins;
         _game = Vm.Game;
         _loaders = Vm.Loaders;
         _ping = Vm.Ping;
-        _mods = Vm.Mods;
         _modpacks = Vm.Modpacks;
-
-
-        Vm.RamMonitor.OnUpdate += RamMonitor_OnUpdate;
 
         ToastNotification.Initialize(this);
 
         _downloads.Progress += OnProgress;
         _java.Progress += OnProgress;
-        _auth.Status += s => Dispatcher.Invoke(() => SetStage(s));
         _loaders.Status += s => Dispatcher.Invoke(() => SetStage(s));
-        _mods.Status += s => Dispatcher.Invoke(() => SetStage(s));
         _modpacks.Status += s => Dispatcher.Invoke(() => SetStage(s));
         _modpacks.Progress += OnProgress;
         _game.GameOutput += line => Vm.AppendLog(line);
@@ -218,10 +202,6 @@ public partial class MainWindow : Window
 
             AppendLog("VEC Launcher запущен. Папка: " + _settings.GameDir);
 
-            _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-            _uptimeTimer.Tick += (_, _) => UpdateUptimeBadge();
-            _uptimeTimer.Start();
-
             if (_preloadedData?.JavaInstallations != null && _preloadedData.JavaInstallations.Count > 0)
             {
                 TxtJavaStatus.Visibility = Visibility.Collapsed;
@@ -241,35 +221,6 @@ public partial class MainWindow : Window
             if (saved is not null)
             {
                 SetAccount(saved, refreshSkin: true);
-
-                if (!saved.IsOffline && saved.IsExpired && !string.IsNullOrEmpty(saved.MicrosoftRefreshToken))
-                {
-                    try
-                    {
-                        SetStage("Обновляю сессию Microsoft...");
-                        var refreshed = await _auth.RefreshOrReloginAsync(saved.MicrosoftRefreshToken!);
-                        Vm.Accounts.Save(refreshed);
-                        SetAccount(refreshed, refreshSkin: true);
-                    }
-                    catch (MicrosoftAuthService.TokenExpiredException)
-                    {
-                        try
-                        {
-                            AppendLog("Токен истёк — открываю окно входа Microsoft...");
-                            var relogged = await ReloginMicrosoftAsync();
-                            SetAccount(relogged, refreshSkin: true);
-                        }
-                        catch (Exception rex)
-                        {
-                            AppendLog("Повторный вход не удался: " + rex.Message);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        AppendLog("Не удалось обновить сессию: " + ex.Message);
-                    }
-                    finally { HideProgress(); }
-                }
             }
 
             await LoadVersionsAsync();
@@ -280,7 +231,6 @@ public partial class MainWindow : Window
             Dispatcher.BeginInvoke(new Action(() => SetupWheelHandling(this)),
                 System.Windows.Threading.DispatcherPriority.Loaded);
 
-            _ramMonitor.Start();
             UpdateStatisticsDisplay();
             StartServerPingTimer();
 
@@ -386,10 +336,6 @@ public partial class MainWindow : Window
         _serverPingTimer.Start();
     }
 
-    private void RamMonitor_OnUpdate((DateTime Time, double UsedMb) point)
-    {
-    }
-
     private async void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         if (_sessions.AnyRunning)
@@ -405,7 +351,6 @@ public partial class MainWindow : Window
             if (r == ConfirmResult.Yes) await _sessions.StopAllAsync();
         }
 
-        _uptimeTimer?.Stop();
         PersistSettings();
         Application.Current.Shutdown();
     }
@@ -439,17 +384,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void BtnPlay_Click(object sender, RoutedEventArgs e)
-    {
-        if (_selectedInstance is null)
-        {
-            _dialog.ShowMessage("Сначала выберите или создайте сборку.", "Сборка не выбрана");
-            NavContent.IsChecked = true;
-            return;
-        }
-
-        await LaunchAsync(_selectedInstance, null);
-    }
 
     private static string Dashed(string uuid)
     {
@@ -523,26 +457,7 @@ public partial class MainWindow : Window
         _ = Task.Run(DetectJava);
     }
 
-    private System.Timers.Timer? _searchDebounceTimer;
 
-    private void TxtModSearch_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (!IsLoaded) return;
-        _searchDebounceTimer?.Stop();
-        _searchDebounceTimer = new System.Timers.Timer(600);
-        _searchDebounceTimer.Elapsed += (_, _) =>
-        {
-            _searchDebounceTimer.Stop();
-            _searchDebounceTimer.Dispose();
-            Dispatcher.Invoke(() =>
-            {
-                if (TxtModSearch.Text.Length >= 2)
-                    RunModSearchFromStart();
-            });
-        };
-        _searchDebounceTimer.AutoReset = false;
-        _searchDebounceTimer.Start();
-    }
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
@@ -831,7 +746,6 @@ public partial class MainWindow : Window
     private static string Shorten(string s, int max) =>
         s.Length <= max ? s : "…" + s[^(max - 1)..];
 
-    // ── Safe async wrapper (prevents fire-and-forget exceptions) ──
     private void RunAsync(Func<Task> action, string? errorContext = null)
     {
         _ = Task.Run(async () =>

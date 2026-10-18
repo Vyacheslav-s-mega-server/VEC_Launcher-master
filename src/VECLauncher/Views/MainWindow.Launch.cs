@@ -12,10 +12,6 @@ using VECLauncher.Services;
 
 namespace VECLauncher.Views;
 
-/// <summary>
-/// Partial class handling game launch pipeline: instance preparation, download orchestration,
-/// JVM argument construction, process start, log capture, session tracking, and stop logic.
-/// </summary>
 public partial class MainWindow
 {
     private HomeButtonState _homeBtnState = HomeButtonState.Idle;
@@ -61,7 +57,7 @@ public partial class MainWindow
         {
             _dialog.ShowMessage(
                 "Сначала войдите в аккаунт на вкладке «Аккаунт».\n\n" +
-                "Доступны вход через Microsoft и оффлайн-профиль.", "Требуется вход");
+                "Требуется авторизация через VEC ID.", "Требуется вход");
             NavAccount.IsChecked = true;
             return;
         }
@@ -97,23 +93,6 @@ public partial class MainWindow
 
         try
         {
-            if (!_account.IsOffline && _account.IsExpired &&
-                !string.IsNullOrEmpty(_account.MicrosoftRefreshToken))
-            {
-                SetStage("Обновляю сессию Microsoft...");
-                try
-                {
-                    _account = await _auth.RefreshOrReloginAsync(_account.MicrosoftRefreshToken!, ct);
-                }
-                catch (MicrosoftAuthService.TokenExpiredException)
-                {
-                    _account = await Dispatcher.InvokeAsync(() => ReloginMicrosoftAsync()).Task.Unwrap();
-                }
-                Vm.Accounts.Save(_account);
-                SetAccount(_account, refreshSkin: false);
-            }
-
-            // Delegate business logic to LaunchService
             var result = await Vm.Launch.LaunchAsync(
                 _account, inst, _settings, _manifest, _instances,
                 serverAddress, _settings.AllowMultipleInstances,
@@ -134,8 +113,6 @@ public partial class MainWindow
             AppendLog($"Minecraft запущен (PID {result.Process.Id}), сборка «{result.InstanceName}».");
             if (serverAddress is not null) AppendLog($"Автоподключение к серверу {serverAddress}.");
             SetStage("Игра запущена");
-
-            Vm.Events.Publish(new GameSessionChangedEvent(true, result.InstanceName));
 
             if (_settings.CloseLauncherOnStart)
             {
@@ -186,40 +163,7 @@ public partial class MainWindow
         SetStage("Отмена...");
     }
 
-    private async void BtnStopGame_Click(object sender, RoutedEventArgs e)
-    {
-        // Delegate logic to VM
-        var running = _sessions.Sessions.Where(s => s.IsRunning).ToList();
-        if (running.Count == 0) { UpdateRunStateUi(); return; }
 
-        // UI: confirmation dialog
-        if (_settings.ConfirmGameStop)
-        {
-            var names = string.Join(", ", running.Select(s => s.InstanceName));
-            if (!await _dialog.ConfirmAsync("Остановить игру",
-                $"Закрыть игру: {names}?\n\nНесохранённый прогресс может быть потерян.")) return;
-        }
-
-        // UI: button state
-        BtnStopGame.IsEnabled = false;
-        BtnStopGame.Content = "ОСТАНАВЛИВАЮ…";
-
-        // Delegate stop to VM
-        try
-        {
-            foreach (var s in running)
-            {
-                AppendLog($"Останавливаю «{s.InstanceName}» (PID {s.Pid})...");
-                await Vm.Sessions.StopAsync(s);
-            }
-        }
-        finally
-        {
-            BtnStopGame.IsEnabled = true;
-            BtnStopGame.Content = "ОСТАНОВИТЬ";
-            UpdateRunStateUi();
-        }
-    }
 
     private void OnSessionExited(GameSession session, int code)
     {
@@ -245,8 +189,6 @@ public partial class MainWindow
             AppendLog($"--- «{session.InstanceName}» завершилась (код {code}), " +
                       $"время сессии {session.UptimeDisplay} ---");
 
-            Vm.Events.Publish(new GameSessionChangedEvent(false, null));
-
             if (WindowState == WindowState.Minimized && !_sessions.AnyRunning)
                 WindowState = WindowState.Normal;
 
@@ -257,25 +199,7 @@ public partial class MainWindow
     private void UpdateRunStateUi()
     {
         _sessions.Prune();
-
         var anyRunning = _sessions.AnyRunning;
-        var thisRunning = _selectedInstance is not null &&
-                          _sessions.IsInstanceRunning(_selectedInstance.Id);
-
-        var hidePlay = !_busy && anyRunning && (!_settings.AllowMultipleInstances || thisRunning);
-
-        BtnPlay.Visibility = hidePlay ? Visibility.Collapsed : Visibility.Visible;
-        BtnStopGame.Visibility = anyRunning ? Visibility.Visible : Visibility.Collapsed;
-
-        BtnPlay.IsEnabled = !_busy;
-        BtnPlay.Content = _busy ? "ПОДГОТОВКА…"
-            : _selectedInstance is not null && !File.Exists(GamePaths.ForInstance(_selectedInstance).VersionJar(_selectedInstance.McVersion))
-                ? "УСТАНОВИТЬ И ИГРАТЬ"
-                : "ИГРАТЬ";
-
-        RunningBadge.Visibility = Visibility.Collapsed;
-
-        UpdateUptimeBadge();
         UpdateHomePlayButton(anyRunning);
     }
 
@@ -311,16 +235,6 @@ public partial class MainWindow
         }
     }
 
-    private void UpdateUptimeBadge()
-    {
-        var running = _sessions.Sessions.Where(s => s.IsRunning).ToList();
-        if (running.Count == 0) return;
 
-        TxtRunningBadge.Text = running.Count == 1
-            ? $"{running[0].InstanceName} · {running[0].UptimeDisplay}"
-            : $"Запущено игр: {running.Count}";
-
-        BtnStopGame.Content = running.Count > 1 ? $"ОСТАНОВИТЬ ({running.Count})" : "ОСТАНОВИТЬ";
-    }
 
 }

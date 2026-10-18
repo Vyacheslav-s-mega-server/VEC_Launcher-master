@@ -99,53 +99,35 @@ public sealed class VecAuthService
             {
                 throw new Exception("Invalid login or password on VEC server.");
             }
-        }
-        catch (Exception ex) when (!ex.Message.Contains("Invalid login"))
-        {
-            Log.Warn($"VecAuthService: VEC remote server offline ({url}): {ex.Message}. Using secure local database.");
-        }
 
-        var (success, message, account) = VecAccountDatabase.Login(login, password);
-        if (!success || account == null)
-        {
-            throw new Exception(message);
+            throw new Exception($"VEC server returned {resp.StatusCode}.");
         }
-
-        return account;
+        catch (Exception ex)
+        {
+            Log.Warn($"VecAuthService: VEC server error ({url}): {ex.Message}");
+            throw;
+        }
     }
 
     public async Task<MinecraftAccount> RegisterAsync(string username, string password, string? email = null, string? serverUrl = null)
     {
         var url = string.IsNullOrWhiteSpace(serverUrl) ? DefaultVecServerUrl : serverUrl.TrimEnd('/');
 
-        try
+        var payload = new
         {
-            var payload = new
-            {
-                username = username,
-                password = password,
-                email = email ?? $"{username.ToLowerInvariant()}@vec.kpvk.edu.kz"
-            };
+            username = username,
+            password = password,
+            email = email ?? $"{username.ToLowerInvariant()}@vec.kpvk.edu.kz"
+        };
 
-            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            var resp = await _http.PostAsync($"{url}/api/auth/register", content);
+        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+        var resp = await _http.PostAsync($"{url}/api/auth/register", content);
 
-            if (resp.IsSuccessStatusCode)
-            {
-                return await LoginAsync(username, password, url);
-            }
-        }
-        catch (Exception ex)
+        if (resp.IsSuccessStatusCode)
         {
-            Log.Warn($"VecAuthService: VEC server registration offline ({url}): {ex.Message}");
+            return await LoginAsync(username, password, url);
         }
 
-        var (success, message, account) = VecAccountDatabase.Register(username, password, email);
-        if (!success || account == null)
-        {
-            throw new Exception(message);
-        }
-
-        return account;
+        throw new Exception($"VEC server registration failed with status {resp.StatusCode}.");
     }
 }

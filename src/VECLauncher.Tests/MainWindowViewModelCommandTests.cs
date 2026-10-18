@@ -15,26 +15,21 @@ public class MainWindowViewModelCommandTests
         var vm = new MainWindowViewModel(
             new VersionService(s_http),
             new DownloadManager(s_http),
-            new MicrosoftAuthService(s_http),
             new JavaService(s_http),
             new SkinService(s_http),
             new GameLauncher(),
             new ModLoaderService(s_http),
             new ServerPingService(),
-            new ModService(s_http),
             new ModpackService(s_http),
-            new RamMonitor(),
             new LaunchService(
                 new VersionService(s_http),
                 new DownloadManager(s_http),
-                new MicrosoftAuthService(s_http),
                 new JavaService(s_http),
                 new SkinService(s_http),
                 new GameLauncher(),
                 new ModLoaderService(s_http)),
             GameStatistics.Load(),
-            new FavoriteInstances(),
-            new TestAccountRepository(), new EventAggregator());
+            new TestAccountRepository());
         vm.SetDialogService(new TestDialogService());
         return vm;
     }
@@ -52,10 +47,8 @@ public class MainWindowViewModelCommandTests
         var vm = CreateVm();
         var dialog = (TestDialogService)vm.Dialogs;
 
-        // No instance selected, no account — should not throw
         vm.LaunchGameCommand.Execute(null);
 
-        // LaunchAsyncCallback should NOT be called since no instance
         Assert.False(dialog.LaunchCalled);
     }
 
@@ -65,8 +58,7 @@ public class MainWindowViewModelCommandTests
         var vm = CreateVm();
         var dialog = (TestDialogService)vm.Dialogs;
 
-        // Set account but no instance
-        var acc = OfflineAccountService.Create("TestPlayer");
+        var acc = new MinecraftAccount { Username = "TestPlayer", Type = AccountType.Vec };
         vm.SetAccount(acc, refreshSkin: false);
 
         vm.LaunchGameCommand.Execute(null);
@@ -80,7 +72,7 @@ public class MainWindowViewModelCommandTests
         var vm = CreateVm();
         var dialog = (TestDialogService)vm.Dialogs;
 
-        var acc = OfflineAccountService.Create("TestPlayer");
+        var acc = new MinecraftAccount { Username = "TestPlayer", Type = AccountType.Vec };
         vm.SetAccount(acc, refreshSkin: false);
 
         var inst = new GameInstance
@@ -109,60 +101,14 @@ public class MainWindowViewModelCommandTests
     }
 
     [Fact]
-    public void LoginOffline_CreatesAccount()
-    {
-        var vm = CreateVm();
-
-        vm.LoginOfflineCommand.Execute("TestPlayer");
-
-        Assert.NotNull(vm.Account);
-        Assert.Equal("TestPlayer", vm.Account.Username);
-        Assert.Equal("TestPlayer", vm.SideName); // SetAccount sets SideName to username
-    }
-
-    [Fact]
-    public void LoginOffline_EmptyName_DoesNothing()
-    {
-        var vm = CreateVm();
-
-        vm.LoginOfflineCommand.Execute("");
-
-        Assert.Null(vm.Account);
-    }
-
-    [Fact]
-    public void LoginOffline_NullName_DoesNothing()
-    {
-        var vm = CreateVm();
-
-        vm.LoginOfflineCommand.Execute(null);
-
-        Assert.Null(vm.Account);
-    }
-
-    [Fact]
     public void Logout_ClearsAccount()
     {
         var vm = CreateVm();
-        var acc = OfflineAccountService.Create("TestPlayer");
+        var acc = new MinecraftAccount { Username = "TestPlayer", Type = AccountType.Vec };
         vm.SetAccount(acc, refreshSkin: false);
         Assert.NotNull(vm.Account);
 
         vm.LogoutCommand.Execute(null);
-
-        Assert.Null(vm.Account);
-        Assert.False(vm.IsAccountLoggedIn);
-    }
-
-    [Fact]
-    public void DeleteAccount_RemovesAccount()
-    {
-        var vm = CreateVm();
-        var acc = OfflineAccountService.Create("ToDelete");
-        vm.SetAccount(acc, refreshSkin: false);
-        Assert.NotNull(vm.Account);
-
-        vm.DeleteAccountCommand.Execute(null);
 
         Assert.Null(vm.Account);
         Assert.False(vm.IsAccountLoggedIn);
@@ -181,19 +127,10 @@ public class MainWindowViewModelCommandTests
     }
 
     [Fact]
-    public void OpenGameDir_DoesNotThrow()
-    {
-        var vm = CreateVm();
-        vm.Settings.GameDir = Directory.GetCurrentDirectory();
-        vm.OpenGameDirCommand.Execute(null); // should not throw
-    }
-
-    [Fact]
     public void DoClearLog_ClearsLogText()
     {
         var vm = CreateVm();
-        // AppendLog dispatches to UI thread; in tests just verify the buffer is cleared
-        vm.DoClearLogCommand.Execute(null);
+        vm.DoClearLog();
         Assert.Equal("", vm.LogText);
     }
 }
@@ -215,7 +152,6 @@ internal sealed class TestDialogService : IDialogService
 
     public string? BrowseFolder(string description = "") => null;
     public string? BrowseFile(string filter, string title = "Выберите файл") => null;
-    public Task<(string? code, string? error)> ShowMicrosoftLoginAsync(string authUrl) => Task.FromResult<(string?, string?)>((null, null));
     public Task<MinecraftAccount?> ShowVecLoginAsync() => Task.FromResult<MinecraftAccount?>(null);
     public void MinimizeWindow() { }
     public void ShowMessage(string message, string title = "VEC Launcher", MessageSeverity severity = MessageSeverity.Info) { }

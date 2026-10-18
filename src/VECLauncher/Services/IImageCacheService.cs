@@ -2,9 +2,6 @@ using System.Windows.Media.Imaging;
 
 namespace VECLauncher.Services;
 
-/// <summary>
-/// Abstracts image caching. Default implementation wraps existing ImageCacheService.
-/// </summary>
 public interface IImageCacheService
 {
     BitmapImage? TryGetCached(string? url);
@@ -13,9 +10,6 @@ public interface IImageCacheService
     long DiskCacheSize();
 }
 
-/// <summary>
-/// Default implementation wrapping the existing static ImageCacheService.
-/// </summary>
 public sealed class ImageCacheServiceAdapter : IImageCacheService
 {
     public BitmapImage? TryGetCached(string? url) => ImageCacheService.TryGetCached(url);

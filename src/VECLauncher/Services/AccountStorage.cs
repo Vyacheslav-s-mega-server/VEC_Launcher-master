@@ -34,28 +34,6 @@ public static class AccountStorage
         }
     }
 
-    /// <summary>
-    /// Tries to save account, returning Result instead of throwing.
-    /// </summary>
-    public static Result TrySave(MinecraftAccount account)
-    {
-        lock (_lock)
-        {
-            try
-            {
-                LauncherPaths.EnsureAll();
-                SaveActive(account);
-                AddOrUpdateSaved(account);
-                return Result.Ok();
-            }
-            catch (Exception ex)
-            {
-                Log.Warn($"AccountStorage: failed to persist account '{account?.Username}': {ex.Message}");
-                return Result.Fail($"Failed to save account: {ex.Message}");
-            }
-        }
-    }
-
     private static void SaveActive(MinecraftAccount account)
     {
         var json = JsonSerializer.SerializeToUtf8Bytes(account);
@@ -111,17 +89,6 @@ public static class AccountStorage
                 return null;
             }
         }
-    }
-
-    /// <summary>
-    /// Tries to load account, returning Result instead of null.
-    /// </summary>
-    public static Result<MinecraftAccount> TryLoad()
-    {
-        var account = Load();
-        return account is not null
-            ? Result<MinecraftAccount>.Ok(account)
-            : Result<MinecraftAccount>.Fail("No active account found");
     }
 
     public static List<MinecraftAccount> GetAllSaved()

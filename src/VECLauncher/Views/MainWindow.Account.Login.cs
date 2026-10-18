@@ -14,28 +14,9 @@ using VECLauncher.Services;
 
 namespace VECLauncher.Views;
 
-/// <summary>
-/// Partial class handling account management: login/logout, saved accounts list,
-/// skin loading and display, skin upload/reset, cape wardrobe, and avatar rendering.
-/// </summary>
 public partial class MainWindow
 {
 
-    private async Task<MinecraftAccount> ReloginMicrosoftAsync()
-    {
-        var authUrl = _auth.BuildLiveAuthorizeUrl();
-        var dialog = new MicrosoftLoginDialog(authUrl) { Owner = this };
-        var result = dialog.ShowDialog();
-
-        if (result != true || string.IsNullOrEmpty(dialog.AuthorizationCode))
-            throw new InvalidOperationException("Повторный вход отменён пользователем.");
-
-        var acc = await _auth.SignInWithLiveCodeAsync(dialog.AuthorizationCode);
-        Vm.Accounts.Save(acc);
-        SetAccount(acc, refreshSkin: false);
-        AppendLog($"Сессия Microsoft обновлена: {acc.Username}");
-        return acc;
-    }
 
     private async void BtnVecLogin_Click(object sender, RoutedEventArgs e)
     {
@@ -63,38 +44,28 @@ public partial class MainWindow
                 if (head != null) return head;
             }
 
-            if (!acc.IsOffline && !string.IsNullOrEmpty(acc.Uuid))
+            if (!string.IsNullOrEmpty(acc.SkinUrl))
             {
                 _ = Task.Run(async () =>
                 {
                     try
                     {
-                        var skinUrl = !string.IsNullOrEmpty(acc.SkinUrl) ? acc.SkinUrl : SkinService.RawSkinUrl(acc.Uuid);
-                        if (!string.IsNullOrEmpty(skinUrl))
+                        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
+                        using var resp = await http.GetAsync(acc.SkinUrl);
+                        if (resp.IsSuccessStatusCode)
                         {
-                            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
-                            using var resp = await http.GetAsync(skinUrl);
-                            if (resp.IsSuccessStatusCode)
-                            {
-                                var downloaded = await resp.Content.ReadAsByteArrayAsync();
-                                var path = _offlineSkins.AccountSkinPath(acc.Username);
-                                var dir = System.IO.Path.GetDirectoryName(path);
-                                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                                await File.WriteAllBytesAsync(path, downloaded);
-                            }
+                            var downloaded = await resp.Content.ReadAsByteArrayAsync();
+                            var path = _offlineSkins.AccountSkinPath(acc.Username);
+                            var dir = System.IO.Path.GetDirectoryName(path);
+                            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                            await File.WriteAllBytesAsync(path, downloaded);
                         }
                     }
                     catch (Exception ex) { Log.Warn(ex.Message); }
                 });
             }
 
-            var isSlim = _currentSkinModel.Equals("slim", StringComparison.OrdinalIgnoreCase);
-            var defBytes = DefaultSkinService.GetDefaultSkin(acc.Username, isSlim);
-            if (defBytes != null && defBytes.Length > 0)
-            {
-                var head = SkinService.CreateCrispHeadAvatar(defBytes, size);
-                if (head != null) return head;
-            }
+
         }
         catch (Exception ex) { Log.Warn(ex.Message); }
 
@@ -263,7 +234,6 @@ public partial class MainWindow
 
         _currentSkinRawBytes = null;
         TxtAccName.Text = "—";
-        TxtAccType.Text = "";
         TxtSideName.SetCurrentValue(TextBlock.TextProperty, "Не выполнен вход");
         TxtSideStatus.SetCurrentValue(TextBlock.TextProperty, "Оффлайн");
         ImgAvatar.Source = null;

@@ -39,34 +39,24 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
-    <PackageReference Include="CmlLib.Core.Auth.Microsoft" Version="*" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="logo.ico" />
     <Resource Include="Assets\home_bg.png" />
-    <Resource Include="Assets\default_instance_icon.jpg" />
-    <Resource Include="Assets\mods_menu_bg.jpg" />
     <Resource Include="Assets\rp_shader_bg.png" />
     <Resource Include="Assets\account_bg.jpg" />
-    <Resource Include="Assets\default_content_icon.jpg" />
     <Resource Include="Assets\slime.png" />
     <Resource Include="Assets\main_page.png" />
-    <Resource Include="Assets\mods_page.png" />
     <Resource Include="Assets\content_page.png" />
     <Resource Include="Assets\profile_page.png" />
     <Resource Include="Assets\setting_page.png" />
     <Resource Include="Fonts\minecraft.ttf" />
     <Resource Include="Fonts\minecraft_title.ttf" />
-    <Resource Include="Fonts\OCR A Regular.ttf" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Assets\steve_classic.png" />
-    <EmbeddedResource Include="Assets\alex_slim.png" />
-    <EmbeddedResource Include="Assets\cape_vec.png" />
     <EmbeddedResource Include="Assets\3D_Model.gltf" />
   </ItemGroup>
 

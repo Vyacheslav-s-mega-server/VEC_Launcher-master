@@ -1,4 +1,4 @@
-﻿using System.IO.Compression;
+using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
 using VECLauncher.Models;
@@ -208,7 +208,7 @@ public sealed class ModpackService
         {
             using var req = new HttpRequestMessage(HttpMethod.Get,
                 $"https://api.curseforge.com/v1/mods/{projectId}/files/{fileId}");
-            req.Headers.TryAddWithoutValidation("x-api-key", ModService.CurseForgeApiKey);
+            req.Headers.TryAddWithoutValidation("x-api-key", "");
             req.Headers.TryAddWithoutValidation("Accept", "application/json");
 
             using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);

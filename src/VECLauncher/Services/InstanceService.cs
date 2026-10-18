@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text.Json;
 using VECLauncher.Models;
 
@@ -151,8 +151,7 @@ public static class InstanceService
                     McVersion = mcVersion,
                     Loader = LoaderKind.Vanilla,
                     LaunchVersionId = mcVersion,
-                    Isolated = isolated,
-                    IconColor = "#38BDF8"
+                    Isolated = isolated
                 });
             }
         }
@@ -193,85 +192,6 @@ public static class InstanceService
         }
     }
 
-    public sealed class FolderStats
-    {
-        public int Mods { get; init; }
-        public int ResourcePacks { get; init; }
-        public int ShaderPacks { get; init; }
-        public int Screenshots { get; init; }
-        public int Worlds { get; init; }
-        public long TotalBytes { get; init; }
-
-        public string SizeDisplay
-        {
-            get
-            {
-                string[] u = { "B", "KB", "MB", "GB" };
-                double v = TotalBytes;
-                var i = 0;
-                while (v >= 1024 && i < u.Length - 1) { v /= 1024; i++; }
-                return $"{v:0.#} {u[i]}";
-            }
-        }
-    }
-
-    public static FolderStats GetStats(GameInstance inst)
-    {
-        int Count(string dir, params string[] patterns)
-        {
-            if (!Directory.Exists(dir)) return 0;
-            try
-            {
-                return patterns.Length == 0
-                    ? Directory.GetFiles(dir).Length
-                    : patterns.Sum(p => Directory.GetFiles(dir, p).Length);
-            }
-            catch { return 0; }
-        }
-
-        long size = 0;
-        try
-        {
-            var d = InstanceDir(inst);
-            if (Directory.Exists(d))
-                size = new DirectoryInfo(d).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
-        }
-        catch (Exception ex) { Log.Warn(ex.Message); }
-
-        var worlds = 0;
-        try
-        {
-            if (Directory.Exists(SavesDir(inst)))
-                worlds = Directory.GetDirectories(SavesDir(inst)).Length;
-        }
-        catch (Exception ex) { Log.Warn(ex.Message); }
-
-        return new FolderStats
-        {
-            Mods = Count(ModsDir(inst), "*.jar", "*.disabled"),
-            ResourcePacks = Count(ResourcePacksDir(inst), "*.zip"),
-            ShaderPacks = Count(ShaderPacksDir(inst), "*.zip"),
-            Screenshots = Count(ScreenshotsDir(inst), "*.png"),
-            Worlds = worlds,
-            TotalBytes = size
-        };
-    }
-
-    public static List<FileInfo> GetScreenshots(GameInstance inst, int limit = 200)
-    {
-        var dir = ScreenshotsDir(inst);
-        if (!Directory.Exists(dir)) return new List<FileInfo>();
-
-        try
-        {
-            return new DirectoryInfo(dir)
-                .GetFiles("*.png")
-                .OrderByDescending(f => f.LastWriteTime)
-                .Take(limit)
-                .ToList();
-        }
-        catch { return new List<FileInfo>(); }
-    }
 
     public static void OpenFolder(string path)
     {

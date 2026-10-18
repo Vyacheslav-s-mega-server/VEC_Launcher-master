@@ -6,27 +6,21 @@ using IOPath = System.IO.Path;
 
 namespace VECLauncher.Services;
 
-/// <summary>
-/// Pure game launch logic — no UI dependencies.
-/// All UI interactions (dialogs, notifications, window state) stay in the View layer.
-/// </summary>
 public sealed class LaunchService
 {
     private readonly VersionService _versions;
     private readonly DownloadManager _downloads;
-    private readonly MicrosoftAuthService _auth;
     private readonly JavaService _java;
     private readonly SkinService _skins;
     private readonly GameLauncher _game;
     private readonly ModLoaderService _loaders;
 
     public LaunchService(VersionService versions, DownloadManager downloads,
-        MicrosoftAuthService auth, JavaService java, SkinService skins,
+        JavaService java, SkinService skins,
         GameLauncher game, ModLoaderService loaders)
     {
         _versions = versions;
         _downloads = downloads;
-        _auth = auth;
         _java = java;
         _skins = skins;
         _game = game;
@@ -39,10 +33,6 @@ public sealed class LaunchService
     private void SetStatus(string s) => StatusChanged?.Invoke(s);
     private void Log(string line) => LogLine?.Invoke(line);
 
-    /// <summary>
-    /// Core launch pipeline: resolve versions → Java → download → loader → VEC/skins → launch.
-    /// Returns the launched Process and metadata.
-    /// </summary>
     public async Task<LaunchResult> LaunchAsync(
         MinecraftAccount account,
         GameInstance inst,
@@ -68,14 +58,12 @@ public sealed class LaunchService
 
         if (paths.IsIsolated) Log($"Сборка «{inst.Name}» изолирована: файлы в её папке.");
 
-        // ── Version manifest ──
         SetStatus($"Читаю описание версии {inst.McVersion}...");
         var mvManifest = manifest ?? await _versions.GetManifestAsync(ct);
         var mv = mvManifest.Versions.FirstOrDefault(v => v.Id == inst.McVersion)
                  ?? throw new InvalidOperationException($"Версия {inst.McVersion} не найдена в манифесте.");
         var baseDetail = await _versions.GetVersionDetailAsync(mv, ct);
 
-        // ── Java ──
         var requiredJava = baseDetail.JavaVersion?.MajorVersion ?? JavaService.RequiredJavaFor(inst.McVersion);
         SetStatus($"Проверяю Java {requiredJava}...");
 
@@ -94,12 +82,10 @@ public sealed class LaunchService
             java = await _java.EnsureJavaAsync(requiredJava, ct);
         }
 
-        // ── Download base version ──
         await Task.Run(() => _downloads.InstallVersionAsync(baseDetail, ct), ct);
 
         var launchId = inst.EffectiveVersionId;
 
-        // ── Loader (Fabric/Forge/NeoForge) ──
         if (inst.Loader != LoaderKind.Vanilla)
         {
             var alreadyInstalled = !string.IsNullOrEmpty(inst.LaunchVersionId) &&
@@ -120,12 +106,10 @@ public sealed class LaunchService
             }
         }
 
-        // ── Resolve final version ──
         SetStatus("Готовлю файлы запуска...");
         var finalDetail = await _versions.ResolveAsync(launchId, ct);
         var install = await Task.Run(() => _downloads.InstallVersionAsync(finalDetail, ct), ct);
 
-        // ── VEC Auth / Skins ──
         bool useAuthlibInjector = false;
         string? authlibServerUrl = null;
 
@@ -179,7 +163,6 @@ public sealed class LaunchService
             AuthlibServerUrl = authlibServerUrl
         };
 
-        // ── Launch! ──
         var proc = _game.Launch(options);
 
         inst.LastPlayed = DateTimeOffset.Now;
@@ -196,7 +179,6 @@ public sealed class LaunchService
         };
     }
 
-    // ── VEC Auth ──
     private async Task<(bool UseAuthlib, string? ServerUrl)> PrepareVecAuthAsync(
         MinecraftAccount account, GameInstance inst, CancellationToken ct)
     {
@@ -223,9 +205,6 @@ public sealed class LaunchService
         inst.MaxMemoryMb > 0 ? inst.MaxMemoryMb : settings.MaxMemoryMb;
 }
 
-// ── Result models ──
-
-/// <summary>Result of a successful game launch, containing the process handle and metadata.</summary>
 public sealed class LaunchResult
 {
     public required Process Process { get; init; }

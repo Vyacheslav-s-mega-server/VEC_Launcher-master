@@ -1,8 +1,5 @@
 namespace VECLauncher.Services;
 
-/// <summary>
-/// Abstracts maintenance/cleanup operations. Default implementation wraps existing MaintenanceService.
-/// </summary>
 public interface IMaintenanceService
 {
     List<MaintenanceService.TargetInfo> Enumerate();
@@ -12,9 +9,6 @@ public interface IMaintenanceService
     void RunUninstall(string script);
 }
 
-/// <summary>
-/// Default implementation wrapping the existing static MaintenanceService.
-/// </summary>
 public sealed class MaintenanceServiceAdapter : IMaintenanceService
 {
     public List<MaintenanceService.TargetInfo> Enumerate() => MaintenanceService.Enumerate();

@@ -45,11 +45,7 @@
                             <TextBlock Text=" PLATFORM" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource Fg}"/>
                         </StackPanel>
                     </StackPanel>
-
-                        <Border x:Name="RunningBadge" Visibility="Collapsed" IsHitTestVisible="False">
-                            <TextBlock x:Name="TxtRunningBadge" Visibility="Collapsed"/>
-                        </Border>
-                    </StackPanel>
+                </StackPanel>
 
                 <Grid Grid.Column="1" Background="Transparent"/>
 
@@ -119,17 +115,6 @@
                                 <ProgressBar x:Name="PbProgress" Grid.Row="1" Height="5" Minimum="0" Maximum="100" Value="0"/>
                             </Grid>
                         </Border>
-
-                        <Grid Visibility="Collapsed" IsHitTestVisible="False">
-                            <ComboBox x:Name="CbInstances" Width="290"
-                                      SelectionChanged="CbInstances_SelectionChanged"/>
-                            <Button x:Name="BtnCancel" Content="Отмена" Command="{Binding CancelCommand}"/>
-                            <Button x:Name="BtnStopGame" Content="ОСТАНОВИТЬ" Click="BtnStopGame_Click"/>
-                            <Button x:Name="BtnPlay" Content="ИГРАТЬ" Click="BtnPlay_Click"/>
-                            <ComboBox x:Name="CbInstancesHome"
-                                      Style="{StaticResource HomeVersionComboStyle}"
-                                      SelectionChanged="CbInstancesHome_SelectionChanged"/>
-                        </Grid>
 
                         <Grid HorizontalAlignment="Right" Width="340" Margin="0,0,60,0">
                             <StackPanel VerticalAlignment="Bottom" Margin="0,0,30,50" HorizontalAlignment="Right">
@@ -305,11 +290,6 @@
                                                     <TextBlock Text="Загрузить скин (.png)" VerticalAlignment="Center"/>
                                                 </Button>
                                                 <TextBlock x:Name="TxtSelectedSkinFileName" FontSize="11" Foreground="#34D399" Margin="0,6,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                            </StackPanel>
-
-                                            <StackPanel Visibility="Collapsed">
-                                                <TextBlock x:Name="TxtAccType"/>
-                                                <TextBlock x:Name="TxtSkinModelBadge"/>
                                             </StackPanel>
                                             <TextBlock x:Name="TxtSkinStatus" Text="" FontSize="11" TextWrapping="Wrap"
                                                        Foreground="#888" Margin="0,8,0,0" HorizontalAlignment="Center"/>
@@ -833,204 +813,6 @@
 
                     </Grid>
 
-                    <Grid x:Name="PageConsole" Grid.Row="0" Margin="24,14,24,0" Visibility="Collapsed">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <Grid Grid.Row="0">
-                            <StackPanel>
-                                <TextBlock Text="Консоль" Style="{StaticResource H1}"/>
-                                <TextBlock x:Name="TxtLogInfo" Text="{Binding LogInfo}"
-                                           Foreground="{DynamicResource FgMuted}" FontSize="12" Margin="0,4,0,0"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                <RadioButton x:Name="LogAll" Style="{StaticResource SegmentToggle}"
-                                             Content="Всё" IsChecked="True" Checked="LogFilter_Checked" Tag="all"/>
-                                <RadioButton x:Name="LogWarn" Style="{StaticResource SegmentToggle}"
-                                             Content="Предупреждения" Checked="LogFilter_Checked" Tag="warn"/>
-                                <RadioButton x:Name="LogErr" Style="{StaticResource SegmentToggle}"
-                                             Content="Ошибки" Checked="LogFilter_Checked" Tag="error"/>
-                                <Button x:Name="BtnOpenLogFile" Style="{StaticResource IconButton}"
-                                        Content="Файл лога" Margin="10,0,8,0" Command="{Binding OpenLogFileCommand}"/>
-                                <Button x:Name="BtnClearLog" Style="{StaticResource IconButton}"
-                                        Content="Очистить" Command="{Binding DoClearLogCommand}"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <Border Grid.Row="1" Margin="0,14,0,0" Background="{DynamicResource ConsoleBg}"
-                                BorderBrush="{DynamicResource BorderBrushDark}" BorderThickness="1" CornerRadius="0">
-                            <ScrollViewer x:Name="ScrollLog" VerticalScrollBarVisibility="Auto" Margin="4">
-                                <TextBox x:Name="TxtLog" Background="Transparent" BorderThickness="0"
-                                         Foreground="{DynamicResource ConsoleFg}" FontFamily="Consolas" FontSize="11.5"
-                                         IsReadOnly="True" TextWrapping="NoWrap" VerticalContentAlignment="Top"
-                                         VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Auto"/>
-                            </ScrollViewer>
-                        </Border>
-                    </Grid>
-
-                    <Grid x:Name="PageMods" Grid.Row="0" Margin="0" Visibility="Collapsed">
-                        <Grid.Background>
-                            <ImageBrush ImageSource="pack://application:,,,/Assets/mods_menu_bg.jpg" Stretch="UniformToFill" Opacity="0.15"/>
-                        </Grid.Background>
-                        <Grid Margin="20,14,20,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <Grid Grid.Row="0" Margin="0,0,0,14">
-                            <StackPanel>
-                                <TextBlock Text="Моды и Контент" Style="{StaticResource H1}"/>
-                                <TextBlock x:Name="TxtModsSubtitle" Text="Одобренные модификации сервера VEC 1.21.11" Foreground="#777788" FontSize="11.5" Margin="0,4,0,0"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                <Button Style="{StaticResource IconButton}" Content="Импорт .jar"
-                                        FontSize="11" Padding="12,5" Click="BtnImportMod_Click"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <Grid x:Name="ModSearchBar" Grid.Row="1" Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <TextBox x:Name="TxtModSearch" Grid.Column="0" Height="36"
-                                     KeyDown="TxtModSearch_KeyDown"
-                                     TextChanged="TxtModSearch_TextChanged"
-                                     FontSize="12" Padding="12,0"
-                                     VerticalContentAlignment="Center"/>
-
-                            <ComboBox x:Name="CbModType" Grid.Column="1" Width="140" Height="36" Margin="8,0,0,0"
-                                      FontSize="11" SelectionChanged="ModFilter_Changed">
-                                <ComboBoxItem Content="Все категории" IsSelected="True" Tag="all"/>
-                                <ComboBoxItem Content="Ядро (Core)" Tag="Core"/>
-                                <ComboBoxItem Content="Оптимизация" Tag="Optimization"/>
-                                <ComboBoxItem Content="Графика (Visual)" Tag="Visual"/>
-                                <ComboBoxItem Content="Утилиты (Utility)" Tag="Utility"/>
-                                <ComboBoxItem Content="Шейдеры" Tag="Shaders"/>
-                                <ComboBoxItem Content="Ресурспаки" Tag="Resourcepacks"/>
-                            </ComboBox>
-
-                            <ComboBox x:Name="CbModSource" Grid.Column="2" Width="110" Height="36" Margin="8,0,0,0"
-                                      FontSize="11" SelectionChanged="ModFilter_Changed" IsEnabled="False">
-                                <ComboBoxItem Content="База VEC" IsSelected="True" Tag="vec"/>
-                            </ComboBox>
-
-                            <Button x:Name="BtnModSearch" Grid.Column="3" Style="{StaticResource AccentButton}"
-                                    Content="Найти" Height="36" MinWidth="90" Margin="8,0,0,0"
-                                    Click="BtnModSearchNew_Click"/>
-                        </Grid>
-
-                        <Grid x:Name="PanelBrowse" Grid.Row="2">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <ScrollViewer x:Name="ModScroll" Grid.Row="0" VerticalScrollBarVisibility="Auto">
-                                <StackPanel Margin="0,0,6,10">
-                                    <TextBlock x:Name="TxtModStatus" Text="Введите запрос и нажмите «Найти»."
-                                               Foreground="#777788" FontSize="11.5" TextWrapping="Wrap" Margin="2,0,0,10"/>
-
-                                    <ItemsControl x:Name="ItemsMods">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Background="#111116" CornerRadius="0" Padding="12"
-                                                        Margin="0,0,0,8" BorderBrush="#1F1F28" BorderThickness="1">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                             <ColumnDefinition Width="Auto"/>
-                                                             <ColumnDefinition Width="*"/>
-                                                             <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <Border Grid.Column="0" Width="46" Height="46" CornerRadius="0"
-                                                                Background="#16161E" BorderThickness="0" ClipToBounds="True">
-                                                            <Grid>
-                                                                <Image Source="{Binding Icon}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                                <TextBlock Text="{Binding Initial}" FontSize="16"
-                                                                           FontWeight="Bold" Foreground="#555566"
-                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                                           Visibility="{Binding PlaceholderVisibility}"/>
-                                                            </Grid>
-                                                        </Border>
-
-                                                        <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="12.5" Foreground="#FFFFFF"/>
-                                                                <Border CornerRadius="0" Padding="5,1.5" Margin="8,0,0,0"
-                                                                        Background="#1A1A24" BorderBrush="#2A2A38" BorderThickness="1">
-                                                                    <TextBlock Text="{Binding Source}" FontSize="9" FontWeight="SemiBold" Foreground="#AAAAAA"/>
-                                                                </Border>
-                                                            </StackPanel>
-                                                            <TextBlock Text="{Binding Summary}" FontSize="11"
-                                                                       Foreground="#777788" Margin="0,3,0,0" TextWrapping="Wrap"
-                                                                       MaxHeight="32" TextTrimming="CharacterEllipsis"/>
-                                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                                <TextBlock Text="{Binding DownloadsText}" FontSize="10" Foreground="#555566"/>
-                                                                <TextBlock Text="{Binding AuthorText}" FontSize="10" Foreground="#555566" Margin="10,0,0,0"/>
-                                                            </StackPanel>
-                                                        </StackPanel>
-
-                                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                            <Button MinWidth="105" Height="32" Style="{StaticResource AccentButton}"
-                                                                    Content="{Binding ActionText, FallbackValue='Установить'}"
-                                                                    IsEnabled="{Binding ActionEnabled, FallbackValue=True}"
-                                                                    FontSize="11"
-                                                                    Click="ModInstall_Click" Tag="{Binding Index}"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </ScrollViewer>
-
-                            <Border x:Name="ModPager" Grid.Row="1" Visibility="Collapsed"
-                                    Background="#111116" CornerRadius="0" Padding="6"
-                                    Margin="0,4,6,6" BorderBrush="#1F1F28" BorderThickness="1">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Button x:Name="BtnPrevPage" Width="30" Height="26" Cursor="Hand"
-                                            Background="Transparent" BorderThickness="0"
-                                            Click="BtnPrevPage_Click">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="Bd" Background="Transparent" CornerRadius="0">
-                                                    <TextBlock Text="←" FontSize="11" Foreground="#AAAAAA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Background" Value="#1A1A24"/></Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                    <StackPanel x:Name="PageButtons" Orientation="Horizontal" Margin="4,0"/>
-                                    <Button x:Name="BtnNextPage" Width="30" Height="26" Cursor="Hand"
-                                            Background="Transparent" BorderThickness="0"
-                                            Click="BtnNextPage_Click">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="Bd" Background="Transparent" CornerRadius="0">
-                                                    <TextBlock Text="→" FontSize="11" Foreground="#AAAAAA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Background" Value="#1A1A24"/></Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-                        </Grid>
-                    </Grid>
-
                     <Grid x:Name="PageContent" Grid.Row="0" Margin="0" Visibility="Collapsed"
                           AllowDrop="True" Drop="Content_Drop" DragOver="Content_DragOver">
                         <Grid.Background>
@@ -1343,82 +1125,6 @@
                                                        HorizontalAlignment="Center" Foreground="#777788"/>
                                         </StackPanel>
                                     </Border>
-                                </Grid>
-                            </Border>
-                        </Grid>
-                    </Grid>
-
-
-
-                    <Grid x:Name="PageSkins" Grid.Row="0" Margin="20,12,20,0" Visibility="Collapsed">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid Grid.Row="0" Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Скины" Style="{StaticResource H1}"/>
-                            <TextBlock x:Name="TxtSkinTabStatus" Grid.Column="1" VerticalAlignment="Center"
-                                       Margin="16,0,0,0" TextWrapping="Wrap" MaxWidth="380"
-                                       Foreground="{DynamicResource FgMuted}" FontSize="11"/>
-                            <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                <Border x:Name="SkinsPreviewBorder" Width="48" Height="48" CornerRadius="0" Background="#262B34" BorderBrush="{DynamicResource BorderBrushDark}" BorderThickness="1" ClipToBounds="True">
-                                    <Image x:Name="ImgSkinsPreview" Stretch="UniformToFill"/>
-                                </Border>
-                            </StackPanel>
-                        </Grid>
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
-                        </StackPanel>
-                        <Grid Grid.Row="2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <Grid x:Name="PanelSkinLocal" Visibility="Visible">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                <Grid Grid.Row="0" Margin="0,0,0,8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Button Grid.Column="0" Style="{StaticResource BaseButton}" Content="Импортировать скин" Click="BtnImportSkin_Click" Height="36" Padding="16,0" HorizontalAlignment="Left"/>
-                                    <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="🔄" Click="BtnRefreshLocalSkins_Click" Height="36" Width="36"/>
-                                </Grid>
-                                <WrapPanel x:Name="LocalSkinsPanel" Grid.Row="1"/>
-                            </Grid>
-                            
-                            <Border Grid.Column="1" x:Name="SkinPreviewPanelNew" Width="252" Margin="12,0,0,0"
-                                    Style="{StaticResource Card}" Padding="14" Visibility="Collapsed">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <Border Grid.Row="0" Background="#262B34" CornerRadius="0" Margin="0,0,0,10" ClipToBounds="True">
-                                        <Image x:Name="ImgNewSkinPreview" Width="110" Height="220" Stretch="Uniform"/>
-                                    </Border>
-                                    <TextBlock Grid.Row="1" x:Name="TxtNewSkinName" Text="" FontWeight="SemiBold" FontSize="13" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Grid.Row="2" x:Name="TxtNewSkinInfo" Text="" Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,4,0,0" TextAlignment="Center" TextWrapping="Wrap"/>
-                                    <Grid Grid.Row="3" Margin="0,12,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Button x:Name="BtnApplySkinNew" Style="{StaticResource AccentButton}" Content="Надеть скин" Height="38" Click="BtnApplySkin_Click" IsEnabled="False"/>
-                                        <Button x:Name="BtnResetSkinNew" Grid.Column="1" Style="{StaticResource BaseButton}" Content="По умолчанию" Height="38" Margin="8,0,0,0" Padding="10,0" Click="BtnResetSkinNew_Click" Visibility="Collapsed" ToolTip="Вернуть стандартный скин"/>
-                                    </Grid>
                                 </Grid>
                             </Border>
                         </Grid>

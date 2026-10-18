@@ -9,10 +9,6 @@ using VECLauncher.Services;
 
 namespace VECLauncher.Views;
 
-/// <summary>
-/// Partial class handling 3D skin viewer: ground/shadow rendering, mouse rotation/zoom,
-/// glTF model loading, cape mode transitions, and skin 3D texture updates.
-/// </summary>
 public partial class MainWindow
 {
     private void BuildGroundAndShadow()
@@ -56,25 +52,25 @@ public partial class MainWindow
                 if (isMainLine)
                 {
                     byte a = (byte)(fade * 90);
-                    pixels[idx + 0] = 255; // B
-                    pixels[idx + 1] = 250; // G
-                    pixels[idx + 2] = 240; // R
+                    pixels[idx + 0] = 255;
+                    pixels[idx + 1] = 250;
+                    pixels[idx + 2] = 240;
                     pixels[idx + 3] = a;
                 }
                 else if (isSubLine)
                 {
                     byte a = (byte)(fade * 30);
-                    pixels[idx + 0] = 220; // B
-                    pixels[idx + 1] = 215; // G
-                    pixels[idx + 2] = 210; // R
+                    pixels[idx + 0] = 220;
+                    pixels[idx + 1] = 215;
+                    pixels[idx + 2] = 210;
                     pixels[idx + 3] = a;
                 }
                 else
                 {
                     byte a = (byte)(fade * 6);
-                    pixels[idx + 0] = 200; // B
-                    pixels[idx + 1] = 210; // G
-                    pixels[idx + 2] = 220; // R
+                    pixels[idx + 0] = 200;
+                    pixels[idx + 1] = 210;
+                    pixels[idx + 2] = 220;
                     pixels[idx + 3] = a;
                 }
             }

@@ -76,15 +76,4 @@ public class AccountStorageTests
         Assert.Equal(0, (int)AccountType.Microsoft);
         Assert.Equal(1, (int)AccountType.Offline);
         Assert.Equal(2, (int)AccountType.Vec);
-    }
-
-    [Fact]
-    public void MinecraftAccount_IsExpired_OnlyForMicrosoft()
-    {
-        var ms = new MinecraftAccount { Type = AccountType.Microsoft, ExpiresAt = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero) };
-        var off = new MinecraftAccount { Type = AccountType.Offline, ExpiresAt = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero) };
-
-        Assert.True(ms.IsExpired);
-        Assert.False(off.IsExpired); // non-Microsoft accounts never expire
-    }
-}
+    }}

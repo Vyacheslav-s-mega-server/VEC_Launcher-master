@@ -1,105 +1,16 @@
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
+using System.Text.Json.Nodes;
 using VECLauncher.Models;
 
 namespace VECLauncher.Services;
 
 public sealed class SkinService
 {
-    private const string ProfileUrl = "https://api.minecraftservices.com/minecraft/profile";
-    private const string SkinsUrl = "https://api.minecraftservices.com/minecraft/profile/skins";
-    private const string ActiveSkinUrl = "https://api.minecraftservices.com/minecraft/profile/skins/active";
-    private const string CapeActiveUrl = "https://api.minecraftservices.com/minecraft/profile/capes/active";
-
     private readonly HttpClient _http;
 
     public SkinService(HttpClient http) => _http = http;
-
-    public static string BodyRenderUrl(string uuid, int scale = 10) =>
-        $"https://crafatar.com/renders/body/{Clean(uuid)}?scale={scale}&overlay&default=MHF_Steve";
-
-    public static string HeadRenderUrl(string uuid, int scale = 10) =>
-        $"https://crafatar.com/renders/head/{Clean(uuid)}?scale={scale}&overlay&default=MHF_Steve";
-
-    public static string AvatarUrl(string uuid, int size = 64) =>
-        $"https://crafatar.com/avatars/{Clean(uuid)}?size={size}&overlay&default=MHF_Steve";
-
-    public static string RawSkinUrl(string uuid) =>
-        $"https://crafatar.com/skins/{Clean(uuid)}?default=MHF_Steve";
-
-    public static string FallbackBodyRenderUrl(string username) =>
-        $"https://minotar.net/armor/body/{Uri.EscapeDataString(username)}/220.png";
-
-    public static string AvatarByNameUrl(string username, int size = 64) =>
-        $"https://minotar.net/helm/{Uri.EscapeDataString(username)}/{size}.png";
-
-    private static string Clean(string uuid) => uuid.Replace("-", "").Trim();
-
-    public sealed class MojangTexturesResult
-    {
-        public string? SkinUrl { get; set; }
-        public string? SkinModel { get; set; }
-        public string? CapeUrl { get; set; }
-    }
-
-    public async Task<MojangTexturesResult?> FetchMojangTexturesAsync(string uuid, CancellationToken ct = default)
-    {
-        try
-        {
-            var cleanUuid = Clean(uuid);
-            if (string.IsNullOrEmpty(cleanUuid)) return null;
-
-            var url = $"https://sessionserver.mojang.com/session/minecraft/profile/{cleanUuid}";
-            using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
-            if (!resp.IsSuccessStatusCode) return null;
-
-            var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            using var doc = JsonDocument.Parse(body);
-            if (doc.RootElement.TryGetProperty("properties", out var props))
-            {
-                foreach (var prop in props.EnumerateArray())
-                {
-                    if (prop.TryGetProperty("name", out var n) && n.GetString() == "textures" &&
-                        prop.TryGetProperty("value", out var v))
-                    {
-                        var base64 = v.GetString();
-                        if (string.IsNullOrEmpty(base64)) continue;
-
-                        var jsonBytes = Convert.FromBase64String(base64);
-                        using var texDoc = JsonDocument.Parse(jsonBytes);
-                        var root = texDoc.RootElement;
-
-                        var res = new MojangTexturesResult();
-                        if (root.TryGetProperty("textures", out var textures))
-                        {
-                            if (textures.TryGetProperty("SKIN", out var skinObj))
-                            {
-                                if (skinObj.TryGetProperty("url", out var su)) res.SkinUrl = su.GetString();
-                                if (skinObj.TryGetProperty("metadata", out var meta) &&
-                                    meta.TryGetProperty("model", out var m))
-                                {
-                                    res.SkinModel = m.GetString();
-                                }
-                            }
-                            if (textures.TryGetProperty("CAPE", out var capeObj))
-                            {
-                                if (capeObj.TryGetProperty("url", out var cu)) res.CapeUrl = cu.GetString();
-                            }
-                        }
-                        return res;
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Warn($"SkinService: failed to query Mojang session server: {ex.Message}");
-        }
-        return null;
-    }
 
     public async Task<byte[]?> TryDownloadAsync(string url, CancellationToken ct = default)
     {
@@ -116,69 +27,7 @@ public sealed class SkinService
         }
     }
 
-    public async Task<byte[]?> GetBodyRenderAsync(MinecraftAccount acc, CancellationToken ct = default)
-    {
-        if (acc.IsOffline)
-        {
-            return await TryDownloadAsync(FallbackBodyRenderUrl(acc.Username), ct).ConfigureAwait(false)
-                   ?? await TryDownloadAsync(BodyRenderUrl(acc.Uuid), ct).ConfigureAwait(false);
-        }
-
-        return await TryDownloadAsync(BodyRenderUrl(acc.Uuid), ct).ConfigureAwait(false)
-               ?? await TryDownloadAsync(FallbackBodyRenderUrl(acc.Username), ct).ConfigureAwait(false);
-    }
-
-    public async Task<byte[]?> GetAvatarAsync(MinecraftAccount acc, int size = 72, CancellationToken ct = default)
-    {
-        if (acc.IsOffline)
-        {
-            return await TryDownloadAsync(AvatarByNameUrl(acc.Username, size), ct).ConfigureAwait(false)
-                   ?? await TryDownloadAsync(AvatarUrl(acc.Uuid, size), ct).ConfigureAwait(false);
-        }
-
-        return await TryDownloadAsync(AvatarUrl(acc.Uuid, size), ct).ConfigureAwait(false);
-    }
-
-    public async Task<MinecraftProfileResponse?> GetProfileAsync(string accessToken, CancellationToken ct = default)
-    {
-        using var req = new HttpRequestMessage(HttpMethod.Get, ProfileUrl);
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
-        if (!resp.IsSuccessStatusCode) return null;
-
-        var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-        return JsonSerializer.Deserialize<MinecraftProfileResponse>(body);
-    }
-
     public enum SkinModel { Classic, Slim }
-
-    public async Task UploadSkinAsync(string accessToken, string filePath, SkinModel model, CancellationToken ct = default)
-    {
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException("Skin file not found.", filePath);
-
-        var bytes = await File.ReadAllBytesAsync(filePath, ct).ConfigureAwait(false);
-        ValidateSkinPng(bytes);
-
-        using var content = new MultipartFormDataContent();
-        content.Add(new StringContent(model == SkinModel.Slim ? Constants.SkinModel.Slim : Constants.SkinModel.Classic), "variant");
-
-        var fileContent = new ByteArrayContent(bytes);
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
-        content.Add(fileContent, "file", Path.GetFileName(filePath));
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, SkinsUrl) { Content = content };
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
-        var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException(DescribeSkinError(resp.StatusCode, body));
-
-        Log.Info($"SkinService: skin uploaded successfully ({model}).");
-    }
 
     public async Task<bool> UploadSkinToVecServerAsync(string serverUrl, string username, byte[] skinBytes, SkinModel model, string? uuid = null, CancellationToken ct = default)
     {
@@ -309,70 +158,6 @@ public sealed class SkinService
         }
     }
 
-    public async Task ChangeSkinByUrlAsync(string accessToken, string skinUrl, SkinModel model, CancellationToken ct = default)
-    {
-        var payload = new
-        {
-            variant = model == SkinModel.Slim ? Constants.SkinModel.Slim : Constants.SkinModel.Classic,
-            url = skinUrl
-        };
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, ActiveSkinUrl)
-        {
-            Content = JsonContent.Create(payload)
-        };
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
-        var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException(DescribeSkinError(resp.StatusCode, body));
-
-        Log.Info("SkinService: skin applied by URL successfully.");
-    }
-
-    public async Task ResetSkinAsync(string accessToken, CancellationToken ct = default)
-    {
-        using var req = new HttpRequestMessage(HttpMethod.Delete, ActiveSkinUrl);
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        using var resp = await _http.SendAsync(req, ct).ConfigureAwait(false);
-        var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException(DescribeSkinError(resp.StatusCode, body));
-
-        Log.Info("SkinService: skin reset to default.");
-    }
-
-    public async Task SetCapeAsync(string accessToken, string? capeId, CancellationToken ct = default)
-    {
-        HttpRequestMessage req;
-
-        if (string.IsNullOrEmpty(capeId))
-        {
-            req = new HttpRequestMessage(HttpMethod.Delete, CapeActiveUrl);
-        }
-        else
-        {
-            req = new HttpRequestMessage(HttpMethod.Put, CapeActiveUrl)
-            {
-                Content = JsonContent.Create(new { capeId })
-            };
-        }
-
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        using (req)
-        using (var resp = await _http.SendAsync(req, ct).ConfigureAwait(false))
-        {
-            var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            if (!resp.IsSuccessStatusCode)
-                throw new InvalidOperationException(DescribeSkinError(resp.StatusCode, body));
-        }
-    }
-
     public static void ValidateSkinPng(byte[] data)
     {
         if (data.Length < 24)
@@ -395,29 +180,6 @@ public sealed class SkinService
 
         if (data.Length > 512 * 1024)
             throw new InvalidDataException("Skin file too large (max 512 KB).");
-    }
-
-    private static string DescribeSkinError(System.Net.HttpStatusCode code, string body)
-    {
-        var detail = body;
-        try
-        {
-            using var doc = JsonDocument.Parse(body);
-            if (doc.RootElement.TryGetProperty("errorMessage", out var m))
-                detail = m.GetString() ?? body;
-        }
-        catch (Exception ex) { Log.Warn(ex.Message); }
-
-        return code switch
-        {
-            System.Net.HttpStatusCode.Unauthorized =>
-                "Session expired. Please sign in to your Microsoft account again.",
-            System.Net.HttpStatusCode.BadRequest =>
-                "Mojang rejected the skin file: " + detail,
-            System.Net.HttpStatusCode.TooManyRequests =>
-                "Too many requests to Mojang. Please wait a minute and try again.",
-            _ => $"Skin update error ({(int)code}): {detail}"
-        };
     }
 
     public static System.Windows.Media.Imaging.BitmapSource? CreateCrispHeadAvatar(byte[] skinBytes, int targetSize = 64)
@@ -509,7 +271,7 @@ public sealed class SkinService
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Error: {body}");
 
-        var json = System.Text.Json.Nodes.JsonNode.Parse(body);
+        var json = JsonNode.Parse(body);
         return json?["message"]?.ToString() ?? "Done!";
     }
 }

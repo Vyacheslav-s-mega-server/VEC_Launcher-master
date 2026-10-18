@@ -13,10 +13,6 @@ using VECLauncher.ViewModels;
 
 namespace VECLauncher.Views;
 
-/// <summary>
-/// Partial class handling settings UI: game directory selection, JVM memory, window resolution,
-/// language, Java path browsing, maintenance tools, and settings persistence.
-/// </summary>
 public partial class MainWindow
 {
     private void ApplySettingsToUi()
@@ -63,8 +59,6 @@ public partial class MainWindow
         _settings.LastInstanceId = _selectedInstance?.Id ?? _settings.LastInstanceId;
 
         SettingsService.Save(_settings);
-
-        Vm.Events.Publish(new SettingsSavedEvent(_settings));
 
         if (!_initializing && _instancesService.Loaded) _instancesService.SaveAll(_instances);
     }
@@ -316,27 +310,15 @@ public partial class MainWindow
 
         var tag = (sender as FrameworkElement)?.Tag?.ToString() ?? "0";
 
-        // Sync VM navigation state
         Vm.NavigateCommand.Execute(tag);
 
         AnimatePageTransition(tag);
 
         if (tag == "0" && _account != null) _ = LoadSkinImagesAsync(_account);
-        if (tag == "1") { RefreshInstanceStats(); LoadScreenshots(); }
-        if (tag == "3")
+        if (tag == "3" && _account != null)
         {
-            UpdateSkinTabHeader();
-            if (_account != null)
-            {
-                _ = LoadSkinImagesAsync(_account);
-                _ = RefreshCapesGridUIAsync(_account);
-            }
-        }
-        if (tag == "9" && _account != null) _ = LoadSkinImagesAsync(_account);
-        if (tag == "6")
-        {
-            UpdateModsSubtitle();
-            if (_modResults.Count == 0 && _selectedInstance is not null) RunModSearchFromStart();
+            _ = LoadSkinImagesAsync(_account);
+            _ = RefreshCapesGridUIAsync(_account);
         }
         if (tag == "7") RefreshContent();
     }
@@ -346,38 +328,19 @@ public partial class MainWindow
         var pages = new Dictionary<string, Grid>
         {
             ["0"] = PageHome,
-            ["3"] = PageAccount, ["4"] = PageSettings, ["5"] = PageConsole,
-            ["6"] = PageMods, ["7"] = PageContent, ["9"] = PageSkins
+            ["3"] = PageAccount,
+            ["4"] = PageSettings,
+            ["7"] = PageContent
         };
 
         foreach (var kvp in pages)
         {
             kvp.Value.Visibility = kvp.Key == tag ? Visibility.Visible : Visibility.Collapsed;
         }
-
-
     }
 
-    private string _instanceFilter = "";
 
 
-    private List<GameInstance> ApplyInstanceFilter(List<GameInstance> source)
-    {
-        if (_instanceFilter.Length == 0) return source;
-
-        return source.Where(i =>
-            i.Name.Contains(_instanceFilter, StringComparison.OrdinalIgnoreCase) ||
-            i.McVersion.Contains(_instanceFilter, StringComparison.OrdinalIgnoreCase) ||
-            i.LoaderDisplay.Contains(_instanceFilter, StringComparison.OrdinalIgnoreCase)
-        ).ToList();
-    }
-
-    private void LogFilter_Checked(object sender, RoutedEventArgs e)
-    {
-        if (!IsLoaded) return;
-        var filter = (sender as FrameworkElement)?.Tag?.ToString() ?? "all";
-        Vm.SetLogFilter(filter);
-    }
 
     private static bool MatchesLogLevel(string line, string level) =>
         MainWindowViewModel.MatchesLogLevel(line, level);
@@ -473,10 +436,6 @@ public partial class MainWindow
         {
             RefreshContent();
         }
-        else if (PageMods.Visibility == Visibility.Visible)
-        {
-            RunModSearchFromStart();
-        }
         else if (PageSettings.Visibility == Visibility.Visible)
         {
             if (SecPanelStorage.Visibility == Visibility.Visible) ScanMaintenance();
@@ -506,8 +465,6 @@ public partial class MainWindow
                 if (helper.Handle != IntPtr.Zero) FlashWindow(helper.Handle, true);
             }
             catch (Exception ex) { Log.Warn(ex.Message); }
-
-            TxtRunningBadge.Text = message;
         });
     }
 
@@ -590,7 +547,6 @@ public partial class MainWindow
         Vm.SetBusy(busy);
         Dispatcher.Invoke(() =>
         {
-            BtnCancel.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
             UpdateRunStateUi();
         });
     }
@@ -684,14 +640,6 @@ public partial class MainWindow
         if (!await _dialog.ConfirmAsync("Подтверждение очистки", msg + "\n\nПродолжить?")) return;
 
         var freed = _maintenance.Clean(selected);
-
-        if (_maintChecked.Contains(MaintenanceService.CleanTarget.Instances))
-        {
-            _instances.Clear();
-            RefreshInstanceLists();
-        }
-
-        if (_maintChecked.Contains(MaintenanceService.CleanTarget.Account)) BtnLogout_Click(sender, e);
         if (_maintChecked.Contains(MaintenanceService.CleanTarget.ImageCache)) _imageCache.ClearMemory();
 
         _maintChecked.Clear();

@@ -2,9 +2,6 @@ using VECLauncher.Models;
 
 namespace VECLauncher.Services;
 
-/// <summary>
-/// Abstracts instance data access. Default implementation wraps existing InstanceService.
-/// </summary>
 public interface IInstanceService
 {
     bool Loaded { get; }
@@ -14,8 +11,6 @@ public interface IInstanceService
     List<GameInstance> ScanOrphans(List<GameInstance> known);
     void EnsureFolders(GameInstance inst);
     void Delete(GameInstance inst, bool deleteFiles);
-    InstanceService.FolderStats GetStats(GameInstance inst);
-    List<FileInfo> GetScreenshots(GameInstance inst, int maxCount = 12);
     string InstanceDir(GameInstance inst);
     string ModsDir(GameInstance inst);
     string ResourcePacksDir(GameInstance inst);
@@ -28,9 +23,6 @@ public interface IInstanceService
     void RevealFile(string path);
 }
 
-/// <summary>
-/// Default implementation wrapping the existing static InstanceService.
-/// </summary>
 public sealed class InstanceServiceAdapter : IInstanceService
 {
     public bool Loaded => InstanceService.Loaded;
@@ -40,8 +32,6 @@ public sealed class InstanceServiceAdapter : IInstanceService
     public List<GameInstance> ScanOrphans(List<GameInstance> known) => InstanceService.ScanOrphans(known);
     public void EnsureFolders(GameInstance inst) => InstanceService.EnsureFolders(inst);
     public void Delete(GameInstance inst, bool deleteFiles) => InstanceService.Delete(inst, deleteFiles);
-    public InstanceService.FolderStats GetStats(GameInstance inst) => InstanceService.GetStats(inst);
-    public List<FileInfo> GetScreenshots(GameInstance inst, int maxCount = 12) => InstanceService.GetScreenshots(inst, maxCount);
     public string InstanceDir(GameInstance inst) => InstanceService.InstanceDir(inst);
     public string ModsDir(GameInstance inst) => InstanceService.ModsDir(inst);
     public string ResourcePacksDir(GameInstance inst) => InstanceService.ResourcePacksDir(inst);

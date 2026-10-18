@@ -22,16 +22,6 @@ public partial class MainWindow
 
         TxtAccName.Text = acc.Username;
 
-        if (acc.IsVec)
-        {
-            var vecUsers = VecAccountDatabase.GetAllUsers();
-            var matched = vecUsers.FirstOrDefault(u => string.Equals(u.Username, acc.Username, StringComparison.OrdinalIgnoreCase));
-            if (matched != null && !string.IsNullOrEmpty(matched.SkinModel))
-            {
-                acc.SkinModel = matched.SkinModel;
-            }
-        }
-
         _currentSkinModel = !string.IsNullOrEmpty(acc.SkinModel) ? acc.SkinModel : "classic";
         var isSlim = _currentSkinModel.Equals("slim", StringComparison.OrdinalIgnoreCase);
         var badge = isSlim ? "Slim" : "Classic";
@@ -39,12 +29,10 @@ public partial class MainWindow
 
         if (ToggleModelSwitch != null) ToggleModelSwitch.IsChecked = isSlim;
 
-        var accountType = acc.IsVec ? "VEC ID (КПВК)" : (acc.IsOffline ? "Оффлайн" : "Microsoft");
         var sideStatus = acc.IsVec ? "VEC ID" : (acc.IsOffline ? "Оффлайн" : "Microsoft");
 
         TxtSideName.SetCurrentValue(TextBlock.TextProperty, acc.Username);
         TxtSideStatus.SetCurrentValue(TextBlock.TextProperty, sideStatus);
-        TxtAccType.Text = accountType;
 
         if (BorderProfileCard != null) BorderProfileCard.Visibility = Visibility.Visible;
         if (BorderLoginCard != null) BorderLoginCard.Visibility = Visibility.Collapsed;

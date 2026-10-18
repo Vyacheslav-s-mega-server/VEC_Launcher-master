@@ -17,10 +17,6 @@ using VECLauncher.Services;
 
 namespace VECLauncher.Views;
 
-/// <summary>
-/// Partial class handling account management: login/logout, saved accounts list,
-/// skin loading and display, skin upload/reset, cape wardrobe, and avatar rendering.
-/// </summary>
 public partial class MainWindow
 {
     private sealed class CapeDisplayItem
@@ -86,7 +82,6 @@ public partial class MainWindow
                             {
                                 if (ToggleModelSwitch != null) ToggleModelSwitch.IsChecked = isSlim;
                                 if (TxtToggleModelBadge != null) TxtToggleModelBadge.Text = isSlim ? "Slim" : "Classic";
-                                if (TxtSkinModelBadge != null) TxtSkinModelBadge.Text = isSlim ? "Slim" : "Classic";
                             });
                         }
                     }
@@ -153,14 +148,6 @@ public partial class MainWindow
                             var preview = el.TryGetProperty("previewUrl", out var p) ? p.GetString() ?? "" : "";
                             var isEq = el.TryGetProperty("isEquipped", out var eq) && eq.GetBoolean();
 
-                            if (id == "vec_default" && !isEq && !isNoCape)
-                            {
-                                var vecBytes = DefaultSkinService.GetDefaultCape();
-                                if (vecBytes != null && _currentCapeRawBytes != null && _currentCapeRawBytes.Length == vecBytes.Length)
-                                {
-                                    isEq = true;
-                                }
-                            }
 
                             if (!items.Any(i => i.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
                             {
@@ -523,10 +510,6 @@ public partial class MainWindow
                     req.Headers.Add("X-Username", acc.Username);
                     await App.Http.SendAsync(req);
                 }
-                else if (acc.Type == AccountType.Microsoft && !string.IsNullOrEmpty(acc.AccessToken))
-                {
-                    try { await _skins.SetCapeAsync(acc.AccessToken, null); } catch { }
-                }
 
                 _toast.Show("Гардероб", "Плащ снят.", NotificationType.Info);
                 return;
@@ -543,10 +526,6 @@ public partial class MainWindow
                 }
             }
 
-            if (capeBytes == null && item.Id == "vec_default")
-            {
-                capeBytes = DefaultSkinService.GetDefaultCape();
-            }
 
             if (capeBytes != null && capeBytes.Length > 0)
             {
@@ -570,10 +549,6 @@ public partial class MainWindow
                         new KeyValuePair<string, string>("username", acc.Username)
                     });
                     await App.Http.SendAsync(req);
-                }
-                else if (acc.Type == AccountType.Microsoft && !string.IsNullOrEmpty(acc.AccessToken) && item.Id.StartsWith("mojang_"))
-                {
-                    try { await _skins.SetCapeAsync(acc.AccessToken, item.Id.Substring(7)); } catch { }
                 }
 
                 _toast.Show("Гардероб", $"Плащ «{item.Name}» успешно надет!", NotificationType.Success);

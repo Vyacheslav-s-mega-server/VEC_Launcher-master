@@ -105,10 +105,6 @@ public sealed class VersionService
         return result.IsSuccess ? result.Value! : throw new InvalidOperationException(result.Error);
     }
 
-    /// <summary>
-    /// Tries to get version detail, returning Result&lt;VersionDetail&gt; instead of throwing.
-    /// Use this for error-handling without try/catch.
-    /// </summary>
     public async Task<Result<VersionDetail>> TryGetVersionDetailAsync(ManifestVersion version, CancellationToken ct = default)
     {
         var path = Paths.VersionJson(version.Id);

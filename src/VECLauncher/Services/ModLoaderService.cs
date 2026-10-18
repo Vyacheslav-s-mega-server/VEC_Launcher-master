@@ -1,6 +1,5 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text.Json;
-using System.Xml.Linq;
 using VECLauncher.Models;
 
 namespace VECLauncher.Services;
@@ -8,9 +7,7 @@ namespace VECLauncher.Services;
 public sealed class ModLoaderService
 {
     private const string FabricMetaBase = "https://meta.fabricmc.net/v2";
-    private const string ForgeMetadata = "https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml";
     private const string ForgeInstallerBase = "https://maven.minecraftforge.net/net/minecraftforge/forge";
-    private const string NeoForgeMetadata = "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml";
     private const string NeoForgeInstallerBase = "https://maven.neoforged.net/releases/net/neoforged/neoforge";
 
     private readonly HttpClient _http;
@@ -23,153 +20,6 @@ public sealed class ModLoaderService
 
     public event Action<string>? Status;
     private void Report(string s) { Status?.Invoke(s); Log.Info(s); }
-
-    public async Task<List<LoaderVersion>> GetLoaderVersionsAsync(
-        LoaderKind kind, string mcVersion, CancellationToken ct = default)
-    {
-        return kind switch
-        {
-            LoaderKind.Fabric => await GetFabricVersionsAsync(mcVersion, ct).ConfigureAwait(false),
-            LoaderKind.Forge => await GetForgeVersionsAsync(mcVersion, ct).ConfigureAwait(false),
-            LoaderKind.NeoForge => await GetNeoForgeVersionsAsync(mcVersion, ct).ConfigureAwait(false),
-            _ => new List<LoaderVersion>()
-        };
-    }
-
-    private async Task<List<LoaderVersion>> GetFabricVersionsAsync(string mcVersion, CancellationToken ct)
-    {
-        var result = new List<LoaderVersion>();
-
-        var json = await _http.GetStringAsync($"{FabricMetaBase}/versions/loader/{Uri.EscapeDataString(mcVersion)}", ct)
-            .ConfigureAwait(false);
-
-        using var doc = JsonDocument.Parse(json);
-        var first = true;
-
-        foreach (var el in doc.RootElement.EnumerateArray())
-        {
-            if (!el.TryGetProperty("loader", out var loader)) continue;
-
-            var version = loader.GetProperty("version").GetString();
-            if (string.IsNullOrEmpty(version)) continue;
-
-            var stable = loader.TryGetProperty("stable", out var st) && st.GetBoolean();
-
-            result.Add(new LoaderVersion
-            {
-                Kind = LoaderKind.Fabric,
-                Version = version!,
-                McVersion = mcVersion,
-                IsStable = stable,
-                IsRecommended = first
-            });
-            first = false;
-        }
-
-        return result;
-    }
-
-    private async Task<List<LoaderVersion>> GetForgeVersionsAsync(string mcVersion, CancellationToken ct)
-    {
-        var all = await FetchMavenVersionsAsync(ForgeMetadata, ct).ConfigureAwait(false);
-
-        var prefix = mcVersion + "-";
-        var matched = all.Where(v => v.StartsWith(prefix, StringComparison.Ordinal))
-                         .Reverse()
-                         .ToList();
-
-        return matched.Select((v, i) => new LoaderVersion
-        {
-            Kind = LoaderKind.Forge,
-            Version = v,
-            McVersion = mcVersion,
-            IsStable = true,
-            IsRecommended = i == 0
-        }).ToList();
-    }
-
-    private async Task<List<LoaderVersion>> GetNeoForgeVersionsAsync(string mcVersion, CancellationToken ct)
-    {
-        var all = await FetchMavenVersionsAsync(NeoForgeMetadata, ct).ConfigureAwait(false);
-
-        var mv = VersionService.ParseMcVersion(mcVersion);
-        List<string> matched;
-
-        if (mv is not null && mv >= new Version(1, 20, 2))
-        {
-            var prefix = $"{mv.Minor}.{mv.Build}.";
-            matched = all.Where(v => v.StartsWith(prefix, StringComparison.Ordinal)).Reverse().ToList();
-        }
-        else
-        {
-            var prefix = mcVersion + "-";
-            matched = all.Where(v => v.StartsWith(prefix, StringComparison.Ordinal)).Reverse().ToList();
-        }
-
-        return matched.Select((v, i) => new LoaderVersion
-        {
-            Kind = LoaderKind.NeoForge,
-            Version = v,
-            McVersion = mcVersion,
-            IsStable = !v.Contains("beta", StringComparison.OrdinalIgnoreCase),
-            IsRecommended = i == 0
-        }).ToList();
-    }
-
-    private async Task<List<string>> FetchMavenVersionsAsync(string metadataUrl, CancellationToken ct)
-    {
-        var xml = await _http.GetStringAsync(metadataUrl, ct).ConfigureAwait(false);
-        var doc = XDocument.Parse(xml);
-
-        return doc.Root?
-            .Element("versioning")?
-            .Element("versions")?
-            .Elements("version")
-            .Select(e => e.Value)
-            .ToList() ?? new List<string>();
-    }
-
-    public async Task<HashSet<string>> GetSupportedMcVersionsAsync(LoaderKind kind, CancellationToken ct = default)
-    {
-        try
-        {
-            switch (kind)
-            {
-                case LoaderKind.Fabric:
-                {
-                    var json = await _http.GetStringAsync($"{FabricMetaBase}/versions/game", ct).ConfigureAwait(false);
-                    using var doc = JsonDocument.Parse(json);
-                    return doc.RootElement.EnumerateArray()
-                        .Select(e => e.GetProperty("version").GetString() ?? "")
-                        .Where(s => s.Length > 0)
-                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-                }
-                case LoaderKind.Forge:
-                {
-                    var all = await FetchMavenVersionsAsync(ForgeMetadata, ct).ConfigureAwait(false);
-                    return all.Select(v => v.Split('-')[0]).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                }
-                case LoaderKind.NeoForge:
-                {
-                    var all = await FetchMavenVersionsAsync(NeoForgeMetadata, ct).ConfigureAwait(false);
-                    var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    foreach (var v in all)
-                    {
-                        if (v.Contains('-') && v.StartsWith('1')) { set.Add(v.Split('-')[0]); continue; }
-                        var parts = v.Split('.');
-                        if (parts.Length >= 2) set.Add($"1.{parts[0]}.{parts[1]}");
-                    }
-                    return set;
-                }
-            }
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            Log.Warn($"ModLoaderService: failed to get {kind} versions: {ex.Message}");
-        }
-
-        return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    }
 
     public async Task<string> InstallAsync(
         LoaderKind kind, string mcVersion, string loaderVersion,

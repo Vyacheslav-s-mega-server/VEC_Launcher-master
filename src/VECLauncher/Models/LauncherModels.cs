@@ -22,18 +22,6 @@ public static class LoaderKindExtensions
     };
 }
 
-public sealed class LoaderVersion
-{
-    public required LoaderKind Kind { get; init; }
-    public required string Version { get; init; }
-    public string? McVersion { get; init; }
-    public bool IsStable { get; init; } = true;
-    public bool IsRecommended { get; init; }
-
-    public override string ToString() =>
-        Version + (IsRecommended ? "  (рекомендуется)" : IsStable ? "" : "  (beta)");
-}
-
 public sealed class GameInstance
 {
     [JsonPropertyName("id")] public string Id { get; set; } = Guid.NewGuid().ToString("N")[..12];

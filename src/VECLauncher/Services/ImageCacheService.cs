@@ -1,28 +1,42 @@
+using System;
 using System.Collections.Concurrent;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 namespace VECLauncher.Services;
 
-public static class ImageCacheService
+public interface IImageCacheService
 {
-    private static readonly ConcurrentDictionary<string, BitmapImage> Memory = new();
-    private static readonly SemaphoreSlim Limiter = new(6);
+    BitmapImage? TryGetCached(string? url);
+    Task<BitmapImage?> GetAsync(string? url, HttpClient http, int decodeWidth = 128, CancellationToken ct = default);
+    void ClearMemory();
+    long DiskCacheSize();
+}
+
+public sealed class ImageCacheService : IImageCacheService
+{
+    private readonly ConcurrentDictionary<string, BitmapImage> _memory = new();
+    private readonly SemaphoreSlim _limiter = new(6);
 
     private static string DiskDir => Path.Combine(LauncherPaths.CacheDir, "images");
 
-    public static BitmapImage? TryGetCached(string? url)
+    public BitmapImage? TryGetCached(string? url)
     {
         if (string.IsNullOrWhiteSpace(url)) return null;
-        return Memory.TryGetValue(url, out var img) ? img : null;
+        return _memory.TryGetValue(url, out var img) ? img : null;
     }
 
-    public static async Task<BitmapImage?> GetAsync(
+    public async Task<BitmapImage?> GetAsync(
         string? url, HttpClient http, int decodeWidth = 128, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(url)) return null;
-        if (Memory.TryGetValue(url!, out var cached)) return cached;
+        if (_memory.TryGetValue(url!, out var cached)) return cached;
 
         try
         {
@@ -37,7 +51,7 @@ public static class ImageCacheService
 
             if (bytes is null || bytes.Length == 0)
             {
-                await Limiter.WaitAsync(ct).ConfigureAwait(false);
+                await _limiter.WaitAsync(ct).ConfigureAwait(false);
                 try
                 {
                     using var req = new HttpRequestMessage(HttpMethod.Get, url);
@@ -51,7 +65,7 @@ public static class ImageCacheService
 
                     bytes = await resp.Content.ReadAsByteArrayAsync(cts.Token).ConfigureAwait(false);
                 }
-                finally { Limiter.Release(); }
+                finally { _limiter.Release(); }
 
                 if (bytes.Length == 0) return null;
 
@@ -73,7 +87,7 @@ public static class ImageCacheService
         }
     }
 
-    private static BitmapImage? Decode(string url, byte[] bytes, int decodeWidth)
+    private BitmapImage? Decode(string url, byte[] bytes, int decodeWidth)
     {
         try
         {
@@ -88,7 +102,7 @@ public static class ImageCacheService
             bmp.EndInit();
             bmp.Freeze();
 
-            Memory[url] = bmp;
+            _memory[url] = bmp;
             return bmp;
         }
         catch (Exception ex)
@@ -106,9 +120,9 @@ public static class ImageCacheService
         return Path.Combine(DiskDir, hash + ext);
     }
 
-    public static void ClearMemory() => Memory.Clear();
+    public void ClearMemory() => _memory.Clear();
 
-    public static long DiskCacheSize()
+    public long DiskCacheSize()
     {
         try
         {

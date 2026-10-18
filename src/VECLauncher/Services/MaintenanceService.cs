@@ -1,9 +1,22 @@
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace VECLauncher.Services;
 
-public static class MaintenanceService
+public interface IMaintenanceService
+{
+    List<MaintenanceService.TargetInfo> Enumerate();
+    long TotalSize();
+    long Clean(IEnumerable<MaintenanceService.TargetInfo> targets);
+    string PrepareUninstall(bool removeExe);
+    void RunUninstall(string script);
+}
+
+public sealed class MaintenanceService : IMaintenanceService
 {
     public enum CleanTarget
     {
@@ -39,7 +52,7 @@ public static class MaintenanceService
         }
     }
 
-    public static List<TargetInfo> Enumerate()
+    public List<TargetInfo> Enumerate()
     {
         var list = new List<TargetInfo>
         {
@@ -53,7 +66,7 @@ public static class MaintenanceService
             {
                 Target = CleanTarget.ImageCache, Title = "Кэш скинов и плащей",
                 Description = "Локально сохраненные изображения профилей. Загрузятся снова автоматически.",
-                Path = System.IO.Path.Combine(LauncherPaths.CacheDir, "images")
+                Path = Path.Combine(LauncherPaths.CacheDir, "images")
             },
             new()
             {
@@ -104,7 +117,7 @@ public static class MaintenanceService
         catch { return 0; }
     }
 
-    public static long Clean(IEnumerable<TargetInfo> targets)
+    public long Clean(IEnumerable<TargetInfo> targets)
     {
         long freed = 0;
 
@@ -139,7 +152,7 @@ public static class MaintenanceService
         return freed;
     }
 
-    public static string PrepareUninstall(bool removeExe)
+    public string PrepareUninstall(bool removeExe)
     {
         var root = LauncherPaths.Root;
         var exe = Environment.ProcessPath ?? "";
@@ -148,9 +161,7 @@ public static class MaintenanceService
         script.AppendLine("@echo off");
         script.AppendLine("chcp 65001 >nul");
         script.AppendLine("echo Uninstalling VEC Launcher...");
-
         script.AppendLine("timeout /t 2 /nobreak >nul");
-
         script.AppendLine($"rmdir /s /q \"{root}\" 2>nul");
 
         if (removeExe && exe.Length > 0 && exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
@@ -169,7 +180,7 @@ public static class MaintenanceService
         return path;
     }
 
-    public static void RunUninstall(string scriptPath)
+    public void RunUninstall(string scriptPath)
     {
         Process.Start(new ProcessStartInfo("cmd.exe", $"/c \"{scriptPath}\"")
         {
@@ -179,5 +190,5 @@ public static class MaintenanceService
         });
     }
 
-    public static long TotalSize() => Measure(LauncherPaths.Root, false);
+    public long TotalSize() => Measure(LauncherPaths.Root, false);
 }

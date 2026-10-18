@@ -511,7 +511,7 @@ public partial class MainWindow
                     await App.Http.SendAsync(req);
                 }
 
-                _toast.Show("Гардероб", "Плащ снят.", NotificationType.Info);
+                ToastNotification.Show("Гардероб", "Плащ снят.", NotificationType.Info);
                 return;
             }
 
@@ -551,13 +551,13 @@ public partial class MainWindow
                     await App.Http.SendAsync(req);
                 }
 
-                _toast.Show("Гардероб", $"Плащ «{item.Name}» успешно надет!", NotificationType.Success);
+                ToastNotification.Show("Гардероб", $"Плащ «{item.Name}» успешно надет!", NotificationType.Success);
             }
         }
         catch (Exception ex)
         {
             Log.Warn($"Equip cape failed: {ex.Message}");
-            _toast.Show("Ошибка", ex.Message, NotificationType.Error);
+            ToastNotification.Show("Ошибка", ex.Message, NotificationType.Error);
             _ = RefreshCapesGridUIAsync(acc);
         }
     }
@@ -618,21 +618,21 @@ public partial class MainWindow
                 TxtCapePromoStatus.Text = msg;
                 TxtCapePromoStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0xDE, 0x80));
                 TxtCapePromoCode.Clear();
-                _toast.Show("Промокод активирован", msg, NotificationType.Success);
+                ToastNotification.Show("Промокод активирован", msg, NotificationType.Success);
                 await RefreshCapesGridUIAsync(acc);
             }
             else
             {
                 TxtCapePromoStatus.Text = !string.IsNullOrEmpty(msg) ? msg : "Неверный промокод.";
                 TxtCapePromoStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
-                _toast.Show("Ошибка промокода", TxtCapePromoStatus.Text, NotificationType.Error);
+                ToastNotification.Show("Ошибка промокода", TxtCapePromoStatus.Text, NotificationType.Error);
             }
         }
         catch (Exception ex)
         {
             TxtCapePromoStatus.Text = $"Ошибка: {ex.Message}";
             TxtCapePromoStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
-            _toast.Show("Ошибка", ex.Message, NotificationType.Error);
+            ToastNotification.Show("Ошибка", ex.Message, NotificationType.Error);
         }
         finally
         {

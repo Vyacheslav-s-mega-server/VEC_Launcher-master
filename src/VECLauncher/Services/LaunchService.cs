@@ -136,8 +136,7 @@ public sealed class LaunchService
             launchTicket = integrity.Ticket;
         }
 
-        var jvmArgs = JvmPresetService.Resolve(inst.JvmPreset,
-            string.IsNullOrWhiteSpace(inst.ExtraJvmArgs) ? settings.ExtraJvmArgs : inst.ExtraJvmArgs);
+        var jvmArgs = string.IsNullOrWhiteSpace(inst.ExtraJvmArgs) ? settings.ExtraJvmArgs : inst.ExtraJvmArgs;
 
         if (!string.IsNullOrWhiteSpace(launchTicket))
         {

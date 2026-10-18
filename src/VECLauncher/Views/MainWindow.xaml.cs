@@ -30,7 +30,6 @@ public partial class MainWindow : Window
     private ModpackService _modpacks;
     private GameSessionManager _sessions => Vm.Sessions;
     private GameStatistics _stats => Vm.Stats;
-    private readonly IToastService _toast;
     private readonly IDialogService _dialog;
     private readonly IInstanceService _instancesService;
     private readonly IMaintenanceService _maintenance;
@@ -65,12 +64,11 @@ public partial class MainWindow : Window
     private bool _initializing = true;
     private DateTime _lastProgressUi = DateTime.MinValue;
 
-    public MainWindow(MainWindowViewModel vm, IToastService toast,
+    public MainWindow(MainWindowViewModel vm,
         IInstanceService instancesService,
         IMaintenanceService maintenance, IImageCacheService imageCache)
     {
         Vm = vm;
-        _toast = toast;
         _instancesService = instancesService;
         _maintenance = maintenance;
         _imageCache = imageCache;

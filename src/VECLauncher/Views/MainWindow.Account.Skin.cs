@@ -205,14 +205,14 @@ public partial class MainWindow
         TxtSkinStatus.Foreground = (Brush)(TryFindResource("FgMuted") ?? Brushes.Gray);
         await LoadSkinImagesAsync(_account);
         TxtSkinStatus.Text = "";
-        _toast.Show("Синхронизация", "Скин и плащ успешно обновлены с сервера!", NotificationType.Success);
+        ToastNotification.Show("Синхронизация", "Скин и плащ успешно обновлены с сервера!", NotificationType.Success);
     }
 
     private async void BtnBrowseSkin_Click(object sender, RoutedEventArgs e)
     {
         if (_account is null)
         {
-            _toast.Show("Авторизация", "Сначала войдите в аккаунт, чтобы сменить скин.", NotificationType.Warning);
+            ToastNotification.Show("Авторизация", "Сначала войдите в аккаунт, чтобы сменить скин.", NotificationType.Warning);
             TxtSkinStatus.Text = "Сначала войдите в аккаунт.";
             TxtSkinStatus.Foreground = (Brush)(TryFindResource("Danger") ?? Brushes.Red);
             return;
@@ -273,7 +273,7 @@ public partial class MainWindow
             }
 
             TxtSkinStatus.Text = "";
-            _toast.Show("Скин обновлён", "Новый скин успешно установлен!", NotificationType.Success);
+            ToastNotification.Show("Скин обновлён", "Новый скин успешно установлен!", NotificationType.Success);
             await LoadSkinImagesAsync(_account);
         }
         catch (Exception ex)
@@ -281,7 +281,7 @@ public partial class MainWindow
             Log.Error("Ошибка смены скина", ex);
             TxtSkinStatus.Text = ex.Message;
             TxtSkinStatus.Foreground = (Brush)(TryFindResource("Danger") ?? Brushes.Red);
-            _toast.Show("Ошибка", ex.Message, NotificationType.Error);
+            ToastNotification.Show("Ошибка", ex.Message, NotificationType.Error);
         }
     }
 

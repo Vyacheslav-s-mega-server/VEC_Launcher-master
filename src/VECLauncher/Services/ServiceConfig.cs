@@ -23,13 +23,11 @@ public static class ServiceConfig
         services.AddSingleton<WebAuthService>();
 
         services.AddSingleton<IInstanceService, InstanceServiceAdapter>();
-        services.AddSingleton<IMaintenanceService, MaintenanceServiceAdapter>();
-        services.AddSingleton<IImageCacheService, ImageCacheServiceAdapter>();
+        services.AddSingleton<IMaintenanceService, MaintenanceService>();
+        services.AddSingleton<IImageCacheService, ImageCacheService>();
         services.AddSingleton<LaunchService>();
 
         services.AddSingleton<GameStatistics>();
-
-        services.AddSingleton<IToastService, ToastService>();
 
         services.AddSingleton<IAccountRepository, AccountRepository>();
 

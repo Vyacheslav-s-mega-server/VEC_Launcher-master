@@ -201,7 +201,7 @@ public partial class MainWindow
                     PopupSavedAccounts.IsOpen = false;
                     Vm.Accounts.Save(targetAcc);
                     SetAccount(targetAcc, refreshSkin: true);
-                    _toast.Show("Профиль переключен", $"Активен аккаунт: {targetAcc.Username}", NotificationType.Info);
+                    ToastNotification.Show("Профиль переключен", $"Активен аккаунт: {targetAcc.Username}", NotificationType.Info);
                 };
 
                 StackSidebarAccounts.Children.Add(btn);

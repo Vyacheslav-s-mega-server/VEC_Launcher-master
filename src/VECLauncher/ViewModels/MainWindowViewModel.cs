@@ -27,7 +27,6 @@ public partial class MainWindowViewModel : ObservableObject
 
     public readonly GameSessionManager Sessions = new();
     public readonly GameStatistics Stats;
-    public readonly VecAuthService VecAuth = new();
     public readonly LaunchService Launch;
     public readonly IAccountRepository Accounts;
     public IDialogService Dialogs { get; private set; } = null!;

@@ -142,7 +142,7 @@ public static class InstanceService
                 }
 
                 if (string.IsNullOrEmpty(mcVersion))
-                    mcVersion = GameOptionsService.GetLanguage(dir) is not null ? "1.20.1" : "1.20.1";
+                    mcVersion = "1.21.1";
 
                 found.Add(new GameInstance
                 {

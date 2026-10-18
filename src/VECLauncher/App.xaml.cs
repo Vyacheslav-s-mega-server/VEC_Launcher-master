@@ -32,12 +32,6 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        if (SelfUpdateService.RunSelfReplacementIfNeeded())
-        {
-            Shutdown();
-            return;
-        }
-
         if (!ProtocolService.TryEnsureSingleInstance(e.Args))
         {
             Shutdown();

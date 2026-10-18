@@ -12,7 +12,6 @@ public static class GameOptionsService
         return lang switch
         {
             "ru" => old ? "ru_RU" : "ru_ru",
-            "uk" => old ? "uk_UA" : "uk_ua",
             "en" => old ? "en_US" : "en_us",
             _ => old ? "ru_RU" : "ru_ru"
         };

@@ -4,8 +4,6 @@ namespace VECLauncher.Tests;
 
 public class GameOptionsServiceTests
 {
-    // ── LanguageCodeFor() ──
-
     [Theory]
     [InlineData("1.20.4", "ru", "ru_ru")]
     [InlineData("1.18.2", "ru", "ru_ru")]
@@ -14,9 +12,7 @@ public class GameOptionsServiceTests
     [InlineData("1.7.10", "ru", "ru_RU")]
     [InlineData("1.20.4", "en", "en_us")]
     [InlineData("1.10", "en", "en_US")]
-    [InlineData("1.20.4", "uk", "uk_ua")]
-    [InlineData("1.10", "uk", "uk_UA")]
-    [InlineData("1.20.4", "de", "ru_ru")] // unknown lang defaults to Russian
+    [InlineData("1.20.4", "de", "ru_ru")]
     public void LanguageCodeFor_ReturnsCorrectCode(string mcVersion, string lang, string expected)
     {
         var result = GameOptionsService.LanguageCodeFor(mcVersion, lang);
@@ -31,9 +27,9 @@ public class GameOptionsServiceTests
     }
 
     [Theory]
-    [InlineData("1.20.4", true)]  // modern: ru_ru
-    [InlineData("1.10", false)]   // old: 1.10 < 1.11 -> ru_RU
-    [InlineData("1.9.4", false)]  // old: 1.9.4 < 1.11 -> ru_RU
+    [InlineData("1.20.4", true)]
+    [InlineData("1.10", false)]
+    [InlineData("1.9.4", false)]
     public void LanguageCodeFor_OldVersionsUseUppercase(string mcVersion, bool modern)
     {
         var result = GameOptionsService.LanguageCodeFor(mcVersion, "ru");

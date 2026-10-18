@@ -137,9 +137,9 @@ public sealed class LaunchService
         }
         if (settings.AutoSetGameLanguage)
         {
-            var created = GameOptionsService.EnsureLanguage(
+            var updated = GameOptionsService.SetLanguage(
                 InstanceService.InstanceDir(inst), inst.McVersion, settings.GameLanguage);
-            if (created)
+            if (updated)
                 Log($"Язык игры установлен: " +
                     GameOptionsService.LanguageCodeFor(inst.McVersion, settings.GameLanguage));
         }

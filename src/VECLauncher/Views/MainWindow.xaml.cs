@@ -224,7 +224,13 @@ public partial class MainWindow : Window
 
             if (_preloadedData?.JavaInstallations != null && _preloadedData.JavaInstallations.Count > 0)
             {
-                TxtJavaList.Text = "Найдено:\n" + string.Join("\n", _preloadedData.JavaInstallations.Select(j => "  • " + j));
+                TxtJavaStatus.Visibility = Visibility.Collapsed;
+                ItemsJava.ItemsSource = _preloadedData.JavaInstallations.Select(j => new
+                {
+                    Title = $"Java {j.MajorVersion} ({j.DisplayVersion})",
+                    Source = j.Source,
+                    Path = j.JavaExe
+                }).ToList();
             }
             else
             {
@@ -462,10 +468,18 @@ public partial class MainWindow : Window
         SecPanelGame.Visibility = tag == "game" ? Visibility.Visible : Visibility.Collapsed;
         SecPanelJava.Visibility = tag == "java" ? Visibility.Visible : Visibility.Collapsed;
         SecPanelStorage.Visibility = tag == "storage" ? Visibility.Visible : Visibility.Collapsed;
-        SecPanelMaint.Visibility = tag == "maint" ? Visibility.Visible : Visibility.Collapsed;
 
-        if (tag == "maint" && ItemsMaint.ItemsSource is null) ScanMaintenance();
-        if (tag == "storage") RefreshPortableState();
+        if (tag == "storage")
+        {
+            ScanMaintenance();
+        }
+        else if (tag == "java")
+        {
+            if (ItemsJava.ItemsSource == null)
+            {
+                _ = Task.Run(DetectJava);
+            }
+        }
     }
 
     private void SetResolution(int w, int h)
@@ -474,6 +488,7 @@ public partial class MainWindow : Window
         TxtHeight.Text = h.ToString();
         ChkFullscreen.IsChecked = false;
         PersistSettings();
+        ShowSavedHint();
     }
 
     private void Preset720_Click(object s, RoutedEventArgs e) => SetResolution(1280, 720);
@@ -483,7 +498,9 @@ public partial class MainWindow : Window
     private void SetMemory(int mb)
     {
         SldMemory.Value = Math.Clamp(mb, 1024, 16384);
+        TxtMemory.Text = $"{mb} МБ";
         PersistSettings();
+        ShowSavedHint();
     }
 
     private void Mem2_Click(object s, RoutedEventArgs e) => SetMemory(2048);
@@ -493,7 +510,8 @@ public partial class MainWindow : Window
 
     private void BtnRescanJava_Click(object sender, RoutedEventArgs e)
     {
-        TxtJavaList.Text = "Поиск…";
+        TxtJavaStatus.Visibility = Visibility.Visible;
+        TxtJavaStatus.Text = "Поиск установленных версий Java…";
         _ = Task.Run(DetectJava);
     }
 
@@ -809,31 +827,6 @@ public partial class MainWindow : Window
 
     private List<MaintenanceService.TargetInfo> _maintTargets = new();
     private readonly HashSet<MaintenanceService.CleanTarget> _maintChecked = new();
-
-    private void RefreshPortableState()
-    {
-        if (TxtPortableState is null) return;
-
-        if (LauncherPaths.IsPortable)
-        {
-            TxtPortableState.Text = $"Включён. Данные: {LauncherPaths.Root}";
-            TxtPortableState.Foreground = (Brush)FindResource("Accent");
-            BtnPortableToggle.Content = "Выключить портативный режим";
-        }
-        else
-        {
-            var can = LauncherPaths.CanUsePortable();
-
-            TxtPortableState.Text = can
-                ? $"Выключен. Данные: {LauncherPaths.Root}"
-                : "Недоступен: нет прав на запись рядом с лаунчером. " +
-                  "Перенесите exe в обычную папку или на флешку.";
-
-            TxtPortableState.Foreground = (Brush)FindResource(can ? "FgMuted" : "Danger");
-            BtnPortableToggle.Content = "Включить портативный режим";
-            BtnPortableToggle.IsEnabled = can;
-        }
-    }
 
     private static string Shorten(string s, int max) =>
         s.Length <= max ? s : "…" + s[^(max - 1)..];

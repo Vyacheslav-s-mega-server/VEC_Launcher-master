@@ -138,7 +138,7 @@ public partial class MainWindow
 
                 var border = new Border
                 {
-                    CornerRadius = new CornerRadius(5),
+                    CornerRadius = new CornerRadius(0),
                     Padding = new Thickness(6, 4, 6, 4),
                     Background = isCurrent ? new SolidColorBrush(Color.FromRgb(22, 22, 30)) : Brushes.Transparent
                 };
@@ -152,7 +152,7 @@ public partial class MainWindow
                 {
                     Width = 22,
                     Height = 22,
-                    CornerRadius = new CornerRadius(4),
+                    CornerRadius = new CornerRadius(0),
                     Background = new SolidColorBrush(Color.FromRgb(24, 24, 32)),
                     ClipToBounds = true
                 };
@@ -248,7 +248,7 @@ public partial class MainWindow
     private void BtnSidebarAddAccount_Click(object sender, RoutedEventArgs e)
     {
         if (PopupSavedAccounts != null) PopupSavedAccounts.IsOpen = false;
-        if (NavAccount != null) NavAccount.IsChecked = true;
+        BtnVecLogin_Click(sender, e);
     }
 
     private void BtnSidebarLogout_Click(object sender, RoutedEventArgs e)

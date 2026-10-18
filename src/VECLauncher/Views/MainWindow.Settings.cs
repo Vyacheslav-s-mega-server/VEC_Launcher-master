@@ -81,15 +81,34 @@ public partial class MainWindow
             {
                 if (list.Count == 0)
                 {
-                    TxtJavaList.Text = "Java не обнаружена. Лаунчер скачает нужную версию автоматически.";
+                    ItemsJava.ItemsSource = null;
+                    TxtJavaStatus.Visibility = Visibility.Visible;
+                    TxtJavaStatus.Text = "Java не обнаружена. Лаунчер скачает нужную версию автоматически.";
                 }
                 else
                 {
-                    TxtJavaList.Text = "Найдено:\n" + string.Join("\n", list.Select(j => "  • " + j));
+                    TxtJavaStatus.Visibility = Visibility.Collapsed;
+                    ItemsJava.ItemsSource = list.Select(j => new
+                    {
+                        Title = $"Java {j.MajorVersion} ({j.DisplayVersion})",
+                        Source = j.Source,
+                        Path = j.JavaExe
+                    }).ToList();
                 }
             });
         }
         catch (Exception ex) { Log.Warn("Ошибка поиска Java: " + ex.Message); }
+    }
+
+    private void BtnSelectJava_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.Tag is string path && !string.IsNullOrWhiteSpace(path))
+        {
+            TxtJavaPath.Text = path;
+            _settings.CustomJavaPath = path;
+            PersistSettings();
+            AppendLog($"Выбрана установленная Java: {path}");
+        }
     }
 
     private void BuildThemeCards()
@@ -138,6 +157,24 @@ public partial class MainWindow
         ShowSavedHint();
     }
 
+    private void LaunchBehavior_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!IsLoaded || _initializing) return;
+
+        if (sender == ChkCloseOnLaunch && ChkCloseOnLaunch.IsChecked == true)
+        {
+            ChkMinimizeOnLaunch.IsChecked = false;
+        }
+        else if (sender == ChkMinimizeOnLaunch && ChkMinimizeOnLaunch.IsChecked == true)
+        {
+            ChkCloseOnLaunch.IsChecked = false;
+        }
+
+        PersistSettings();
+        UpdateRunStateUi();
+        ShowSavedHint();
+    }
+
     private string _currentSettingsSection = "game";
 
     private DispatcherTimer? _autoSaveTimer;
@@ -172,122 +209,6 @@ public partial class MainWindow
 
     private void ShowSavedHint()
     {
-        if (TxtSettingsHint is null) return;
-
-        TxtSettingsHint.Text = $"Сохранено в {DateTime.Now:HH:mm:ss}";
-        TxtSettingsHint.Foreground = (Brush)FindResource("Accent");
-
-        var t = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-        t.Tick += (s, _) =>
-        {
-            t.Stop();
-            TxtSettingsHint.Text = "Изменения применяются и сохраняются сразу";
-            TxtSettingsHint.Foreground = (Brush)FindResource("FgMuted");
-        };
-        t.Start();
-    }
-
-    private void BtnResetSection_Click(object sender, RoutedEventArgs e)
-    {
-        var sectionName = _currentSettingsSection switch
-        {
-            "java" => "«Java и память»",
-            "storage" => "«Хранилище»",
-            "versions" => "«Версии игры»",
-            "maint" => "«Обслуживание»",
-            _ => "«Игра»"
-        };
-
-        if (_currentSettingsSection is "versions" or "maint")
-        {
-            _dialog.ShowMessage($"В разделе {sectionName} нет настроек для сброса.", "Сброс");
-            return;
-        }
-
-        if (!_dialog.ConfirmAsync("Сброс раздела", $"Сбросить настройки раздела {sectionName} к значениям по умолчанию?").GetAwaiter().GetResult()) return;
-
-        var def = new LauncherSettings();
-
-        switch (_currentSettingsSection)
-        {
-            case "game":
-                _settings.WindowWidth = def.WindowWidth;
-                _settings.WindowHeight = def.WindowHeight;
-                _settings.Fullscreen = def.Fullscreen;
-                _settings.AllowMultipleInstances = def.AllowMultipleInstances;
-                _settings.MinimizeOnLaunch = def.MinimizeOnLaunch;
-                _settings.ConfirmGameStop = def.ConfirmGameStop;
-                _settings.CloseLauncherOnStart = def.CloseLauncherOnStart;
-                _settings.ShowConsole = def.ShowConsole;
-                _settings.ShowSnapshots = def.ShowSnapshots;
-                _settings.DefaultIsolated = def.DefaultIsolated;
-                _settings.AutoSetGameLanguage = def.AutoSetGameLanguage;
-                _settings.GameLanguage = def.GameLanguage;
-                break;
-
-            case "java":
-                _settings.MaxMemoryMb = LauncherSettings.RecommendedMaxMemory();
-                _settings.CustomJavaPath = "";
-                _settings.ExtraJvmArgs = "";
-                break;
-
-            case "storage":
-                _settings.GameDir = LauncherPaths.Root;
-                break;
-        }
-
-        SettingsService.Save(_settings);
-        ApplySettingsToUi();
-
-        AppendLog($"Раздел {sectionName} сброшен.");
-    }
-
-    private void BtnCalcSize_Click(object sender, RoutedEventArgs e)
-    {
-        TxtStorageInfo.Text = "Считаю…";
-
-        _ = Task.Run(() =>
-        {
-            long Size(string dir)
-            {
-                try
-                {
-                    return Directory.Exists(dir)
-                        ? new DirectoryInfo(dir).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length)
-                        : 0;
-                }
-                catch { return 0; }
-            }
-
-            var libs = Size(LauncherPaths.LibrariesDir);
-            var assets = Size(LauncherPaths.AssetsDir);
-            var versions = Size(LauncherPaths.VersionsDir);
-            var runtime = Size(LauncherPaths.RuntimeDir);
-            var cache = Size(LauncherPaths.CacheDir);
-
-            var perInstance = new List<string>();
-            long instancesTotal = 0;
-
-            foreach (var inst in _instances)
-            {
-                var s = Size(_instancesService.InstanceDir(inst));
-                instancesTotal += s;
-                perInstance.Add($"     • {inst.Name}: {Human(s)}" + (inst.Isolated ? "  (изолированная)" : ""));
-            }
-
-            var text =
-                $"Общее хранилище:\n" +
-                $"     библиотеки: {Human(libs)}\n" +
-                $"     ресурсы: {Human(assets)}\n" +
-                $"     версии: {Human(versions)}\n" +
-                $"     Java: {Human(runtime)}\n" +
-                $"     кэш: {Human(cache)}\n\n" +
-                $"Сборки ({_instances.Count}): {Human(instancesTotal)}\n" +
-                string.Join("\n", perInstance) +
-                $"\n\nВсего: {Human(libs + assets + versions + runtime + cache + instancesTotal)}";
-
-            Dispatcher.Invoke(() => TxtStorageInfo.Text = text);
-        });
     }
 
     private void BtnClearCache_Click(object sender, RoutedEventArgs e)
@@ -313,25 +234,12 @@ public partial class MainWindow
         }
     }
 
-    private async void BtnCheckCurse_Click(object sender, RoutedEventArgs e)
+    private async void BtnResetSettings_Click(object sender, RoutedEventArgs e)
     {
-        TxtMaintenance.Text = "Проверяю доступ к Modrinth API…";
-
-        var ok = await Task.FromResult(true);
-
-        TxtMaintenance.Text = ok
-            ? "Modrinth API доступен."
-            : "Только Modrinth.";
-
-        UpdateModsSubtitle();
-    }
-
-    private void BtnResetSettings_Click(object sender, RoutedEventArgs e)
-    {
-        var r = _dialog.ConfirmAsync(
+        var r = await _dialog.ConfirmAsync(
             "Сброс настроек",
             "Сбросить все настройки лаунчера к значениям по умолчанию?\n\n" +
-            "Сборки, моды и аккаунт затронуты не будут.").GetAwaiter().GetResult();
+            "Сборки, моды и аккаунт затронуты не будут.");
 
         if (!r) return;
 
@@ -353,6 +261,7 @@ public partial class MainWindow
 
         TxtMaintenance.Text = "Настройки сброшены.";
         AppendLog("Настройки сброшены к значениям по умолчанию.");
+        ShowSavedHint();
     }
 
 
@@ -570,7 +479,7 @@ public partial class MainWindow
         }
         else if (PageSettings.Visibility == Visibility.Visible)
         {
-            if (SecPanelMaint.Visibility == Visibility.Visible) ScanMaintenance();
+            if (SecPanelStorage.Visibility == Visibility.Visible) ScanMaintenance();
             else _ = Task.Run(DetectJava);
         }
     }
@@ -690,50 +599,6 @@ public partial class MainWindow
 
     private enum ContentKind { Mods, ResourcePacks, Shaders, Worlds }
 
-    private async void BtnPortableToggle_Click(object sender, RoutedEventArgs e)
-    {
-        var turnOn = !LauncherPaths.IsPortable;
-
-        if (_sessions.AnyRunning)
-        {
-            _dialog.ShowMessage("Сначала остановите игру.", "Занято", MessageSeverity.Warning);
-            return;
-        }
-
-        var question = turnOn
-            ? "Включить портативный режим?\n\n" +
-              $"Данные переедут в:\n{IOPath.Combine(LauncherPaths.ExeDir, "VEC LauncherData")}\n\n" +
-              "Скопировать туда текущие сборки и настройки?"
-            : "Выключить портативный режим?\n\n" +
-              "Данные вернутся в папку пользователя (%APPDATA%).\n\n" +
-              "Скопировать туда текущие сборки и настройки?";
-
-        var r = await _dialog.ConfirmCancelAsync("Портативный режим", question);
-
-        if (r == ConfirmResult.Cancel) return;
-
-        try
-        {
-            if (r == ConfirmResult.Yes)
-            {
-                var copied = 0;
-                LauncherPaths.MigrateTo(turnOn, _ => copied++);
-                AppendLog($"Портативный режим: скопировано файлов {copied}.");
-            }
-
-            LauncherPaths.SetPortable(turnOn);
-
-            var restart = await _dialog.ConfirmAsync("Перезапуск",
-                "Готово. Изменения вступят в силу после перезапуска лаунчера.\n\nЗакрыть его сейчас?");
-
-            if (restart) Application.Current.Shutdown();
-            else RefreshPortableState();
-        }
-        catch (Exception ex)
-        {
-            _dialog.ShowMessage("Не удалось переключить режим: " + ex.Message, "Ошибка", MessageSeverity.Error);
-        }
-    }
     private void BtnScanMaint_Click(object sender, RoutedEventArgs e) => ScanMaintenance();
 
     private void ScanMaintenance()

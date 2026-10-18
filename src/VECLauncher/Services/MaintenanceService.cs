@@ -33,7 +33,7 @@ public static class MaintenanceService
         {
             get
             {
-                string[] u = { "B", "KB", "MB", "GB" };
+                string[] u = { "Б", "КБ", "МБ", "ГБ" };
                 double v = Size;
                 var i = 0;
                 while (v >= 1024 && i < u.Length - 1) { v /= 1024; i++; }
@@ -48,63 +48,45 @@ public static class MaintenanceService
         {
             new()
             {
-                Target = CleanTarget.Cache, Title = "Temporary Files",
-                Description = "Loader installers, manifest cache. Safe to delete.",
+                Target = CleanTarget.Cache, Title = "Временные файлы и кэш",
+                Description = "Загрузчики, манифесты и временные данные. Безопасно для очистки.",
                 Path = LauncherPaths.CacheDir
             },
             new()
             {
-                Target = CleanTarget.ImageCache, Title = "Image Cache",
-                Description = "Mod and server icons. Will be re-downloaded.",
+                Target = CleanTarget.ImageCache, Title = "Кэш скинов и плащей",
+                Description = "Локально сохраненные изображения профилей. Загрузятся снова автоматически.",
                 Path = System.IO.Path.Combine(LauncherPaths.CacheDir, "images")
             },
             new()
             {
-                Target = CleanTarget.Logs, Title = "Launcher Logs",
-                Description = "Event history. Doesn't affect functionality.",
+                Target = CleanTarget.Logs, Title = "Логи лаунчера",
+                Description = "История запусков и системных событий. Не влияет на работу клиента.",
                 Path = LauncherPaths.LauncherLogFile, IsFile = true
             },
             new()
             {
-                Target = CleanTarget.JavaRuntime, Title = "Downloaded Java",
-                Description = "Portable JREs. Will be re-downloaded on launch.",
+                Target = CleanTarget.JavaRuntime, Title = "Автоматически скачанная Java",
+                Description = "Среда выполнения Java, загруженная лаунчером. Скачается заново при старте.",
                 Path = LauncherPaths.RuntimeDir
             },
             new()
             {
-                Target = CleanTarget.Assets, Title = "Game Assets",
-                Description = "Sounds, languages, textures. The largest folder.",
+                Target = CleanTarget.Assets, Title = "Ресурсы Minecraft",
+                Description = "Звуковые файлы, текстуры и языковые пакеты клиента игры.",
                 Path = LauncherPaths.AssetsDir
             },
             new()
             {
-                Target = CleanTarget.Libraries, Title = "Libraries",
-                Description = "Shared JAR files for all versions.",
+                Target = CleanTarget.Libraries, Title = "Библиотеки игры",
+                Description = "Системные JAR-библиотеки загрузчика модов и клиента.",
                 Path = LauncherPaths.LibrariesDir
             },
             new()
             {
-                Target = CleanTarget.Versions, Title = "Game Versions",
-                Description = "Minecraft clients and loader profiles.",
+                Target = CleanTarget.Versions, Title = "Файлы версий игры",
+                Description = "Клиентские JAR-файлы и JSON-манифесты установленной версии.",
                 Path = LauncherPaths.VersionsDir
-            },
-            new()
-            {
-                Target = CleanTarget.Instances, Title = "Instances (Full)",
-                Description = "MODS, WORLDS, SCREENSHOTS AND SETTINGS. Cannot be restored.",
-                Path = InstanceService.InstancesRoot, Dangerous = true
-            },
-            new()
-            {
-                Target = CleanTarget.Settings, Title = "Launcher Settings",
-                Description = "Theme, memory, paths. Will reset to defaults.",
-                Path = LauncherPaths.SettingsFile, IsFile = true
-            },
-            new()
-            {
-                Target = CleanTarget.Account, Title = "Account",
-                Description = "Saved profile. You'll need to log in again.",
-                Path = LauncherPaths.AccountFile, IsFile = true
             }
         };
 

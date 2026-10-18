@@ -525,7 +525,6 @@ public partial class MainWindow
 
                     await File.WriteAllBytesAsync(path, bytes);
                     RefreshContent();
-                    RefreshInstanceStats();
                     return;
                 }
             }
@@ -538,81 +537,11 @@ public partial class MainWindow
             if (File.Exists(path)) File.Move(path, target);
 
             RefreshContent();
-            RefreshInstanceStats();
         }
         catch (Exception ex)
         {
             _dialog.ShowMessage("Не удалось выполнить действие: " + ex.Message, "Ошибка", MessageSeverity.Error);
         }
-    }
-
-    private void ContentReveal_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement fe || fe.Tag is not string path) return;
-
-        try
-        {
-            if (Directory.Exists(path)) _instancesService.OpenFolder(path);
-            else _instancesService.RevealFile(path);
-        }
-        catch (Exception ex) { AppendLog(ex.Message); }
-    }
-
-    private async void ContentDelete_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement fe || fe.Tag is not string path) return;
-
-        var name = IOPath.GetFileName(path);
-        var isDir = Directory.Exists(path);
-
-        var msg = isDir
-            ? $"Удалить мир «{name}»?\n\nЭто действие необратимо."
-            : $"Удалить «{name}»?";
-
-        if (!await _dialog.ConfirmAsync("Удаление", msg)) return;
-
-        try
-        {
-            if (isDir) Directory.Delete(path, true);
-            else File.Delete(path);
-
-            AppendLog($"Удалено: {name}");
-            RefreshContent();
-            RefreshInstanceStats();
-        }
-        catch (Exception ex)
-        {
-            _dialog.ShowMessage("Не удалось удалить: " + ex.Message, "Ошибка", MessageSeverity.Error);
-        }
-    }
-
-    private void BtnImportMod_Click(object sender, RoutedEventArgs e)
-    {
-        if (_selectedInstance is null)
-        {
-            _dialog.ShowMessage("Сначала выберите сборку.", "Сборка не выбрана");
-            return;
-        }
-
-        if (_selectedInstance.Name.Contains("VEC", StringComparison.OrdinalIgnoreCase))
-        {
-            _dialog.ShowMessage(
-                "На официальной сборке VEC включена система защиты целостности.\n\n" +
-                "Все сторонние .jar моды удаляются перед запуском игры для предотвращения читов.\n\n" +
-                "Управляйте модами через каталог вкладки «Моды и Контент».",
-                "Защита VEC Server", MessageSeverity.Info);
-            return;
-        }
-
-        var dlg = new OpenFileDialog
-        {
-            Title = "Выберите моды, ресурспаки или шейдеры",
-            Filter = "Все поддерживаемые|*.jar;*.zip;*.mrpack|Моды (*.jar)|*.jar|Архивы (*.zip)|*.zip|Все файлы|*.*",
-            Multiselect = true
-        };
-
-        if (dlg.ShowDialog(this) != true) return;
-        ImportFiles(dlg.FileNames);
     }
 
     private void ImportFiles(IEnumerable<string> paths)
@@ -686,7 +615,6 @@ public partial class MainWindow
 
         AppendLog("Импорт: " + report.Replace("\n", "; "));
         RefreshContent();
-        RefreshInstanceStats();
 
         _dialog.ShowMessage(report, "Импорт файлов",
             failed.Count > 0 ? MessageSeverity.Warning : MessageSeverity.Info);

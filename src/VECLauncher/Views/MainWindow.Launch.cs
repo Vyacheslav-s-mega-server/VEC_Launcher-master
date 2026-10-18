@@ -150,18 +150,9 @@ public partial class MainWindow
             _cts?.Dispose();
             _cts = null;
             UpdateRunStateUi();
-            RefreshInstanceStats();
         }
     }
 
-    private int EffectiveMemory(GameInstance inst) =>
-        inst.MaxMemoryMb > 0 ? inst.MaxMemoryMb : _settings.MaxMemoryMb;
-
-    private void BtnCancel_Click(object sender, RoutedEventArgs e)
-    {
-        _cts?.Cancel();
-        SetStage("Отмена...");
-    }
 
 
 

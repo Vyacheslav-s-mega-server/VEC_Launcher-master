@@ -204,13 +204,9 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     private readonly StringBuilder _logBuffer = new();
-    private string _logFilter = "all";
 
     [ObservableProperty]
     private string _logText = "";
-
-    [ObservableProperty]
-    private string _logInfo = "Журнал лаунчера и вывод игры";
 
     public void AppendLog(string line)
     {
@@ -222,44 +218,10 @@ public partial class MainWindowViewModel : ObservableObject
 
         Application.Current?.Dispatcher.BeginInvoke(() =>
         {
-            if (_logFilter != "all")
-            {
-                if (MatchesLogLevel(line, _logFilter)) ApplyLogFilterInternal();
-                return;
-            }
-
             string text;
             lock (_logBuffer) text = _logBuffer.ToString();
             LogText = text;
         });
-    }
-
-    public void SetLogFilter(string filter)
-    {
-        _logFilter = filter;
-        ApplyLogFilterInternal();
-    }
-
-    private void ApplyLogFilterInternal()
-    {
-        string all;
-        lock (_logBuffer) all = _logBuffer.ToString();
-
-        if (_logFilter == "all")
-        {
-            LogText = all;
-            LogInfo = "Журнал лаунчера и вывод игры";
-            return;
-        }
-
-        var lines = all.Split('\n');
-        var filtered = lines.Where(l => MatchesLogLevel(l, _logFilter)).ToList();
-
-        LogText = filtered.Count > 0
-            ? string.Join("\n", filtered)
-            : (_logFilter == "error" ? "Ошибок нет." : "Предупреждений нет.");
-
-        LogInfo = $"Показано {filtered.Count} из {lines.Length} строк";
     }
 
     internal static bool MatchesLogLevel(string line, string level)
@@ -273,6 +235,7 @@ public partial class MainWindowViewModel : ObservableObject
         return isError || lower.Contains("[warn]") || lower.Contains("warn]") ||
                lower.Contains("внимание") || lower.Contains("предупрежд");
     }
+
 
     public static string Human(long bytes)
     {

@@ -296,14 +296,6 @@ public partial class MainWindow
         catch (Exception ex) { AppendLog("Не удалось открыть папку: " + ex.Message); }
     }
 
-    private void BtnOpenLogFile_Click(object sender, RoutedEventArgs e)
-    {
-        try { _instancesService.RevealFile(LauncherPaths.LauncherLogFile); }
-        catch (Exception ex) { AppendLog(ex.Message); }
-    }
-
-    private void BtnClearLog_Click(object sender, RoutedEventArgs e) => Vm.DoClearLog();
-
     private void Nav_Checked(object sender, RoutedEventArgs e)
     {
         if (!IsLoaded || PageHome is null) return;
@@ -338,12 +330,6 @@ public partial class MainWindow
             kvp.Value.Visibility = kvp.Key == tag ? Visibility.Visible : Visibility.Collapsed;
         }
     }
-
-
-
-
-    private static bool MatchesLogLevel(string line, string level) =>
-        MainWindowViewModel.MatchesLogLevel(line, level);
 
     private void BlockingControl_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
@@ -441,31 +427,6 @@ public partial class MainWindow
             if (SecPanelStorage.Visibility == Visibility.Visible) ScanMaintenance();
             else _ = Task.Run(DetectJava);
         }
-    }
-
-    private void NotifyFinished(string title, string message, bool success = true)
-    {
-        Dispatcher.BeginInvoke(() =>
-        {
-            AppendLog($"{title}: {message}");
-
-            var inactive = !IsActive || WindowState == WindowState.Minimized;
-            if (!inactive) return;
-
-            try
-            {
-                if (success) System.Media.SystemSounds.Asterisk.Play();
-                else System.Media.SystemSounds.Exclamation.Play();
-            }
-            catch (Exception ex) { Log.Warn(ex.Message); }
-
-            try
-            {
-                var helper = new System.Windows.Interop.WindowInteropHelper(this);
-                if (helper.Handle != IntPtr.Zero) FlashWindow(helper.Handle, true);
-            }
-            catch (Exception ex) { Log.Warn(ex.Message); }
-        });
     }
 
     private void BtnMinimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;

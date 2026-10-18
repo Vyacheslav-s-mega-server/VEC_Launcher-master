@@ -146,9 +146,5 @@ public partial class MainWindow
         }
     }
 
-    private void RefreshInstanceStats() { }
-
-    private void LoadScreenshots() { }
-
     private enum HomeButtonState { Idle, Busy, Running }
 }

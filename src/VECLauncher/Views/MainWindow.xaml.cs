@@ -355,44 +355,6 @@ public partial class MainWindow : Window
         Application.Current.Shutdown();
     }
 
-    private static string FormatMinutes(long seconds)
-    {
-        if (seconds < 60) return $"{seconds} с";
-        var ts = TimeSpan.FromSeconds(seconds);
-        return ts.TotalHours >= 1 ? $"{(int)ts.TotalHours} ч {ts.Minutes} мин" : $"{ts.Minutes} мин";
-    }
-
-    private static string Plural(int n, string one, string few, string many)
-    {
-        var mod10 = n % 10;
-        var mod100 = n % 100;
-        var word = (mod10 == 1 && mod100 != 11) ? one
-            : (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) ? few
-            : many;
-        return $"{n} {word}";
-    }
-
-    private void BtnOpenWebsite_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo(LauncherConfig.ProjectWebsiteUrl) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            _dialog.ShowMessage("Не удалось открыть сайт: " + ex.Message, "VEC Launcher", MessageSeverity.Warning);
-        }
-    }
-
-
-    private static string Dashed(string uuid)
-    {
-        var u = uuid.Replace("-", "");
-        return u.Length != 32 ? uuid
-            : $"{u[..8]}-{u.Substring(8, 4)}-{u.Substring(12, 4)}-{u.Substring(16, 4)}-{u.Substring(20)}";
-    }
-
-
     private void SettingsSection_Checked(object sender, RoutedEventArgs e)
     {
         if (!IsLoaded || SecPanelGame is null) return;
@@ -457,10 +419,6 @@ public partial class MainWindow : Window
         _ = Task.Run(DetectJava);
     }
 
-
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ClickCount == 1) DragMove();
@@ -745,19 +703,4 @@ public partial class MainWindow : Window
 
     private static string Shorten(string s, int max) =>
         s.Length <= max ? s : "…" + s[^(max - 1)..];
-
-    private void RunAsync(Func<Task> action, string? errorContext = null)
-    {
-        _ = Task.Run(async () =>
-        {
-            try { await action(); }
-            catch (OperationCanceledException ex) { Log.Warn(ex.Message); }
-            catch (Exception ex)
-            {
-                Log.Error($"Async error{(errorContext != null ? $" ({errorContext})" : "")}: {ex.Message}");
-                Dispatcher.Invoke(() =>
-                    _toast.Show("Ошибка", ex.Message, Services.NotificationType.Error));
-            }
-        });
-    }
 }

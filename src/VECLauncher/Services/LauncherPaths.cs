@@ -3,7 +3,6 @@ namespace VECLauncher.Services;
 public static class LauncherPaths
 {
     private const string FolderName = "VECLauncher";
-    private const string LegacyFolderName = ".mayslauncher";
 
     public const string PortableMarker = "portable.txt";
 
@@ -47,19 +46,7 @@ public static class LauncherPaths
         IsPortable = false;
 
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var canonical = Path.Combine(appData, FolderName);
-        var legacy = Path.Combine(appData, LegacyFolderName);
-
-        if (!Directory.Exists(canonical) && Directory.Exists(legacy))
-        {
-            try
-            {
-                Directory.Move(legacy, canonical);
-            }
-            catch { return legacy; }
-        }
-
-        return canonical;
+        return Path.Combine(appData, FolderName);
     }
 
     public static string VersionsDir => Path.Combine(Root, "versions");

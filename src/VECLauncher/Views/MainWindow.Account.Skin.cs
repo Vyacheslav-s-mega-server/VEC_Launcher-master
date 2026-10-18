@@ -160,7 +160,7 @@ public partial class MainWindow
             {
                 try
                 {
-                    var skinPath = _offlineSkins.AccountSkinPath(acc.Username);
+                    var skinPath = SkinService.AccountSkinPath(acc.Username);
                     var dir = System.IO.Path.GetDirectoryName(skinPath);
                     if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                     _isInternalSkinWrite = true;
@@ -246,8 +246,8 @@ public partial class MainWindow
                 Vm.Accounts.Save(_account);
             }
 
-            var skinFile = _offlineSkins.AccountSkinPath(_account.Username);
-            var capeFile = _offlineSkins.FindAccountCape(_account.Username);
+            var skinFile = SkinService.AccountSkinPath(_account.Username);
+            var capeFile = SkinService.FindAccountCape(_account.Username);
             var isSlim = _currentSkinModel.Equals("slim", StringComparison.OrdinalIgnoreCase);
 
             var skinDir = IOPath.GetDirectoryName(skinFile);
@@ -294,7 +294,7 @@ public partial class MainWindow
         BtnResetSkin.IsEnabled = false;
         try
         {
-            var skinFile = _offlineSkins.AccountSkinPath(_account.Username);
+            var skinFile = SkinService.AccountSkinPath(_account.Username);
             if (File.Exists(skinFile)) File.Delete(skinFile);
 
             _currentSkinRawBytes = null;
@@ -346,7 +346,7 @@ public partial class MainWindow
                         var srvUrl = (!string.IsNullOrEmpty(_account.ServerUrl) && !_account.ServerUrl.Contains("95.59.233")) ? _account.ServerUrl : await VecAuthService.GetActiveServerUrlAsync();
                         await _skins.UpdateSkinModelOnVecServerAsync(srvUrl, _account.Username, _currentSkinModel);
 
-                        var skinFile = _offlineSkins.FindAccountSkin(_account.Username);
+                        var skinFile = SkinService.FindAccountSkin(_account.Username);
                         if (skinFile != null && File.Exists(skinFile))
                         {
                             var modelEnum = isSlim ? SkinService.SkinModel.Slim : SkinService.SkinModel.Classic;

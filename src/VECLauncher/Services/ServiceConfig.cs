@@ -23,7 +23,6 @@ public static class ServiceConfig
         services.AddSingleton<WebAuthService>();
 
         services.AddSingleton<IInstanceService, InstanceServiceAdapter>();
-        services.AddSingleton<IOfflineSkinService, OfflineSkinServiceAdapter>();
         services.AddSingleton<IMaintenanceService, MaintenanceServiceAdapter>();
         services.AddSingleton<IImageCacheService, ImageCacheServiceAdapter>();
         services.AddSingleton<LaunchService>();

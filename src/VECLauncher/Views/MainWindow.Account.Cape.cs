@@ -488,7 +488,7 @@ public partial class MainWindow
         SelectCapeInUI(item.Id);
         try
         {
-            var capePath = _offlineSkins.AccountCapePath(acc.Username);
+            var capePath = SkinService.AccountCapePath(acc.Username);
             var srvUrl = (!string.IsNullOrEmpty(acc.ServerUrl) && !acc.ServerUrl.Contains("95.59.233")) ? acc.ServerUrl : await VecAuthService.GetActiveServerUrlAsync();
             var token = !string.IsNullOrEmpty(acc.SessionKey) ? acc.SessionKey : acc.AccessToken;
 

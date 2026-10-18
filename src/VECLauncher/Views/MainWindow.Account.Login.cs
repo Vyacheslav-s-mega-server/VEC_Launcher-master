@@ -30,7 +30,7 @@ public partial class MainWindow
     {
         try
         {
-            var localFile = _offlineSkins.FindAccountSkin(acc.Username);
+            var localFile = SkinService.FindAccountSkin(acc.Username);
             if (localFile != null && File.Exists(localFile))
             {
                 var bytes = File.ReadAllBytes(localFile);
@@ -55,7 +55,7 @@ public partial class MainWindow
                         if (resp.IsSuccessStatusCode)
                         {
                             var downloaded = await resp.Content.ReadAsByteArrayAsync();
-                            var path = _offlineSkins.AccountSkinPath(acc.Username);
+                            var path = SkinService.AccountSkinPath(acc.Username);
                             var dir = System.IO.Path.GetDirectoryName(path);
                             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                             await File.WriteAllBytesAsync(path, downloaded);

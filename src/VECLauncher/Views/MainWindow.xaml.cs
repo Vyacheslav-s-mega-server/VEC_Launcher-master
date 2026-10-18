@@ -33,7 +33,6 @@ public partial class MainWindow : Window
     private readonly IToastService _toast;
     private readonly IDialogService _dialog;
     private readonly IInstanceService _instancesService;
-    private readonly IOfflineSkinService _offlineSkins;
     private readonly IMaintenanceService _maintenance;
     private readonly IImageCacheService _imageCache;
     private readonly object _skinFileLock = new();
@@ -67,13 +66,12 @@ public partial class MainWindow : Window
     private DateTime _lastProgressUi = DateTime.MinValue;
 
     public MainWindow(MainWindowViewModel vm, IToastService toast,
-        IInstanceService instancesService, IOfflineSkinService offlineSkins,
+        IInstanceService instancesService,
         IMaintenanceService maintenance, IImageCacheService imageCache)
     {
         Vm = vm;
         _toast = toast;
         _instancesService = instancesService;
-        _offlineSkins = offlineSkins;
         _maintenance = maintenance;
         _imageCache = imageCache;
         DataContext = Vm;

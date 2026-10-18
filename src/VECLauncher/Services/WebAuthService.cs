@@ -250,7 +250,7 @@ public sealed class WebAuthService
                     var sBytes = await http.GetByteArrayAsync($"{srvUrl}/api/skin/{username}.png?t={DateTime.UtcNow.Ticks}");
                     if (sBytes.Length > 0)
                     {
-                        var sPath = OfflineSkinService.AccountSkinPath(username);
+                        var sPath = SkinService.AccountSkinPath(username);
                         Directory.CreateDirectory(Path.GetDirectoryName(sPath)!);
                         await File.WriteAllBytesAsync(sPath, sBytes);
                     }
@@ -263,7 +263,7 @@ public sealed class WebAuthService
                     var cBytes = await http.GetByteArrayAsync($"{srvUrl}/api/cape/{username}.png?t={DateTime.UtcNow.Ticks}");
                     if (cBytes.Length > 0)
                     {
-                        var cPath = OfflineSkinService.AccountCapePath(username);
+                        var cPath = SkinService.AccountCapePath(username);
                         Directory.CreateDirectory(Path.GetDirectoryName(cPath)!);
                         await File.WriteAllBytesAsync(cPath, cBytes);
                     }

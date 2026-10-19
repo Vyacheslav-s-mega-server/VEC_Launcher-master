@@ -84,6 +84,11 @@ if ($Target -in @('All', 'Launcher')) {
     $destLauncher = Join-Path $outDir 'VECLauncher.exe'
     Copy-Item $launcherExe -Destination $destLauncher -Force
 
+    $webAppDownloads = Join-Path $root 'VyacheslavsMegaWebApp-dev\VyacheslavsMegaWebApp-dev\VyacheslavsMegaWebApp\wwwroot\downloads'
+    if (Test-Path $webAppDownloads) {
+        Copy-Item $destLauncher (Join-Path $webAppDownloads 'VECLauncher.exe') -Force -ErrorAction SilentlyContinue
+    }
+
     # Create zip archive for bootstrap installer downloading
     $zipPath = Join-Path $outDir 'VECLauncher-win-x64.zip'
     if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
@@ -135,6 +140,11 @@ if ($Target -in @('All', 'Installer')) {
 
     $destSetup = Join-Path $outDir 'VEC_Setup.exe'
     Copy-Item $setupExe -Destination $destSetup -Force
+
+    $webAppDownloads = Join-Path $root 'VyacheslavsMegaWebApp-dev\VyacheslavsMegaWebApp-dev\VyacheslavsMegaWebApp\wwwroot\downloads'
+    if (Test-Path $webAppDownloads) {
+        Copy-Item $destSetup (Join-Path $webAppDownloads 'VEC_Setup.exe') -Force -ErrorAction SilentlyContinue
+    }
 }
 
 # ----------------------------------------------------

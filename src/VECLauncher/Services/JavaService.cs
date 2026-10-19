@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Text.Json;
@@ -14,6 +14,9 @@ public sealed class JavaInstallation
     public required int MajorVersion { get; init; }
     public required string DisplayVersion { get; init; }
     public string Source { get; init; } = "system";
+
+    public string Title => $"Java {MajorVersion} ({DisplayVersion})";
+    public string Path => JavaExe;
 
     public override string ToString() => $"Java {DisplayVersion} ({Source}) — {JavaExe}";
 }

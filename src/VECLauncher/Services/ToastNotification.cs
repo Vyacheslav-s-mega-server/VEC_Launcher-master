@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -99,7 +99,7 @@ public static class ToastNotification
     }
 
     private static StackPanel? _toastContainer;
-    private static StackPanel GetContainer() => _toastContainer;
+    private static StackPanel? GetContainer() => _toastContainer;
 
     private static Color GetColor(NotificationType type) => type switch
     {

@@ -7,16 +7,30 @@ namespace VECLauncher.Services;
 
 public sealed class DialogService : IDialogService
 {
-    private readonly Window _owner;
+    private readonly Window? _owner;
+    private readonly WebAuthService _webAuth;
 
-    public DialogService(Window owner)
+    public DialogService(WebAuthService webAuth, Window? owner = null)
     {
+        _webAuth = webAuth;
         _owner = owner;
+    }
+
+    private Window? GetOwner()
+    {
+        if (_owner != null) return _owner;
+        if (Application.Current == null) return null;
+        return Application.Current.Dispatcher.CheckAccess()
+            ? (Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? Application.Current.MainWindow)
+            : Application.Current.Dispatcher.Invoke(() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? Application.Current.MainWindow);
     }
 
     public Task<bool> ConfirmAsync(string title, string message, string yesText = "Да", string noText = "Отмена")
     {
-        var result = ConfirmDialog.Show(_owner, title, message, yesText, noText);
+        var owner = GetOwner();
+        var result = owner != null
+            ? ConfirmDialog.Show(owner, title, message, yesText, noText)
+            : ConfirmDialog.Show(title, message, yesText, noText);
         return Task.FromResult(result);
     }
 
@@ -54,20 +68,33 @@ public sealed class DialogService : IDialogService
 
     public async Task<MinecraftAccount?> ShowVecLoginAsync()
     {
-        var webAuth = App.Services.GetService<WebAuthService>() ?? new WebAuthService();
-        return await webAuth.LoginViaWebAsync();
+        return await _webAuth.LoginViaWebAsync();
     }
 
     public void MinimizeWindow()
     {
-        _owner.WindowState = WindowState.Minimized;
+        var owner = GetOwner();
+        if (owner == null) return;
+        if (owner.Dispatcher.CheckAccess())
+            owner.WindowState = WindowState.Minimized;
+        else
+            owner.Dispatcher.Invoke(() => owner.WindowState = WindowState.Minimized);
     }
 
     public Task<ConfirmResult> ConfirmCancelAsync(string title, string message, string yesText = "Да", string noText = "Нет", string cancelText = "Отмена")
     {
-        var r = (MessageBoxResult)_owner.Dispatcher.Invoke(() =>
-            MessageBox.Show(_owner, message, title,
-                MessageBoxButton.YesNoCancel, MessageBoxImage.Question));
+        var owner = GetOwner();
+        MessageBoxResult r;
+        if (owner != null)
+        {
+            r = (MessageBoxResult)owner.Dispatcher.Invoke(() =>
+                MessageBox.Show(owner, message, title, MessageBoxButton.YesNoCancel, MessageBoxImage.Question));
+        }
+        else
+        {
+            r = MessageBox.Show(message, title, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+        }
+
         var result = r switch
         {
             MessageBoxResult.Yes => ConfirmResult.Yes,
@@ -85,7 +112,15 @@ public sealed class DialogService : IDialogService
             MessageSeverity.Error => MessageBoxImage.Error,
             _ => MessageBoxImage.Information
         };
-        _owner.Dispatcher.Invoke(() =>
-            MessageBox.Show(_owner, message, title, MessageBoxButton.OK, icon));
+
+        var owner = GetOwner();
+        if (owner != null)
+        {
+            owner.Dispatcher.Invoke(() => MessageBox.Show(owner, message, title, MessageBoxButton.OK, icon));
+        }
+        else
+        {
+            MessageBox.Show(message, title, MessageBoxButton.OK, icon);
+        }
     }
 }

@@ -20,6 +20,9 @@ public static class ServiceConfig
         services.AddSingleton<ModLoaderService>();
         services.AddSingleton<ServerPingService>();
         services.AddSingleton<WebAuthService>();
+        services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<ICapeService, CapeService>();
+        services.AddSingleton<IContentService, ContentService>();
 
         services.AddSingleton<IInstanceService, InstanceServiceAdapter>();
         services.AddSingleton<IMaintenanceService, MaintenanceService>();

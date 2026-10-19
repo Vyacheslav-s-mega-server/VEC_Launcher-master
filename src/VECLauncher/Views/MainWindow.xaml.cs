@@ -75,10 +75,7 @@ public partial class MainWindow : Window
 
         InitializeComponent();
 
-        _dialog = new DialogService(this);
-        Vm.SetDialogService(_dialog);
-
-        Vm.LaunchAsyncCallback = LaunchAsync;
+        _dialog = Vm.Dialogs;
 
         _versions = Vm.Versions;
         _downloads = Vm.Downloads;
@@ -98,6 +95,10 @@ public partial class MainWindow : Window
 
         Vm.Sessions.Changed += () => Dispatcher.BeginInvoke(UpdateRunStateUi);
         _sessions.SessionExited += OnSessionExited;
+        Vm.AccountChanged += OnAccountChanged;
+        Vm.CapeTextureChanged += OnCapeTextureChanged;
+        Vm.SkinTextureChanged += OnSkinTextureChanged;
+        Vm.SkinModelChanged += OnSkinModelChanged;
 
         Loaded += OnLoadedAsync;
         Closing += OnClosing;
@@ -184,24 +185,19 @@ public partial class MainWindow : Window
             _settings = SettingsService.Load();
 
             ThemeService.ApplyAccent(_settings.AccentColor);
-            ApplySettingsToUi();
             ApplyWindowBackground();
 
             AppendLog("VEC Launcher запущен. Папка: " + _settings.GameDir);
 
             if (_preloadedData?.JavaInstallations != null && _preloadedData.JavaInstallations.Count > 0)
             {
-                TxtJavaStatus.Visibility = Visibility.Collapsed;
-                ItemsJava.ItemsSource = _preloadedData.JavaInstallations.Select(j => new
-                {
-                    Title = $"Java {j.MajorVersion} ({j.DisplayVersion})",
-                    Source = j.Source,
-                    Path = j.JavaExe
-                }).ToList();
+                Vm.DetectedJavaList.Clear();
+                foreach (var j in _preloadedData.JavaInstallations) Vm.DetectedJavaList.Add(j);
+                Vm.JavaScanStatus = "";
             }
             else
             {
-                _ = Task.Run(DetectJava);
+                _ = Vm.DetectJavaCommand.ExecuteAsync(null);
             }
 
             var saved = _preloadedData?.ActiveAccount ?? Vm.Accounts.GetActive();
@@ -215,7 +211,7 @@ public partial class MainWindow : Window
             _initializing = false;
             UpdateRunStateUi();
 
-            Dispatcher.BeginInvoke(new Action(() => SetupWheelHandling(this)),
+            _ = Dispatcher.BeginInvoke(new Action(() => SetupWheelHandling(this)),
                 System.Windows.Threading.DispatcherPriority.Loaded);
 
             UpdateStatisticsDisplay();
@@ -291,7 +287,7 @@ public partial class MainWindow : Window
 
     private void UpdateStatisticsDisplay()
     {
-        StatTotalTime.Text = _stats.GetFormattedTotalTime();
+        Vm.TotalPlayTimeDisplay = _stats.GetFormattedTotalTime();
     }
 
     private DispatcherTimer? _serverPingTimer;
@@ -301,17 +297,13 @@ public partial class MainWindow : Window
         try
         {
             var status = await _ping.PingAsync(LauncherConfig.DefaultMinecraftServer);
-            Dispatcher.Invoke(() =>
-            {
-                if (status.Online)
-                    TxtServerPlayers.Text = $"{status.OnlinePlayers} / {status.MaxPlayers}";
-                else
-                    TxtServerPlayers.Text = "офлайн";
-            });
+            Vm.ServerPlayersDisplay = status.Online
+                ? $"{status.OnlinePlayers} / {status.MaxPlayers}"
+                : "офлайн";
         }
         catch
         {
-            Dispatcher.Invoke(() => TxtServerPlayers.Text = "офлайн");
+            Vm.ServerPlayersDisplay = "офлайн";
         }
     }
 
@@ -342,6 +334,8 @@ public partial class MainWindow : Window
         Application.Current.Shutdown();
     }
 
+    private string _currentSettingsSection = "game";
+
     private void SettingsSection_Checked(object sender, RoutedEventArgs e)
     {
         if (!IsLoaded || SecPanelGame is null) return;
@@ -354,339 +348,21 @@ public partial class MainWindow : Window
 
         if (tag == "storage")
         {
-            ScanMaintenance();
+            Vm.ScanMaintenanceCommand.Execute(null);
         }
         else if (tag == "java")
         {
-            if (ItemsJava.ItemsSource == null)
+            if (Vm.DetectedJavaList.Count == 0)
             {
-                _ = Task.Run(DetectJava);
+                _ = Vm.DetectJavaCommand.ExecuteAsync(null);
             }
         }
-    }
-
-    private void SetResolution(int w, int h)
-    {
-        TxtWidth.Text = w.ToString();
-        TxtHeight.Text = h.ToString();
-        ChkFullscreen.IsChecked = false;
-        PersistSettings();
-        ShowSavedHint();
-    }
-
-    private void Preset720_Click(object s, RoutedEventArgs e) => SetResolution(1280, 720);
-    private void Preset900_Click(object s, RoutedEventArgs e) => SetResolution(1600, 900);
-    private void Preset1080_Click(object s, RoutedEventArgs e) => SetResolution(1920, 1080);
-
-    private void SetMemory(int mb)
-    {
-        SldMemory.Value = Math.Clamp(mb, 1024, 16384);
-        TxtMemory.Text = $"{mb} МБ";
-        PersistSettings();
-        ShowSavedHint();
-    }
-
-    private void Mem2_Click(object s, RoutedEventArgs e) => SetMemory(2048);
-    private void Mem4_Click(object s, RoutedEventArgs e) => SetMemory(4096);
-    private void Mem8_Click(object s, RoutedEventArgs e) => SetMemory(8192);
-    private void MemAuto_Click(object s, RoutedEventArgs e) => SetMemory(LauncherSettings.RecommendedMaxMemory());
-
-    private void BtnRescanJava_Click(object sender, RoutedEventArgs e)
-    {
-        TxtJavaStatus.Visibility = Visibility.Visible;
-        TxtJavaStatus.Text = "Поиск установленных версий Java…";
-        _ = Task.Run(DetectJava);
-    }
-
-    private void BtnClearJava_Click(object sender, RoutedEventArgs e)
-    {
-        TxtJavaPath.Clear();
-        _settings.CustomJavaPath = "";
-        PersistSettings();
-        _ = Task.Run(DetectJava);
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ClickCount == 1) DragMove();
     }
-
-    private static readonly Dictionary<string, string> _modNameCache = new();
-    private static readonly Dictionary<string, string?> _modIdCache = new();
-    private static readonly Dictionary<string, BitmapImage?> _modIconCache = new();
-    private static readonly HttpClient _iconHttp = new() { Timeout = TimeSpan.FromSeconds(5) };
-
-    private static string CleanTomlValue(string line)
-    {
-        var eq = line.IndexOf('=');
-        if (eq < 0) return "";
-        var val = line[(eq + 1)..].Trim();
-        bool inQuote = false;
-        int hashIdx = -1;
-        for (int i = 0; i < val.Length; i++)
-        {
-            if (val[i] == '"') inQuote = !inQuote;
-            if (!inQuote && val[i] == '#') { hashIdx = i; break; }
-        }
-        if (hashIdx >= 0) val = val[..hashIdx].TrimEnd();
-        return val.Trim('"', '\'', ' ', '\r', '\n');
-    }
-
-    private (string modName, string? modId, BitmapImage? icon) ExtractModInfo(string jarPath)
-    {
-        if (_modNameCache.TryGetValue(jarPath, out var cachedName))
-        {
-            _modIconCache.TryGetValue(jarPath, out var cachedIcon);
-            _modIdCache.TryGetValue(jarPath, out var cachedId);
-            return (cachedName, cachedId, cachedIcon);
-        }
-
-        string name = IOPath.GetFileNameWithoutExtension(jarPath);
-        string? modId = null;
-        BitmapImage? icon = null;
-
-        try
-        {
-            using var archive = ZipFile.OpenRead(jarPath);
-
-            var fabricEntry = archive.GetEntry("fabric.mod.json");
-            if (fabricEntry is not null)
-            {
-                using var stream = fabricEntry.Open();
-                var doc = JsonNode.Parse(stream);
-                name = doc?["name"]?.GetValue<string>() ?? name;
-                modId = doc?["id"]?.GetValue<string>();
-
-                var iconPath = doc?["icon"]?.GetValue<string>();
-                if (!string.IsNullOrEmpty(iconPath))
-                {
-                    var iconEntry = archive.GetEntry(iconPath);
-                    if (iconEntry is not null)
-                        icon = LoadIconFromEntry(iconEntry);
-                }
-            }
-            else
-            {
-                var modsToml = archive.GetEntry("META-INF/mods.toml")
-                              ?? archive.GetEntry("META-INF/neoforge.mods.toml");
-                if (modsToml is not null)
-                {
-                    using var reader = new StreamReader(modsToml.Open());
-                    var tomlText = reader.ReadToEnd();
-                    var lines = tomlText.Split('\n');
-                    bool inMods = false;
-                    foreach (var line in lines)
-                    {
-                        var trimmed = line.Trim();
-                        var sectionCheck = trimmed.Split('#')[0].Trim();
-                        if (sectionCheck == "[[mods]]" || sectionCheck.StartsWith("[[mods.")) inMods = true;
-                        else if (sectionCheck.StartsWith("[")) inMods = false;
-
-                        if (inMods && trimmed.StartsWith("displayName"))
-                        {
-                            name = CleanTomlValue(trimmed);
-                        }
-                        if (inMods && trimmed.StartsWith("modId"))
-                        {
-                            modId = CleanTomlValue(trimmed);
-                        }
-                        if (inMods && trimmed.StartsWith("logoFile"))
-                        {
-                            var logoPath = CleanTomlValue(trimmed);
-                            var logoEntry = archive.GetEntry(logoPath);
-                            if (logoEntry is not null)
-                                icon = LoadIconFromEntry(logoEntry);
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex) { Log.Warn(ex.Message); }
-
-        _modNameCache[jarPath] = name;
-        _modIconCache[jarPath] = icon;
-        if (modId != null) _modIdCache[jarPath] = modId;
-        return (name, modId, icon);
-    }
-
-    private static readonly Dictionary<string, (string? title, BitmapImage? icon, BitmapImage? banner, string? description, string? author)> _modrinthProjectCache = new();
-
-    private static readonly System.Text.RegularExpressions.Regex _rxVersionSuffix = new(
-        @"[-_](mc)?(1\.|forge|fabric|neoforge|quilt|sl|babric|legacy)[^""]*",
-        System.Text.RegularExpressions.RegexOptions.Compiled);
-    private static readonly System.Text.RegularExpressions.Regex _rxVersionNumber = new(
-        @"[-_]v?\d+\.\d+[^""]*",
-        System.Text.RegularExpressions.RegexOptions.Compiled);
-
-    private static readonly Dictionary<string, string> _knownModNames = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["alexsmobs"] = "Alex's Mobs",
-        ["ars_nouveau"] = "Ars Nouveau",
-        ["baublemounts"] = "Baubles Mounts",
-        ["appleskin"] = "AppleSkin",
-        ["backpacked"] = "Backpacked",
-        ["balm"] = "Balm",
-        ["autoreglib"] = "AutoRegLib",
-        ["architectury"] = "Architectury",
-        ["bbs"] = "Better Bed spawning",
-        ["beylewither"] = "Beyle Wither",
-        ["curios"] = "Curios API",
-        ["jei"] = "Just Enough Items",
-        ["crafttweaker"] = "CraftTweaker",
-        ["create"] = "Create",
-        ["createaddition"] = "Create Addition",
-        ["mekanism"] = "Mekanism",
-        ["tconstruct"] = "Tinkers Construct",
-        ["mantle"] = "Mantle",
-        ["thermal"] = "Thermal Expansion",
-        ["botania"] = "Botania",
-        ["thaumcraft"] = "Thaumcraft",
-        [" appliedenergistics2"] = "Applied Energistics 2",
-        ["ae2"] = "Applied Energistics 2",
-        ["ironchest"] = "Iron Chests",
-        ["ironfurnaces"] = "Iron Furnaces",
-        ["computercraft"] = "Computer Craft",
-        ["xnet"] = "XNet",
-        ["rftools"] = "RFTools",
-        ["rftoolsbase"] = "RFTools Base",
-        ["refinedstorage"] = "Refined Storage",
-        ["rabbitry"] = "Rabbitry",
-        ["morpheus"] = "Morpheus",
-        ["cloth_config"] = "Cloth Config",
-        ["patchouli"] = "Patchouli",
-        ["obookshelf"] = "O Bookshelf",
-        ["bookshelf"] = "Bookshelf",
-        ["reccomplex"] = "Recurrent Complex",
-        ["llibrary"] = "LLibrary",
-        ["obfuscate"] = "Obfuscate",
-        ["placebo"] = "Placebo",
-        ["blueprint"] = "Blueprint",
-        ["environmental"] = "Environmental",
-        ["blue_skies"] = "Blue Skies",
-        ["iceandfire"] = "Ice and Fire",
-        ["zawa"] = "Zawa",
-        ["minecolonies"] = "MineColonies",
-        ["valhelsia_structures"] = "Valhelsia Structures",
-        ["titanium"] = "Titanium",
-        ["silence_lib"] = "Silence Lib",
-        ["sophisticated_core"] = "Sophisticated Core",
-        ["sophisticated_backpacks"] = "Sophisticated Backpacks",
-        ["sophisticated_storage"] = "Sophisticated Storage",
-        ["geckolib"] = "GeckoLib",
-        ["geckolib_forge"] = "GeckoLib",
-        ["croptopia"] = "Croptopia",
-        ["farmers_delight"] = "Farmer's Delight",
-        ["farmersdelight"] = "Farmer's Delight",
-        ["elevatorid"] = "Elevator Mod",
-        ["lightOverlay"] = "Light Overlay",
-        ["lightoverlay"] = "Light Overlay",
-        ["worldedit"] = "WorldEdit",
-        ["world_guard"] = "World Guard",
-        ["journeymap"] = "JourneyMap",
-        ["xaeros_minimap"] = "Xaero's Minimap",
-        ["xaeros_world_map"] = "Xaero's World Map",
-        ["travelers_titles"] = "Traveler's Titles",
-        ["explorify"] = "Explorify",
-        ["village_spawn_point"] = "Village Spawn Point",
-        ["kotlinforforge"] = "Kotlin for Forge",
-        ["bootstrap"] = "Bootstrap",
-        ["moonlight"] = "Moonlight Lib",
-        ["moonlightlib"] = "Moonlight Lib",
-        ["selene"] = "Moonlight Lib",
-        ["medievalgiant"] = "Medieval Giant",
-        ["handcrafted"] = "Handcrafted",
-        ["chipped"] = "Chipped",
-        ["decoration_delight"] = "Decoration Delight",
-        ["resourceful_lib"] = "Resourceful Lib",
-        ["resourcefullib"] = "Resourceful Lib",
-        ["resourceful_tools"] = "Resourceful Tools",
-        ["chisels_and_bits"] = "Chisels and Bits",
-        ["ctoverclocked"] = "CraftTweaker Overclocked",
-        ["toughasnails"] = "Tough As Nails",
-        ["serene_seasons"] = "Serene Seasons",
-        ["comforts"] = "Comforts",
-        ["carry_on"] = "Carry On",
-        ["carryon"] = "Carry On",
-        ["inventory_hud"] = "Inventory HUD",
-        ["inventoryhud"] = "Inventory HUD",
-        ["neapolitan"] = "Neapolitan",
-        ["supplementaries"] = "Supplementaries",
-        ["quark"] = "Quark",
-        ["quark_oddities"] = "Quark Oddities",
-    };
-
-    private async Task<(string? title, BitmapImage? icon, BitmapImage? banner, string? description, string? author)> FetchModrinthProjectAsync(string query, string projectType = "mod")
-    {
-        var cleanSlug = query.Trim().Replace('_', '-').Trim('-');
-        var cacheKey = $"{projectType}:{cleanSlug}";
-        if (_modrinthProjectCache.TryGetValue(cacheKey, out var cached)) return cached;
-
-        string? title = null;
-        BitmapImage? icon = null;
-        BitmapImage? banner = null;
-        string? description = null;
-        string? author = null;
-
-        try
-        {
-            var url = $"https://api.modrinth.com/v2/project/{Uri.EscapeDataString(cleanSlug)}";
-            using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            req.Headers.TryAddWithoutValidation("User-Agent", "VEC Launcher/1.0");
-            using var resp = await _iconHttp.SendAsync(req);
-
-            if (resp.IsSuccessStatusCode)
-            {
-                var json = await resp.Content.ReadAsStringAsync();
-                var doc = JsonNode.Parse(json);
-                title = doc?["title"]?.GetValue<string>();
-                description = doc?["description"]?.GetValue<string>();
-                var iconUrl = doc?["icon_url"]?.GetValue<string>();
-                if (!string.IsNullOrEmpty(iconUrl))
-                    icon = await DownloadIconAsync(iconUrl, cacheKey + ":icon");
-
-                var gallery = doc?["gallery"]?.AsArray();
-                string? bannerUrl = null;
-                if (gallery is not null && gallery.Count > 0)
-                {
-                    var featured = gallery.FirstOrDefault(g => g?["featured"]?.GetValue<bool>() == true);
-                    bannerUrl = (featured ?? gallery[0])?["url"]?.GetValue<string>();
-                }
-                if (!string.IsNullOrEmpty(bannerUrl))
-                    banner = await DownloadIconAsync(bannerUrl, cacheKey + ":banner");
-
-                author = doc?["organization"]?.GetValue<string>();
-            }
-        }
-        catch (Exception ex) { Log.Warn(ex.Message); }
-
-        var result = (title, icon, banner, description, author);
-        _modrinthProjectCache[cacheKey] = result;
-        return result;
-    }
-
-    private (string name, string? slug) ExtractPackInfo(string zipPath)
-    {
-        string name = IOPath.GetFileNameWithoutExtension(zipPath);
-        string? slug = null;
-        try
-        {
-            using var archive = ZipFile.OpenRead(zipPath);
-
-            var packMeta = archive.GetEntry("pack.mcmeta");
-            if (packMeta is not null)
-            {
-                using var reader = new StreamReader(packMeta.Open());
-                var doc = JsonNode.Parse(reader.ReadToEnd());
-                name = doc?["pack"]?["description"]?.GetValue<string>() ?? name;
-            }
-
-        }
-        catch (Exception ex) { Log.Warn(ex.Message); }
-        return (name, slug);
-    }
-
-    private List<MaintenanceService.TargetInfo> _maintTargets = new();
-    private readonly HashSet<MaintenanceService.CleanTarget> _maintChecked = new();
 
     private static string Shorten(string s, int max) =>
         s.Length <= max ? s : "…" + s[^(max - 1)..];

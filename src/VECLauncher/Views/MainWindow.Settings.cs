@@ -15,96 +15,6 @@ namespace VECLauncher.Views;
 
 public partial class MainWindow
 {
-    private void ApplySettingsToUi()
-    {
-        if (string.IsNullOrWhiteSpace(_settings.GameDir)) _settings.GameDir = LauncherPaths.Root;
-
-        SldMemory.Value = Math.Clamp(_settings.MaxMemoryMb, 1024, 16384);
-        TxtMemory.Text = $"{_settings.MaxMemoryMb} МБ";
-        TxtWidth.Text = _settings.WindowWidth.ToString();
-        TxtHeight.Text = _settings.WindowHeight.ToString();
-        ChkFullscreen.IsChecked = _settings.Fullscreen;
-        ChkCloseOnLaunch.IsChecked = _settings.CloseLauncherOnStart;
-        ChkShowConsole.IsChecked = _settings.ShowConsole;
-        ChkAllowMultiple.IsChecked = _settings.AllowMultipleInstances;
-        ChkMinimizeOnLaunch.IsChecked = _settings.MinimizeOnLaunch;
-        ChkConfirmStop.IsChecked = _settings.ConfirmGameStop;
-        ChkAutoLanguage.IsChecked = _settings.AutoSetGameLanguage;
-        RbLangRu.IsChecked = _settings.GameLanguage != "en";
-        RbLangEn.IsChecked = _settings.GameLanguage == "en";
-        TxtJvmArgs.Text = _settings.ExtraJvmArgs;
-        TxtGameDir.Text = _settings.GameDir;
-        TxtJavaPath.Text = _settings.CustomJavaPath;
-
-        var totalRam = (long)(GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / (1024 * 1024));
-        TxtMemoryHint.Text = totalRam > 0
-            ? $"Всего в системе: {totalRam} МБ. Для ванильной игры обычно достаточно 2048–4096 МБ."
-            : "Для ванильной игры обычно достаточно 2048–4096 МБ.";
-    }
-
-    private void PersistSettings()
-    {
-        _settings.MaxMemoryMb = (int)SldMemory.Value;
-        _settings.WindowWidth = ParseIntOr(TxtWidth.Text, 1280);
-        _settings.WindowHeight = ParseIntOr(TxtHeight.Text, 720);
-        _settings.Fullscreen = ChkFullscreen.IsChecked == true;
-        _settings.CloseLauncherOnStart = ChkCloseOnLaunch.IsChecked == true;
-        _settings.ShowConsole = ChkShowConsole.IsChecked == true;
-        _settings.AllowMultipleInstances = ChkAllowMultiple.IsChecked == true;
-        _settings.MinimizeOnLaunch = ChkMinimizeOnLaunch.IsChecked == true;
-        _settings.ConfirmGameStop = ChkConfirmStop.IsChecked == true;
-        _settings.AutoSetGameLanguage = ChkAutoLanguage.IsChecked == true;
-        _settings.ExtraJvmArgs = TxtJvmArgs.Text.Trim();
-        _settings.CustomJavaPath = TxtJavaPath.Text.Trim();
-        _settings.LastInstanceId = _selectedInstance?.Id ?? _settings.LastInstanceId;
-
-        SettingsService.Save(_settings);
-
-        if (!_initializing && _instancesService.Loaded) _instancesService.SaveAll(_instances);
-    }
-
-    private static int ParseIntOr(string s, int fallback) =>
-        int.TryParse(s.Trim(), out var v) && v > 0 ? v : fallback;
-
-    private void DetectJava()
-    {
-        try
-        {
-            var list = _java.FindAll();
-            Dispatcher.Invoke(() =>
-            {
-                if (list.Count == 0)
-                {
-                    ItemsJava.ItemsSource = null;
-                    TxtJavaStatus.Visibility = Visibility.Visible;
-                    TxtJavaStatus.Text = "Java не обнаружена. Лаунчер скачает нужную версию автоматически.";
-                }
-                else
-                {
-                    TxtJavaStatus.Visibility = Visibility.Collapsed;
-                    ItemsJava.ItemsSource = list.Select(j => new
-                    {
-                        Title = $"Java {j.MajorVersion} ({j.DisplayVersion})",
-                        Source = j.Source,
-                        Path = j.JavaExe
-                    }).ToList();
-                }
-            });
-        }
-        catch (Exception ex) { Log.Warn("Ошибка поиска Java: " + ex.Message); }
-    }
-
-    private void BtnSelectJava_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement fe && fe.Tag is string path && !string.IsNullOrWhiteSpace(path))
-        {
-            TxtJavaPath.Text = path;
-            _settings.CustomJavaPath = path;
-            PersistSettings();
-            AppendLog($"Выбрана установленная Java: {path}");
-        }
-    }
-
     private void ApplyWindowBackground()
     {
         var brush = ThemeService.BuildWindowBackground(
@@ -113,161 +23,13 @@ public partial class MainWindow
         WindowBgLayer.Fill = brush ?? (Brush)new SolidColorBrush(Colors.Transparent);
     }
 
-    private void GameLang_Checked(object sender, RoutedEventArgs e)
+    private void PersistSettings()
     {
-        if (!IsLoaded) return;
-
-        _settings.GameLanguage = (sender as FrameworkElement)?.Tag?.ToString() ?? "ru";
-        SettingsService.Save(_settings);
+        _settings.LastInstanceId = _selectedInstance?.Id ?? _settings.LastInstanceId;
+        Vm.SaveSettings();
+        if (!_initializing && _instancesService.Loaded) _instancesService.SaveAll(_instances);
     }
 
-    private void Setting_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!IsLoaded || _initializing) return;
-        PersistSettings();
-        UpdateRunStateUi();
-        ShowSavedHint();
-    }
-
-    private void LaunchBehavior_Changed(object sender, RoutedEventArgs e)
-    {
-        if (!IsLoaded || _initializing) return;
-
-        if (sender == ChkCloseOnLaunch && ChkCloseOnLaunch.IsChecked == true)
-        {
-            ChkMinimizeOnLaunch.IsChecked = false;
-        }
-        else if (sender == ChkMinimizeOnLaunch && ChkMinimizeOnLaunch.IsChecked == true)
-        {
-            ChkCloseOnLaunch.IsChecked = false;
-        }
-
-        PersistSettings();
-        UpdateRunStateUi();
-        ShowSavedHint();
-    }
-
-    private string _currentSettingsSection = "game";
-
-    private DispatcherTimer? _autoSaveTimer;
-
-    private void ScheduleAutoSave(Action action)
-    {
-        _autoSaveTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(600) };
-
-        _autoSaveTimer.Stop();
-
-        foreach (var d in _autoSaveHandlers) _autoSaveTimer.Tick -= d;
-        _autoSaveHandlers.Clear();
-
-        EventHandler handler = (_, _) =>
-        {
-            _autoSaveTimer!.Stop();
-            action();
-        };
-
-        _autoSaveHandlers.Add(handler);
-        _autoSaveTimer.Tick += handler;
-        _autoSaveTimer.Start();
-    }
-
-    private readonly List<EventHandler> _autoSaveHandlers = new();
-
-    private void SettingText_Changed(object sender, TextChangedEventArgs e)
-    {
-        if (!IsLoaded || _initializing) return;
-        ScheduleAutoSave(() => { PersistSettings(); ShowSavedHint(); });
-    }
-
-    private void ShowSavedHint()
-    {
-    }
-
-    private void BtnClearCache_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            var freed = 0L;
-            if (Directory.Exists(LauncherPaths.CacheDir))
-            {
-                foreach (var f in Directory.GetFiles(LauncherPaths.CacheDir))
-                {
-                    if (f.EndsWith("version_manifest_v2.json", StringComparison.OrdinalIgnoreCase)) continue;
-                    try { freed += new FileInfo(f).Length; File.Delete(f); } catch (Exception ex) { Log.Warn(ex.Message); }
-                }
-            }
-
-            TxtMaintenance.Text = $"Кэш очищен, освобождено {Human(freed)}.";
-            AppendLog($"Кэш очищен ({Human(freed)}).");
-        }
-        catch (Exception ex)
-        {
-            TxtMaintenance.Text = "Не удалось очистить кэш: " + ex.Message;
-        }
-    }
-
-    private async void BtnResetSettings_Click(object sender, RoutedEventArgs e)
-    {
-        var r = await _dialog.ConfirmAsync(
-            "Сброс настроек",
-            "Сбросить все настройки лаунчера к значениям по умолчанию?\n\n" +
-            "Сборки, моды и аккаунт затронуты не будут.");
-
-        if (!r) return;
-
-        _settings = new LauncherSettings
-        {
-            MaxMemoryMb = LauncherSettings.RecommendedMaxMemory(),
-            GameDir = LauncherPaths.Root
-        };
-
-        SettingsService.Save(_settings);
-        ThemeService.ApplyAccent(_settings.AccentColor);
-        ApplySettingsToUi();
-        ApplyWindowBackground();
-
-        TxtMaintenance.Text = "Настройки сброшены.";
-        AppendLog("Настройки сброшены к значениям по умолчанию.");
-        ShowSavedHint();
-    }
-
-
-
-    private void SldMemory_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (!IsLoaded) return;
-        var mb = (int)e.NewValue;
-        TxtMemory.Text = $"{mb} МБ";
-        _settings.MaxMemoryMb = mb;
-    }
-
-    private void BtnBrowseJava_Click(object sender, RoutedEventArgs e)
-    {
-        var dlg = new OpenFileDialog
-        {
-            Title = "Выберите java.exe",
-            Filter = "java.exe|java.exe;javaw.exe|Исполняемые файлы (*.exe)|*.exe",
-            CheckFileExists = true
-        };
-        if (dlg.ShowDialog(this) != true) return;
-
-        var probe = JavaService.Probe(dlg.FileName, "custom");
-        if (probe is null)
-        {
-            _dialog.ShowMessage("Не удалось определить версию Java.", "Java", MessageSeverity.Warning);
-            return;
-        }
-
-        TxtJavaPath.Text = dlg.FileName;
-        _settings.CustomJavaPath = dlg.FileName;
-        AppendLog("Выбрана Java: " + probe);
-    }
-
-    private void BtnOpenDir_Click(object sender, RoutedEventArgs e)
-    {
-        try { _instancesService.OpenFolder(_settings.GameDir); }
-        catch (Exception ex) { AppendLog("Не удалось открыть папку: " + ex.Message); }
-    }
 
     private void Nav_Checked(object sender, RoutedEventArgs e)
     {
@@ -367,7 +129,7 @@ public partial class MainWindow
                 break;
 
             case Key.F11:
-                if (_selectedInstance is not null && !_busy) _ = LaunchAsync(_selectedInstance, null);
+                if (_selectedInstance is not null && !_busy) _ = Vm.LaunchGameCommand.ExecuteAsync(null);
                 e.Handled = true;
                 break;
 
@@ -397,8 +159,8 @@ public partial class MainWindow
         }
         else if (PageSettings.Visibility == Visibility.Visible)
         {
-            if (SecPanelStorage.Visibility == Visibility.Visible) ScanMaintenance();
-            else _ = Task.Run(DetectJava);
+            if (SecPanelStorage.Visibility == Visibility.Visible) Vm.ScanMaintenanceCommand.Execute(null);
+            else _ = Vm.DetectJavaCommand.ExecuteAsync(null);
         }
     }
 
@@ -453,16 +215,7 @@ public partial class MainWindow
 
         Dispatcher.BeginInvoke(() =>
         {
-            ProgressArea.Visibility = Visibility.Visible;
-            PbProgress.IsIndeterminate = false;
-            PbProgress.Value = p.Percent;
-            TxtProgressPercent.Text = $"{p.Percent:F1}%";
-
-            var detail = p.FilesTotal > 1 ? $"  ({p.FilesDone}/{p.FilesTotal})" : "";
-            var size = p.BytesTotal > 0 ? $"  ·  {Human(p.BytesDone)} / {Human(p.BytesTotal)}" : "";
-            var file = string.IsNullOrEmpty(p.CurrentFile) ? "" : "  —  " + Shorten(p.CurrentFile, 44);
-
-            TxtProgressStage.Text = p.Stage + detail + size + file;
+            Vm.ReportProgress(p);
         });
     }
 
@@ -487,197 +240,5 @@ public partial class MainWindow
 
     private void AppendLog(string line) => Vm.AppendLog(line);
 
-    private enum ContentKind { Mods, ResourcePacks, Shaders, Worlds }
-
-    private void BtnScanMaint_Click(object sender, RoutedEventArgs e) => ScanMaintenance();
-
-    private void ScanMaintenance()
-    {
-        TxtMaintTotal.Text = "Считаю…";
-
-        _maintTargets = _maintenance.Enumerate();
-        var total = _maintenance.TotalSize();
-
-        TxtMaintTotal.Text = $"Всего данных лаунчера: {Human(total)}  ·  {LauncherPaths.Root}";
-
-        RebuildMaintList();
-    }
-
-    private void RebuildMaintList()
-    {
-        ItemsMaint.ItemsSource = _maintTargets.Select(t => new
-        {
-            Key = t.Target,
-            t.Title,
-            t.Description,
-            SizeText = t.SizeDisplay,
-            Checked = _maintChecked.Contains(t.Target),
-            TitleColor = new SolidColorBrush(t.Dangerous
-                ? (Color)ColorConverter.ConvertFromString("#F87171")
-                : (Color)ColorConverter.ConvertFromString("#FFFFFF")),
-            RowBorder = new SolidColorBrush(t.Dangerous
-                ? (Color)ColorConverter.ConvertFromString("#3A2428")
-                : (Color)ColorConverter.ConvertFromString("#2A2A2A"))
-        }).ToList();
-    }
-
-    private void MaintItem_Changed(object sender, RoutedEventArgs e)
-    {
-        if (sender is not CheckBox cb || cb.Tag is not MaintenanceService.CleanTarget key) return;
-
-        if (cb.IsChecked == true) _maintChecked.Add(key);
-        else _maintChecked.Remove(key);
-    }
-
-    private void BtnMaintSafe_Click(object sender, RoutedEventArgs e)
-    {
-        if (_maintTargets.Count == 0) ScanMaintenance();
-
-        _maintChecked.Clear();
-        foreach (var t in _maintTargets.Where(x => !x.Dangerous &&
-                     x.Target is MaintenanceService.CleanTarget.Cache
-                         or MaintenanceService.CleanTarget.ImageCache
-                         or MaintenanceService.CleanTarget.Logs))
-        {
-            _maintChecked.Add(t.Target);
-        }
-
-        RebuildMaintList();
-    }
-
-    private async void BtnMaintClean_Click(object sender, RoutedEventArgs e)
-    {
-        if (_maintChecked.Count == 0)
-        {
-            _dialog.ShowMessage("Отметьте, что нужно удалить.", "Ничего не выбрано");
-            return;
-        }
-
-        if (_sessions.AnyRunning)
-        {
-            _dialog.ShowMessage("Сначала остановите игру.", "Игра запущена", MessageSeverity.Warning);
-            return;
-        }
-
-        var selected = _maintTargets.Where(t => _maintChecked.Contains(t.Target)).ToList();
-        var dangerous = selected.Where(t => t.Dangerous).ToList();
-        var totalSize = selected.Sum(t => t.Size);
-
-        var msg = "Будет удалено:\n\n" +
-                  string.Join("\n", selected.Select(t => $"  • {t.Title} — {t.SizeDisplay}")) +
-                  $"\n\nОсвободится примерно {Human(totalSize)}.";
-
-        if (dangerous.Count > 0)
-            msg += "\n\nВНИМАНИЕ: среди выбранного есть сборки с модами и мирами. " +
-                   "Восстановить их будет невозможно.";
-
-        if (!await _dialog.ConfirmAsync("Подтверждение очистки", msg + "\n\nПродолжить?")) return;
-
-        var freed = _maintenance.Clean(selected);
-        if (_maintChecked.Contains(MaintenanceService.CleanTarget.ImageCache)) _imageCache.ClearMemory();
-
-        _maintChecked.Clear();
-        ScanMaintenance();
-
-        _dialog.ShowMessage($"Готово. Освобождено {Human(freed)}.", "Очистка завершена");
-
-        AppendLog($"Очистка: освобождено {Human(freed)}");
-    }
-
-    private async void BtnReinstallSoft_Click(object sender, RoutedEventArgs e)
-    {
-        if (!await _dialog.ConfirmAsync("Переустановка начисто",
-                "Будут удалены версии игры, библиотеки, ресурсы, Java и кэш.\n\n" +
-                "Сборки (моды, миры, скриншоты), аккаунт и настройки сохранятся.\n" +
-                "Файлы игры скачаются заново при следующем запуске.\n\nПродолжить?")) return;
-
-        if (_sessions.AnyRunning)
-        {
-            _dialog.ShowMessage("Сначала остановите игру.", "Игра запущена", MessageSeverity.Warning);
-            return;
-        }
-
-        var targets = _maintenance.Enumerate()
-            .Where(t => t.Target is MaintenanceService.CleanTarget.Versions
-                or MaintenanceService.CleanTarget.Libraries
-                or MaintenanceService.CleanTarget.Assets
-                or MaintenanceService.CleanTarget.JavaRuntime
-                or MaintenanceService.CleanTarget.Cache
-                or MaintenanceService.CleanTarget.ImageCache)
-            .ToList();
-
-        var freed = _maintenance.Clean(targets);
-        _imageCache.ClearMemory();
-        ScanMaintenance();
-
-        _dialog.ShowMessage($"Готово. Освобождено {Human(freed)}.\n\n" +
-                        "Файлы игры загрузятся заново при нажатии «ИГРАТЬ».", "Переустановка");
-    }
-
-    private async void BtnReinstallFull_Click(object sender, RoutedEventArgs e)
-    {
-        if (!await _dialog.ConfirmAsync("Полная переустановка",
-                "Будут удалены ВСЕ данные лаунчера:\n\n" +
-                "  • версии игры, библиотеки, ресурсы\n" +
-                "  • сборки со всеми модами и мирами\n" +
-                "  • аккаунт и настройки\n\n" +
-                "Сам файл лаунчера останется. Восстановить данные будет нельзя.\n\nПродолжить?")) return;
-
-        if (!await _dialog.ConfirmAsync("Последнее подтверждение", "Точно удалить все миры и моды?")) return;
-
-        if (_sessions.AnyRunning) _sessions.StopAllAsync().GetAwaiter().GetResult();
-
-        var freed = _maintenance.Clean(_maintenance.Enumerate());
-
-        _dialog.ShowMessage($"Удалено {Human(freed)}.\n\nЛаунчер сейчас закроется. " +
-                        "Запустите его заново — он будет как после установки.", "Готово");
-
-        Application.Current.Shutdown();
-    }
-
-    private async void BtnUninstall_Click(object sender, RoutedEventArgs e)
-    {
-        var exePath = Environment.ProcessPath ?? "";
-        var isExe = exePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
-
-        var r = await _dialog.ConfirmCancelAsync("Удаление лаунчера",
-            "Полностью удалить VEC Launcher с компьютера?\n\n" +
-            $"Будет удалена папка данных:\n{LauncherPaths.Root}\n\n" +
-            (isExe ? "«Да» — удалить и сам файл лаунчера.\n«Нет» — удалить только данные.\n"
-                   : "Файл лаунчера удалить нельзя (запущен не как exe).\n") +
-            "\nЭто действие необратимо.",
-            "Да", "Только данные", "Отмена");
-
-        if (r == ConfirmResult.Cancel) return;
-
-        var removeExe = isExe && r == ConfirmResult.Yes;
-
-        if (!await _dialog.ConfirmAsync("Последнее подтверждение",
-                removeExe
-                    ? "Лаунчер удалит все данные и себя, затем закроется. Подтвердить?"
-                    : "Лаунчер удалит все данные и закроется. Подтвердить?")) return;
-
-        try
-        {
-            if (_sessions.AnyRunning) _sessions.StopAllAsync().GetAwaiter().GetResult();
-
-            var script = _maintenance.PrepareUninstall(removeExe);
-            _maintenance.RunUninstall(script);
-
-            Application.Current.Shutdown();
-        }
-        catch (Exception ex)
-        {
-            _dialog.ShowMessage("Не удалось запустить удаление: " + ex.Message, "Ошибка", MessageSeverity.Error);
-        }
-    }
-    private static string Human(long bytes)
-    {
-        string[] units = { "Б", "КБ", "МБ", "ГБ" };
-        double v = bytes;
-        var i = 0;
-        while (v >= 1024 && i < units.Length - 1) { v /= 1024; i++; }
-        return $"{v:0.#} {units[i]}";
-    }
-
+    private static string Human(long bytes) => MainWindowViewModel.Human(bytes);
 }

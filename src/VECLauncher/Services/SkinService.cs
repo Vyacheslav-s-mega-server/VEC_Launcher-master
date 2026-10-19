@@ -156,6 +156,76 @@ public sealed class SkinService
         }
     }
 
+    public async Task<(byte[]? SkinBytes, byte[]? CapeBytes, string? Model)> SyncSkinFromServerAsync(MinecraftAccount acc, CancellationToken ct = default)
+    {
+        byte[]? skinBytes = null;
+        byte[]? capeBytes = null;
+        string? model = null;
+
+        if (!acc.IsVec) return (null, null, null);
+
+        try
+        {
+            var srvUrl = (!string.IsNullOrEmpty(acc.ServerUrl) && !acc.ServerUrl.Contains("95.59.233"))
+                ? acc.ServerUrl
+                : await VecAuthService.GetActiveServerUrlAsync();
+            acc.ServerUrl = srvUrl;
+
+            var skinUrl = $"{srvUrl}/api/skin/{Uri.EscapeDataString(acc.Username)}.png?t={DateTime.UtcNow.Ticks}";
+            using var sResp = await _http.GetAsync(skinUrl, ct).ConfigureAwait(false);
+            if (sResp.IsSuccessStatusCode)
+            {
+                skinBytes = await sResp.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
+                var skinPath = AccountSkinPath(acc.Username);
+                var dir = Path.GetDirectoryName(skinPath);
+                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                await File.WriteAllBytesAsync(skinPath, skinBytes, ct).ConfigureAwait(false);
+            }
+
+            var capeUrl = $"{srvUrl}/api/cape/{Uri.EscapeDataString(acc.Username)}.png?t={DateTime.UtcNow.Ticks}";
+            using var cResp = await _http.GetAsync(capeUrl, ct).ConfigureAwait(false);
+            if (cResp.IsSuccessStatusCode)
+            {
+                capeBytes = await cResp.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
+                var capePath = AccountCapePath(acc.Username);
+                var dir = Path.GetDirectoryName(capePath);
+                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                await File.WriteAllBytesAsync(capePath, capeBytes, ct).ConfigureAwait(false);
+            }
+            else if (cResp.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                var capePath = AccountCapePath(acc.Username);
+                if (File.Exists(capePath))
+                {
+                    try { File.Delete(capePath); } catch { }
+                }
+            }
+
+            try
+            {
+                var metaUrl = $"{srvUrl}/api/skin/{Uri.EscapeDataString(acc.Username)}.json?t={DateTime.UtcNow.Ticks}";
+                using var mResp = await _http.GetAsync(metaUrl, ct).ConfigureAwait(false);
+                if (mResp.IsSuccessStatusCode)
+                {
+                    var metaJson = await mResp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                    using var doc = System.Text.Json.JsonDocument.Parse(metaJson);
+                    if (doc.RootElement.TryGetProperty("model", out var mProp))
+                    {
+                        var m = mProp.GetString();
+                        if (!string.IsNullOrEmpty(m)) model = m;
+                    }
+                }
+            }
+            catch { }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Log.Warn($"SkinService: SyncSkinFromServerAsync failed for {acc.Username}: {ex.Message}");
+        }
+
+        return (skinBytes, capeBytes, model);
+    }
+
     public static void ValidateSkinPng(byte[] data)
     {
         if (data.Length < 24)

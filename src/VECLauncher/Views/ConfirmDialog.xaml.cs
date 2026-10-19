@@ -18,6 +18,9 @@ public partial class ConfirmDialog : Window
         BtnCancel.Content = cancelText;
     }
 
+    public static bool Show(string title, string message, string confirmText = "Запустить", string cancelText = "Отмена")
+        => Show(null, title, message, confirmText, cancelText);
+
     public static bool Show(Window? owner, string title, string message, string confirmText = "Запустить", string cancelText = "Отмена")
     {
         var dlg = new ConfirmDialog(title, message, confirmText, cancelText);

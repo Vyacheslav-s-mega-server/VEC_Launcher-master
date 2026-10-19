@@ -112,7 +112,8 @@
                                     <TextBlock x:Name="TxtProgressPercent" Grid.Column="1" Text="{Binding ProgressPercent}" FontSize="11.5" FontWeight="Black"
                                                Foreground="#FFFFFF" VerticalAlignment="Center"/>
                                 </Grid>
-                                <ProgressBar x:Name="PbProgress" Grid.Row="1" Height="5" Minimum="0" Maximum="100" Value="0"/>
+                                <ProgressBar x:Name="PbProgress" Grid.Row="1" Height="5" Minimum="0" Maximum="100"
+                                             Value="{Binding ProgressValue}" IsIndeterminate="{Binding ProgressIndeterminate}"/>
                             </Grid>
                         </Border>
 
@@ -127,33 +128,31 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Ellipse Width="7" Height="7" Fill="#22C55E" VerticalAlignment="Center"/>
                                             <TextBlock Text=" " FontSize="5"/>
-                                            <TextBlock x:Name="TxtServerPlayers" Text="— / —" FontSize="12.5" FontWeight="Bold"
+                                            <TextBlock x:Name="TxtServerPlayers" Text="{Binding ServerPlayersDisplay, TargetNullValue='— / —'}" FontSize="12.5" FontWeight="Bold"
                                                        Foreground="White" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                         </StackPanel>
                                     </Border>
 
                                     <Button x:Name="BtnConnectVEC" Height="48" MinWidth="165"
-                                            Click="BtnConnectVEC_Click" Cursor="Hand"
-                                            Background="Transparent" BorderThickness="0"
-                                            MouseEnter="BtnConnectVEC_MouseEnter"
-                                            MouseLeave="BtnConnectVEC_MouseLeave">
+                                            Command="{Binding LaunchGameCommand}" Cursor="Hand"
+                                            Background="Transparent" BorderThickness="0">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
-                                                <Border x:Name="BtnHomeBd" Background="#F59E0B" BorderBrush="#FBBF24" BorderThickness="1" CornerRadius="0">
+                                                <Border x:Name="BtnHomeBd" Background="{Binding HomePlayButtonBackground}" BorderBrush="{Binding HomePlayButtonBorderBrush}" BorderThickness="1" CornerRadius="0">
                                                     <Border.Effect>
                                                         <DropShadowEffect x:Name="BtnHomeShadow" Color="#F59E0B" BlurRadius="16"
-                                                                         ShadowDepth="0" Opacity="0.3"/>
+                                                                          ShadowDepth="0" Opacity="0.3"/>
                                                     </Border.Effect>
-                                                    <TextBlock x:Name="BtnHomeText" Text="ИГРАТЬ" FontSize="18" FontWeight="Bold"
+                                                    <TextBlock x:Name="BtnHomeText" Text="{Binding HomePlayButtonText}" FontSize="18" FontWeight="Bold"
                                                                FontFamily="{StaticResource FontMinecraft}"
-                                                               Foreground="#08090D" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                               Foreground="{Binding HomePlayButtonForeground}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="BtnHomeBd" Property="Background" Value="#FBBF24"/>
+                                                        <Setter TargetName="BtnHomeBd" Property="Opacity" Value="0.88"/>
                                                     </Trigger>
                                                     <Trigger Property="IsPressed" Value="True">
-                                                        <Setter TargetName="BtnHomeBd" Property="Background" Value="#D97706"/>
+                                                        <Setter TargetName="BtnHomeBd" Property="Opacity" Value="0.75"/>
                                                         <Setter TargetName="BtnHomeBd" Property="RenderTransform">
                                                             <Setter.Value>
                                                                 <TranslateTransform Y="1"/>
@@ -173,7 +172,7 @@
                                             Margin="0,12,0,0">
                                     <TextBlock Text="НАИГРАНО:  " FontSize="9" FontWeight="Bold"
                                                Foreground="White" Opacity="0.5"/>
-                                    <TextBlock x:Name="StatTotalTime" Text="0 ч" FontSize="9"
+                                    <TextBlock x:Name="StatTotalTime" Text="{Binding TotalPlayTimeDisplay, TargetNullValue='0 ч'}" FontSize="9"
                                                FontWeight="Bold" Foreground="White" Opacity="0.85"/>
                                 </StackPanel>
                             </StackPanel>
@@ -243,7 +242,7 @@
                                                         <Button x:Name="BtnRefreshSkin" Width="30" Height="30" Margin="0,0,6,0"
                                                                 Background="#141720" Foreground="White" BorderBrush="#3C4250" BorderThickness="1"
                                                                 Cursor="Hand" ToolTip="Синхронизировать скин и плащ с сервером VEC"
-                                                                Click="BtnRefreshSkin_Click">
+                                                                Command="{Binding RefreshSkinCommand}">
                                                             <Button.Resources>
                                                                 <Style TargetType="Border">
                                                                     <Setter Property="CornerRadius" Value="0"/>
@@ -255,7 +254,7 @@
                                                         <Button x:Name="BtnResetSkin" Width="30" Height="30"
                                                                 Background="#141720" Foreground="#AAA" BorderBrush="#3C4250" BorderThickness="1"
                                                                 Cursor="Hand" ToolTip="Сбросить скин на стандартный"
-                                                                Click="BtnResetSkin_Click">
+                                                                Command="{Binding ResetSkinCommand}">
                                                             <Button.Resources>
                                                                 <Style TargetType="Border">
                                                                     <Setter Property="CornerRadius" Value="0"/>
@@ -272,16 +271,18 @@
                                                     <Grid>
                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                             <TextBlock Text="РУКИ" FontSize="11" FontWeight="Bold" Foreground="#9CA3AF"/>
-                                                            <TextBlock x:Name="TxtToggleModelBadge" Text="Classic" FontSize="11" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                                            <TextBlock x:Name="TxtToggleModelBadge" Text="{Binding SkinModelBadge}" FontSize="11" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="10,0,0,0" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                         <CheckBox x:Name="ToggleModelSwitch" HorizontalAlignment="Right"
                                                                   Style="{StaticResource MinecraftSwitchStyle}"
-                                                                  Click="ToggleModelSwitch_Click" ToolTip="Переключить модель Classic (4px) / Slim (3px)"/>
+                                                                  IsChecked="{Binding IsSlimModel, Mode=TwoWay}"
+                                                                  Command="{Binding ToggleSkinModelCommand}" ToolTip="Переключить модель Classic (4px) / Slim (3px)"/>
                                                     </Grid>
                                                 </Border>
 
                                                 <Button x:Name="BtnBrowseSkin" Height="36" Background="#23252D" BorderBrush="#374151" BorderThickness="1"
-                                                        Foreground="#FFFFFF" FontSize="11.5" FontWeight="SemiBold" Cursor="Hand" Click="BtnBrowseSkin_Click">
+                                                        Foreground="#FFFFFF" FontSize="11.5" FontWeight="SemiBold" Cursor="Hand"
+                                                        Command="{Binding BrowseAndUploadSkinCommand}">
                                                     <Button.Resources>
                                                         <Style TargetType="Border">
                                                             <Setter Property="CornerRadius" Value="0"/>
@@ -289,16 +290,17 @@
                                                     </Button.Resources>
                                                     <TextBlock Text="Загрузить скин (.png)" VerticalAlignment="Center"/>
                                                 </Button>
-                                                <TextBlock x:Name="TxtSelectedSkinFileName" FontSize="11" Foreground="#34D399" Margin="0,6,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock x:Name="TxtSelectedSkinFileName" Text="{Binding SelectedSkinFileName}" FontSize="11" Foreground="#34D399" Margin="0,6,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
-                                            <TextBlock x:Name="TxtSkinStatus" Text="" FontSize="11" TextWrapping="Wrap"
-                                                       Foreground="#888" Margin="0,8,0,0" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtSkinStatus" Text="{Binding SkinStatus}" Foreground="{Binding SkinStatusColor}" FontSize="11" TextWrapping="Wrap"
+                                                       Margin="0,8,0,0" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
 
                                     <StackPanel Grid.Column="1" Margin="20,0,0,0">
                                         <Border x:Name="BorderProfileCard" Background="#161922" BorderBrush="#232730" BorderThickness="2"
-                                                CornerRadius="0" Padding="20" Margin="0,0,0,16" Visibility="Collapsed">
+                                                CornerRadius="0" Padding="20" Margin="0,0,0,16"
+                                                Visibility="{Binding IsAccountLoggedIn, Converter={StaticResource BoolToVis}}">
                                             <StackPanel>
                                                 <Grid Margin="0,0,0,14">
                                                     <TextBlock Text="ОСНОВНАЯ ИНФОРМАЦИЯ" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
@@ -312,20 +314,21 @@
                                                     </Grid.ColumnDefinitions>
 
                                                     <Border Grid.Column="0" Width="48" Height="48" CornerRadius="0" Background="#111319" BorderBrush="#232730" BorderThickness="1" ClipToBounds="True">
-                                                        <Image x:Name="ImgAvatarLarge" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderOptions.EdgeMode="Aliased"/>
+                                                        <Image x:Name="ImgAvatarLarge" Source="{Binding CurrentAvatarImage}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderOptions.EdgeMode="Aliased"/>
                                                     </Border>
 
                                                     <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                            <TextBlock x:Name="TxtAccName" Text="Игрок" FontWeight="Bold" FontSize="16" Foreground="White" TextTrimming="CharacterEllipsis"/>
-                                                            <TextBlock x:Name="TxtLicenseBadge" Text="Mojang" FontSize="12" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                                            <TextBlock x:Name="TxtAccName" Text="{Binding AccountUsernameDisplay}" FontWeight="Bold" FontSize="16" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock x:Name="TxtLicenseBadge" Text="Mojang" FontSize="12" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="10,0,0,0" VerticalAlignment="Center"
+                                                                       Visibility="{Binding HasMinecraftLicense, Converter={StaticResource BoolToVis}}"/>
                                                         </StackPanel>
-                                                        <TextBlock x:Name="TxtMinecraftNick" Text="Minecraft: —" Foreground="#9CA3AF" FontSize="12" Margin="0,4,0,0"/>
+                                                        <TextBlock x:Name="TxtMinecraftNick" Text="{Binding MinecraftNickDisplay}" Foreground="#9CA3AF" FontSize="12" Margin="0,4,0,0"/>
                                                     </StackPanel>
 
                                                     <Button x:Name="BtnLogout" Grid.Column="2" Content="Выйти"
                                                             Background="Transparent" Foreground="#EF4444" BorderBrush="#3A2222" BorderThickness="1"
-                                                            Padding="16,6" FontSize="11.5" Cursor="Hand" Click="BtnLogout_Click" IsEnabled="True" VerticalAlignment="Center">
+                                                            Padding="16,6" FontSize="11.5" Cursor="Hand" Command="{Binding LogoutCommand}" IsEnabled="True" VerticalAlignment="Center">
                                                         <Button.Resources>
                                                             <Style TargetType="Border">
                                                                 <Setter Property="CornerRadius" Value="0"/>
@@ -337,7 +340,8 @@
                                         </Border>
 
                                         <Border x:Name="BorderLoginCard" Background="#161922" BorderBrush="#232730" BorderThickness="2"
-                                                CornerRadius="0" Padding="24,22" Margin="0,0,0,16" Visibility="Visible">
+                                                CornerRadius="0" Padding="24,22" Margin="0,0,0,16"
+                                                Visibility="{Binding IsAccountLoggedOut, Converter={StaticResource BoolToVis}}">
                                             <StackPanel>
                                                 <Grid Margin="0,0,0,14">
                                                     <TextBlock Text="АВТОРИЗАЦИЯ" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF"/>
@@ -353,12 +357,12 @@
                                                         <TextBlock Text="ЕДИНЫЙ ВХОД VEC ID" FontSize="11.5" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,8"/>
                                                         <TextBlock Text="Авторизуйтесь через единый аккаунт платформы VEC" FontWeight="Bold" FontSize="14.5" Foreground="#FFFFFF" Margin="0,0,0,8" TextWrapping="Wrap"/>
                                                         <TextBlock Text="Авторизация через веб-браузер. Лицензия Mojang, скины и гардероб плащей синхронизируются автоматически."
-                                                                   Foreground="#9CA3AF" FontSize="12" TextWrapping="Wrap" LineHeight="18"/>
+                                                                    Foreground="#9CA3AF" FontSize="12" TextWrapping="Wrap" LineHeight="18"/>
                                                     </StackPanel>
 
                                                     <Button x:Name="BtnVecLogin" Grid.Column="1" Style="{StaticResource AccentButton}"
                                                             Content="Войти через VEC ID" Padding="24,12" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"
-                                                            Click="BtnVecLogin_Click">
+                                                            Command="{Binding LoginVecCommand}">
                                                         <Button.Resources>
                                                             <Style TargetType="Border">
                                                                 <Setter Property="CornerRadius" Value="0"/>
@@ -383,7 +387,54 @@
                                             <TextBlock Text="Плащи — это особые награды, которые игроки могут разблокировать во время событий, кампаний и прочих веселых приключений."
                                                        Foreground="#9CA3AF" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,18"/>
 
-                                            <WrapPanel x:Name="CapesWrapPanel" Margin="0,0,0,16"/>
+                                            <ItemsControl ItemsSource="{Binding AvailableCapes}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel Margin="0,0,0,16"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
+                                                                Command="{Binding DataContext.EquipCapeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}">
+                                                            <Button.Template>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border Width="140" Height="150" Background="{Binding CardBackground}" BorderBrush="{Binding CardBorder}"
+                                                                            BorderThickness="1" CornerRadius="0" Margin="0,0,10,10" Padding="8,10,8,8">
+                                                                        <Grid>
+                                                                            <Grid.RowDefinitions>
+                                                                                <RowDefinition Height="94"/>
+                                                                                <RowDefinition Height="Auto"/>
+                                                                            </Grid.RowDefinitions>
+
+                                                                            <Border Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                                <Grid>
+                                                                                    <Rectangle Width="44" Height="70" Stroke="#5A6072" StrokeThickness="2" StrokeDashArray="3 2" Fill="Transparent"
+                                                                                               Visibility="{Binding IsNoneCape, Converter={StaticResource BoolToVis}}"/>
+                                                                                    <Image Width="44" Height="70" Stretch="None" Source="{Binding PreviewImage}"
+                                                                                           RenderOptions.BitmapScalingMode="NearestNeighbor" RenderOptions.EdgeMode="Aliased"
+                                                                                           Visibility="{Binding IsNotNoneCape, Converter={StaticResource BoolToVis}}"/>
+                                                                                </Grid>
+                                                                            </Border>
+
+                                                                            <Border Grid.Row="1" BorderThickness="0,1,0,0" BorderBrush="#2D313D" Margin="0,6,0,0" Padding="0,6,0,0">
+                                                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                                    <Border Width="14" Height="14" CornerRadius="7" BorderThickness="2" BorderBrush="{Binding RadioBorderBrush}" Background="#14161D">
+                                                                                        <Ellipse Width="6" Height="6" Fill="#22C55E" Visibility="{Binding RadioDotVisibility}"/>
+                                                                                    </Border>
+                                                                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="{Binding TitleFontWeight}" Foreground="{Binding TitleForeground}"
+                                                                                               MaxWidth="96" TextTrimming="CharacterEllipsis" Margin="6,0,0,0" ToolTip="{Binding Description}"/>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Button.Template>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
 
                                             <Border Height="1" Background="#232730" Margin="0,6,0,18"/>
 
@@ -400,6 +451,7 @@
                                                          Background="#111319" Foreground="White" BorderBrush="#2B303C" BorderThickness="1"
                                                          Padding="12,0" VerticalContentAlignment="Center" FontFamily="Consolas, monospace"
                                                          FontSize="13" TextWrapping="NoWrap" Margin="0,0,10,0"
+                                                         Text="{Binding CapePromoCode, UpdateSourceTrigger=PropertyChanged}"
                                                          KeyDown="TxtCapePromoCode_KeyDown">
                                                     <TextBox.Resources>
                                                         <Style TargetType="Border">
@@ -409,7 +461,8 @@
                                                 </TextBox>
                                                 <Button x:Name="BtnRedeemCapePromo" Grid.Column="1" Height="36" Content="Активировать"
                                                         Background="#23252D" Foreground="White" BorderBrush="#374151" BorderThickness="1"
-                                                        Padding="20,0" FontSize="12" FontWeight="SemiBold" Cursor="Hand" Click="BtnRedeemCapePromo_Click">
+                                                        Padding="20,0" FontSize="12" FontWeight="SemiBold" Cursor="Hand"
+                                                        Command="{Binding RedeemCapePromoCommand}">
                                                     <Button.Resources>
                                                         <Style TargetType="Border">
                                                             <Setter Property="CornerRadius" Value="0"/>
@@ -417,7 +470,8 @@
                                                     </Button.Resources>
                                                 </Button>
                                             </Grid>
-                                            <TextBlock x:Name="TxtCapePromoStatus" FontSize="11.5" Margin="0,8,0,0" Visibility="Collapsed" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="TxtCapePromoStatus" Text="{Binding CapePromoStatus}" Foreground="{Binding CapePromoStatusColor}"
+                                                       FontSize="11.5" Margin="0,8,0,0" Visibility="{Binding IsCapePromoStatusVisible, Converter={StaticResource BoolToVis}}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                     </Border>
                                 </Grid>
@@ -465,14 +519,14 @@
 
                                                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
                                                     <TextBlock Text="Ширина (px)" FontSize="11" Foreground="#777788" Margin="0,0,0,5"/>
-                                                    <TextBox x:Name="TxtWidth" Width="110" Text="1280" LostFocus="Setting_Changed" TextChanged="SettingText_Changed"/>
+                                                    <TextBox x:Name="TxtWidth" Width="110" Text="{Binding Settings.WindowWidth, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
                                                 </StackPanel>
 
                                                 <TextBlock Grid.Column="1" Text="✕" FontSize="11" Foreground="#555566" VerticalAlignment="Bottom" Margin="0,0,10,12"/>
 
                                                 <StackPanel Grid.Column="2" Margin="0,0,20,0">
                                                     <TextBlock Text="Высота (px)" FontSize="11" Foreground="#777788" Margin="0,0,0,5"/>
-                                                    <TextBox x:Name="TxtHeight" Width="110" Text="720" LostFocus="Setting_Changed" TextChanged="SettingText_Changed"/>
+                                                    <TextBox x:Name="TxtHeight" Width="110" Text="{Binding Settings.WindowHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"/>
                                                 </StackPanel>
                                             </Grid>
 
@@ -486,14 +540,14 @@
                                                     <TextBlock Text="Запуск клиента в развернутом виде на весь монитор" Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,2,0,0"/>
                                                 </StackPanel>
                                                 <CheckBox x:Name="ChkFullscreen" Grid.Column="1" Style="{StaticResource MinecraftSwitchStyle}" VerticalAlignment="Center"
-                                                          Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                                          IsChecked="{Binding Settings.Fullscreen, Mode=TwoWay}"/>
                                             </Grid>
 
                                             <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                                                 <TextBlock Text="Пресеты:" FontSize="11" Foreground="#555566" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <Button Style="{StaticResource IconButton}" Content="1280×720 (HD)" Padding="10,5" FontSize="11" Margin="0,0,6,0" Click="Preset720_Click"/>
-                                                <Button Style="{StaticResource IconButton}" Content="1600×900" Padding="10,5" FontSize="11" Margin="0,0,6,0" Click="Preset900_Click"/>
-                                                <Button Style="{StaticResource IconButton}" Content="1920×1080 (FullHD)" Padding="10,5" FontSize="11" Click="Preset1080_Click"/>
+                                                <Button Style="{StaticResource IconButton}" Content="1280×720 (HD)" Padding="10,5" FontSize="11" Margin="0,0,6,0" Command="{Binding SetResolutionCommand}" CommandParameter="1280x720"/>
+                                                <Button Style="{StaticResource IconButton}" Content="1600×900" Padding="10,5" FontSize="11" Margin="0,0,6,0" Command="{Binding SetResolutionCommand}" CommandParameter="1600x900"/>
+                                                <Button Style="{StaticResource IconButton}" Content="1920×1080 (FullHD)" Padding="10,5" FontSize="11" Command="{Binding SetResolutionCommand}" CommandParameter="1920x1080"/>
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
@@ -512,7 +566,7 @@
                                                     <TextBlock Text="Лаунчер скрывается в трей/панель задач во время игры для экономии ресурсов" Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,2,0,0"/>
                                                 </StackPanel>
                                                 <CheckBox x:Name="ChkMinimizeOnLaunch" Grid.Column="1" Style="{StaticResource MinecraftSwitchStyle}" VerticalAlignment="Center"
-                                                          Checked="LaunchBehavior_Changed" Unchecked="LaunchBehavior_Changed"/>
+                                                          IsChecked="{Binding Settings.MinimizeOnLaunch, Mode=TwoWay}"/>
                                             </Grid>
 
                                             <Border Height="1" Background="{DynamicResource BorderBrushDark}" Margin="0,0,0,12"/>
@@ -527,7 +581,7 @@
                                                     <TextBlock Text="Лаунчер полностью выгружается из памяти после успешного старта клиента" Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,2,0,0"/>
                                                 </StackPanel>
                                                 <CheckBox x:Name="ChkCloseOnLaunch" Grid.Column="1" Style="{StaticResource MinecraftSwitchStyle}" VerticalAlignment="Center"
-                                                          Checked="LaunchBehavior_Changed" Unchecked="LaunchBehavior_Changed"/>
+                                                          IsChecked="{Binding Settings.CloseLauncherOnStart, Mode=TwoWay}"/>
                                             </Grid>
 
                                             <Border Height="1" Background="{DynamicResource BorderBrushDark}" Margin="0,0,0,12"/>
@@ -542,7 +596,7 @@
                                                     <TextBlock Text="Выключено по умолчанию для защиты от случайного повторного запуска" Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,2,0,0"/>
                                                 </StackPanel>
                                                 <CheckBox x:Name="ChkAllowMultiple" Grid.Column="1" Style="{StaticResource MinecraftSwitchStyle}" VerticalAlignment="Center"
-                                                          Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                                          IsChecked="{Binding Settings.AllowMultipleInstances, Mode=TwoWay}"/>
                                             </Grid>
 
                                             <Border Height="1" Background="{DynamicResource BorderBrushDark}" Margin="0,0,0,12"/>
@@ -557,7 +611,7 @@
                                                     <TextBlock Text="Запрашивать подтверждение при нажатии кнопки принудительной остановки" Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,2,0,0"/>
                                                 </StackPanel>
                                                 <CheckBox x:Name="ChkConfirmStop" Grid.Column="1" Style="{StaticResource MinecraftSwitchStyle}" VerticalAlignment="Center"
-                                                          Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                                          IsChecked="{Binding Settings.ConfirmGameStop, Mode=TwoWay}"/>
                                             </Grid>
 
                                             <Border Height="1" Background="{DynamicResource BorderBrushDark}" Margin="0,0,0,12"/>
@@ -572,7 +626,7 @@
                                                     <TextBlock Text="Отображать лог вывода Java в отдельной вкладке лаунчера" Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,2,0,0"/>
                                                 </StackPanel>
                                                 <CheckBox x:Name="ChkShowConsole" Grid.Column="1" Style="{StaticResource MinecraftSwitchStyle}" VerticalAlignment="Center"
-                                                          Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                                          IsChecked="{Binding Settings.ShowConsole, Mode=TwoWay}"/>
                                             </Grid>
                                         </StackPanel>
                                     </Border>
@@ -591,15 +645,14 @@
                                                     <TextBlock Text="Заранее прописывает выбранный язык в options.txt клиента Minecraft" Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,2,0,0"/>
                                                 </StackPanel>
                                                 <CheckBox x:Name="ChkAutoLanguage" Grid.Column="1" Style="{StaticResource MinecraftSwitchStyle}" VerticalAlignment="Center"
-                                                          Checked="Setting_Changed" Unchecked="Setting_Changed"/>
+                                                          IsChecked="{Binding Settings.AutoSetGameLanguage, Mode=TwoWay}"/>
                                             </Grid>
 
                                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                                 <RadioButton x:Name="RbLangRu" Style="{StaticResource SegmentToggle}"
-                                                             Content="Русский" IsChecked="True"
-                                                             Checked="GameLang_Checked" Tag="ru"/>
+                                                             Content="Русский" IsChecked="{Binding IsGameLangRu, Mode=TwoWay}"/>
                                                 <RadioButton x:Name="RbLangEn" Style="{StaticResource SegmentToggle}"
-                                                             Content="English" Checked="GameLang_Checked" Tag="en"/>
+                                                             Content="English" IsChecked="{Binding IsGameLangEn, Mode=TwoWay}"/>
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
@@ -615,23 +668,23 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
                                                 <Slider x:Name="SldMemory" Grid.Column="0" Minimum="1024" Maximum="16384"
-                                                        TickFrequency="512" IsSnapToTickEnabled="True" Value="4096"
-                                                        ValueChanged="SldMemory_ValueChanged" VerticalAlignment="Center"/>
-                                                <TextBlock x:Name="TxtMemory" Grid.Column="1" Text="4096 МБ" Width="90"
+                                                        TickFrequency="512" IsSnapToTickEnabled="True"
+                                                        Value="{Binding Settings.MaxMemoryMb, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="TxtMemory" Grid.Column="1" Text="{Binding Settings.MaxMemoryMb, StringFormat='{}{0} МБ'}" Width="90"
                                                            TextAlignment="Right" VerticalAlignment="Center"
                                                            FontWeight="SemiBold" FontSize="13"/>
                                             </Grid>
-                                            <TextBlock x:Name="TxtMemoryHint" Text="" Foreground="{DynamicResource FgMuted}"
+                                            <TextBlock x:Name="TxtMemoryHint" Text="{Binding MemoryHintDisplay}" Foreground="{DynamicResource FgMuted}"
                                                        FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap"/>
                                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                                                 <Button Style="{StaticResource IconButton}" Content="2 ГБ"
-                                                        Margin="0,0,6,0" Padding="12,5" Click="Mem2_Click"/>
+                                                        Margin="0,0,6,0" Padding="12,5" Command="{Binding SetMemoryMbCommand}" CommandParameter="2048"/>
                                                 <Button Style="{StaticResource IconButton}" Content="4 ГБ"
-                                                        Margin="0,0,6,0" Padding="12,5" Click="Mem4_Click"/>
+                                                        Margin="0,0,6,0" Padding="12,5" Command="{Binding SetMemoryMbCommand}" CommandParameter="4096"/>
                                                 <Button Style="{StaticResource IconButton}" Content="8 ГБ"
-                                                        Margin="0,0,6,0" Padding="12,5" Click="Mem8_Click"/>
+                                                        Margin="0,0,6,0" Padding="12,5" Command="{Binding SetMemoryMbCommand}" CommandParameter="8192"/>
                                                 <Button Style="{StaticResource IconButton}" Content="Рекомендуемый объем"
-                                                        Padding="12,5" Click="MemAuto_Click"/>
+                                                        Padding="12,5" Command="{Binding SetMemoryRecommendedCommand}"/>
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
@@ -642,14 +695,14 @@
                                                 <TextBlock Text="УСТАНОВЛЕННЫЕ JAVA" Style="{StaticResource Caption}"/>
                                                 <Button Style="{StaticResource IconButton}" Content="Искать заново"
                                                         HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                        Margin="0,-6,0,0" Click="BtnRescanJava_Click"/>
+                                                        Margin="0,-6,0,0" Command="{Binding DetectJavaCommand}"/>
                                             </Grid>
                                             
-                                            <TextBlock x:Name="TxtJavaStatus" Text="Поиск установленных версий Java…"
+                                            <TextBlock x:Name="TxtJavaStatus" Text="{Binding JavaScanStatus}"
                                                        Foreground="{DynamicResource FgMuted}" FontSize="11.5"
                                                        Margin="0,4,0,4"/>
 
-                                            <ItemsControl x:Name="ItemsJava" Margin="0,6,0,6">
+                                            <ItemsControl x:Name="ItemsJava" ItemsSource="{Binding DetectedJavaList}" Margin="0,6,0,6">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
                                                         <Grid Margin="0,0,0,8">
@@ -667,7 +720,8 @@
                                                             <Button Grid.Column="1" Style="{StaticResource IconButton}"
                                                                     Content="Выбрать" VerticalAlignment="Center"
                                                                     Padding="12,5" FontSize="11" Margin="12,0,0,0"
-                                                                    Tag="{Binding Path}" Click="BtnSelectJava_Click"/>
+                                                                    Command="{Binding DataContext.SelectJavaCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                    CommandParameter="{Binding Path}"/>
                                                         </Grid>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
@@ -682,11 +736,11 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBox x:Name="TxtJavaPath" Grid.Column="0" LostFocus="Setting_Changed" TextChanged="SettingText_Changed"/>
+                                                <TextBox x:Name="TxtJavaPath" Grid.Column="0" Text="{Binding Settings.CustomJavaPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                                 <Button Grid.Column="1" Style="{StaticResource IconButton}"
-                                                        Content="Обзор" Margin="8,0,0,0" Click="BtnBrowseJava_Click"/>
+                                                        Content="Обзор" Margin="8,0,0,0" Command="{Binding BrowseJavaCommand}"/>
                                                 <Button Grid.Column="2" Style="{StaticResource IconButton}"
-                                                        Content="Сброс" Margin="8,0,0,0" Click="BtnClearJava_Click"/>
+                                                        Content="Сброс" Margin="8,0,0,0" Command="{Binding ClearJavaCommand}"/>
                                             </Grid>
                                         </StackPanel>
                                     </Border>
@@ -694,7 +748,7 @@
                                     <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                                         <StackPanel>
                                             <TextBlock Text="АРГУМЕНТЫ JVM" Style="{StaticResource Caption}"/>
-                                            <TextBox x:Name="TxtJvmArgs" LostFocus="Setting_Changed" TextChanged="SettingText_Changed" Margin="0,4,0,0"/>
+                                            <TextBox x:Name="TxtJvmArgs" Text="{Binding Settings.ExtraJvmArgs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0"/>
                                             <TextBlock Text="Дополнительные флаги запуска виртуальной машины. Пример: -XX:+UseZGC"
                                                        Foreground="{DynamicResource FgMuted}" FontSize="11"
                                                        Margin="0,6,0,0"/>
@@ -711,9 +765,9 @@
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBox x:Name="TxtGameDir" Grid.Column="0" IsReadOnly="True"/>
+                                                <TextBox x:Name="TxtGameDir" Grid.Column="0" Text="{Binding Settings.GameDir, Mode=OneWay}" IsReadOnly="True"/>
                                                 <Button Grid.Column="1" Style="{StaticResource IconButton}"
-                                                        Content="Открыть папку" Margin="8,0,0,0" Click="BtnOpenDir_Click"/>
+                                                        Content="Открыть папку" Margin="8,0,0,0" Command="{Binding OpenGameDirCommand}"/>
                                             </Grid>
                                         </StackPanel>
                                     </Border>
@@ -724,13 +778,13 @@
                                                 <TextBlock Text="АНАЛИЗ И ОЧИСТКА МЕСТА" Style="{StaticResource Caption}"/>
                                                 <Button Style="{StaticResource IconButton}" Content="Пересчитать"
                                                         HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                        Margin="0,-4,0,0" Click="BtnScanMaint_Click"/>
+                                                        Margin="0,-4,0,0" Command="{Binding ScanMaintenanceCommand}"/>
                                             </Grid>
-                                            <TextBlock x:Name="TxtMaintTotal" Text="Нажмите «Пересчитать»"
+                                            <TextBlock x:Name="TxtMaintTotal" Text="{Binding MaintenanceTotalDisplay}"
                                                        Foreground="#777788" FontSize="11.5"
                                                        Margin="0,2,0,12"/>
 
-                                            <ItemsControl x:Name="ItemsMaint">
+                                            <ItemsControl x:Name="ItemsMaint" ItemsSource="{Binding MaintenanceItems}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
                                                         <Border Background="#101218" CornerRadius="0"
@@ -743,10 +797,8 @@
                                                                     <ColumnDefinition Width="Auto"/>
                                                                 </Grid.ColumnDefinitions>
 
-                                                                <CheckBox Grid.Column="0" IsChecked="{Binding Checked, Mode=OneTime}"
-                                                                          VerticalAlignment="Center" Tag="{Binding Key}"
-                                                                          Checked="MaintItem_Changed"
-                                                                          Unchecked="MaintItem_Changed"/>
+                                                                <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                                          VerticalAlignment="Center"/>
 
                                                                 <StackPanel Grid.Column="1" Margin="12,0,12,0"
                                                                             VerticalAlignment="Center">
@@ -758,7 +810,7 @@
                                                                                Margin="0,2,0,0" TextWrapping="Wrap"/>
                                                                 </StackPanel>
 
-                                                                <TextBlock Grid.Column="2" Text="{Binding SizeText}"
+                                                                <TextBlock Grid.Column="2" Text="{Binding SizeDisplay}"
                                                                            FontSize="12" FontWeight="SemiBold"
                                                                            VerticalAlignment="Center"
                                                                            Foreground="#FFFFFF"/>
@@ -770,13 +822,13 @@
 
                                             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                                                 <Button Style="{StaticResource IconButton}" Content="Выбрать безопасное"
-                                                        Margin="0,0,8,0" Click="BtnMaintSafe_Click"/>
+                                                        Margin="0,0,8,0" Command="{Binding SelectSafeMaintenanceCommand}"/>
                                                 <Button Style="{StaticResource DangerButton}" Content="Удалить выбранное"
-                                                        Margin="0,0,8,0" Click="BtnMaintClean_Click"/>
+                                                        Margin="0,0,8,0" Command="{Binding CleanMaintenanceCommand}"/>
                                                 <Button Style="{StaticResource IconButton}" Content="Очистить только кэш"
-                                                        Click="BtnClearCache_Click"/>
+                                                        Command="{Binding ClearCacheCommand}"/>
                                             </StackPanel>
-                                            <TextBlock x:Name="TxtMaintenance" Text="" Margin="0,10,0,0"
+                                            <TextBlock x:Name="TxtMaintenance" Text="{Binding MaintenanceMessage}" Margin="0,10,0,0"
                                                        Foreground="{DynamicResource Accent}" FontSize="11.5"
                                                        TextWrapping="Wrap"/>
                                         </StackPanel>
@@ -792,19 +844,19 @@
                                             <Button Style="{StaticResource IconButton}"
                                                     Content="Сбросить настройки лаунчера к значениям по умолчанию"
                                                     HorizontalContentAlignment="Left" Margin="0,0,0,8"
-                                                    Click="BtnResetSettings_Click"/>
+                                                    Command="{Binding ResetSettingsCommand}"/>
                                             <Button Style="{StaticResource IconButton}"
                                                     Content="Переустановить начисто (удалить Java и библиотеки, сохранить сборки)"
                                                     HorizontalContentAlignment="Left" Margin="0,0,0,8"
-                                                    Click="BtnReinstallSoft_Click"/>
+                                                    Command="{Binding ReinstallSoftCommand}"/>
                                             <Button Style="{StaticResource DangerButton}"
                                                     Content="Полная переустановка (стереть все данные лаунчера)"
                                                     HorizontalContentAlignment="Left" Margin="0,0,0,8"
-                                                    Click="BtnReinstallFull_Click"/>
+                                                    Command="{Binding ReinstallFullCommand}"/>
                                             <Button Style="{StaticResource DangerButton}"
                                                     Content="Полностью удалить лаунчер с компьютера"
                                                     HorizontalContentAlignment="Left"
-                                                    Click="BtnUninstall_Click"/>
+                                                    Command="{Binding UninstallCommand}"/>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
@@ -828,11 +880,11 @@
                             <Grid Grid.Row="0" Margin="0,0,0,14">
                                 <StackPanel>
                                     <TextBlock Text="СБОРКА VEC 1.21.11" Style="{StaticResource H1}"/>
-                                    <TextBlock x:Name="TxtContentSubtitle" Text="Официальные моды, ресурспаки и шейдеры сервера VEC"
+                                    <TextBlock x:Name="TxtContentSubtitle" Text="{Binding ContentSubtitle, FallbackValue='Официальные моды, ресурспаки и шейдеры сервера VEC'}"
                                                Foreground="#777788" FontSize="11.5" Margin="0,4,0,0"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                    <Button Padding="18,8" Margin="0,0,8,0" Cursor="Hand" Click="BtnOpenContentFolder_Click">
+                                    <Button Padding="18,8" Margin="0,0,8,0" Cursor="Hand" Command="{Binding OpenContentFolderCommand}">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
                                                 <Border x:Name="Bd" Background="#12151E" BorderBrush="#262D3D" BorderThickness="1" CornerRadius="0" Padding="{TemplateBinding Padding}">
@@ -847,7 +899,7 @@
                                             </ControlTemplate>
                                         </Button.Template>
                                     </Button>
-                                    <Button Padding="18,8" Cursor="Hand" Click="BtnRefreshContent_Click">
+                                    <Button Padding="18,8" Cursor="Hand" Command="{Binding RefreshContentCommand}">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
                                                 <Border x:Name="Bd" Background="#12151E" BorderBrush="#262D3D" BorderThickness="1" CornerRadius="0" Padding="{TemplateBinding Padding}">
@@ -866,11 +918,11 @@
                             </Grid>
 
                             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
-                                <RadioButton x:Name="CtMods" Style="{StaticResource SegmentToggle}" Content="Моды"
+                                <RadioButton x:Name="CtMods" Style="{StaticResource SegmentToggle}" Content="{Binding ModsBadgeText, FallbackValue='Моды'}"
                                              IsChecked="True" Checked="ContentKind_Checked" Tag="mods"/>
-                                <RadioButton x:Name="CtRp" Style="{StaticResource SegmentToggle}" Content="Ресурспаки"
+                                <RadioButton x:Name="CtRp" Style="{StaticResource SegmentToggle}" Content="{Binding ResourcePacksBadgeText, FallbackValue='Ресурспаки'}"
                                              Checked="ContentKind_Checked" Tag="rp"/>
-                                <RadioButton x:Name="CtShaders" Style="{StaticResource SegmentToggle}" Content="Шейдеры"
+                                <RadioButton x:Name="CtShaders" Style="{StaticResource SegmentToggle}" Content="{Binding ShadersBadgeText, FallbackValue='Шейдеры'}"
                                              Checked="ContentKind_Checked" Tag="shaders"/>
                             </StackPanel>
 
@@ -878,9 +930,9 @@
                                 <Grid>
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                         <StackPanel Margin="0,0,6,10">
-                                            <StackPanel x:Name="SecRequired" Margin="0,0,0,18">
+                                            <StackPanel x:Name="SecRequired" Margin="0,0,0,18" Visibility="{Binding HasRequiredContent, Converter={StaticResource BoolToVis}}">
                                                 <TextBlock Text="ОБЯЗАТЕЛЬНЫЕ" FontFamily="{StaticResource FontMinecraft}" FontSize="12" FontWeight="Bold" Foreground="#94A3B8" Margin="2,0,0,12"/>
-                                                <ItemsControl x:Name="ItemsRequired">
+                                                <ItemsControl x:Name="ItemsRequired" ItemsSource="{Binding RequiredContentItems}">
                                                     <ItemsControl.ItemsPanel>
                                                         <ItemsPanelTemplate>
                                                             <UniformGrid Columns="2"/>
@@ -989,9 +1041,9 @@
                                                 </ItemsControl>
                                             </StackPanel>
 
-                                            <StackPanel x:Name="SecOptional" Margin="0,0,0,18">
+                                            <StackPanel x:Name="SecOptional" Margin="0,0,0,18" Visibility="{Binding HasOptionalContent, Converter={StaticResource BoolToVis}}">
                                                 <TextBlock Text="ОПЦИОНАЛЬНЫЕ" FontFamily="{StaticResource FontMinecraft}" FontSize="12" FontWeight="Bold" Foreground="#94A3B8" Margin="2,0,0,12"/>
-                                                <ItemsControl x:Name="ItemsOptional">
+                                                <ItemsControl x:Name="ItemsOptional" ItemsSource="{Binding OptionalContentItems}">
                                                     <ItemsControl.ItemsPanel>
                                                         <ItemsPanelTemplate>
                                                             <UniformGrid Columns="2"/>
@@ -1090,7 +1142,9 @@
                                                                     </WrapPanel>
 
                                                                     <Border Grid.Row="4" Background="#0C0E14" BorderBrush="#1C2333" BorderThickness="0,1,0,0" Padding="16,12">
-                                                                        <Button HorizontalAlignment="Stretch" Padding="0,9" Cursor="Hand" Click="ContentToggle_Click" Tag="{Binding Path}">
+                                                                        <Button HorizontalAlignment="Stretch" Padding="0,9" Cursor="Hand"
+                                                                                Command="{Binding DataContext.ToggleContentItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                                CommandParameter="{Binding}">
                                                                             <Button.Template>
                                                                                 <ControlTemplate TargetType="Button">
                                                                                     <Border x:Name="BtnBd" Background="#161B26" BorderBrush="#2D3548" BorderThickness="1" CornerRadius="0" Padding="{TemplateBinding Padding}">
@@ -1190,7 +1244,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Border Grid.Column="0" Width="34" Height="34" CornerRadius="0" Background="#14141A" BorderThickness="0" ClipToBounds="True">
-                                    <Image x:Name="ImgAvatar" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderOptions.EdgeMode="Aliased"/>
+                                    <Image x:Name="ImgAvatar" Source="{Binding CurrentAvatarImage}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="NearestNeighbor" RenderOptions.EdgeMode="Aliased"/>
                                 </Border>
                                 <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
                                     <TextBlock x:Name="TxtSideName" Text="{Binding SideName}" FontWeight="SemiBold" FontSize="12" Foreground="White" TextTrimming="CharacterEllipsis"/>
@@ -1203,7 +1257,8 @@
                             </Grid>
                         </Border>
 
-                        <Popup x:Name="PopupSavedAccounts" PlacementTarget="{Binding ElementName=BorderSideUser}" Placement="Top" StaysOpen="False" AllowsTransparency="True" VerticalOffset="-6">
+                        <Popup x:Name="PopupSavedAccounts" PlacementTarget="{Binding ElementName=BorderSideUser}" Placement="Top" StaysOpen="False" AllowsTransparency="True" VerticalOffset="-6"
+                               IsOpen="{Binding IsSavedAccountsPopupOpen, Mode=TwoWay}">
                             <Border Width="220" Background="#0C0C10" BorderBrush="#1C1C24" BorderThickness="1" CornerRadius="0" Padding="6">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="12" ShadowDepth="3" Opacity="0.7" Color="#000000"/>
@@ -1211,11 +1266,60 @@
                                 <StackPanel>
                                     <TextBlock Text="ПРОФИЛИ" FontSize="9" FontWeight="Bold" Foreground="#444455" Margin="6,3,6,6"/>
 
-                                    <StackPanel x:Name="StackSidebarAccounts"/>
+                                    <TextBlock Text="Нет сохранённых аккаунтов" FontSize="11" Foreground="#787882" Margin="6,4,6,6"
+                                               Visibility="{Binding HasNoSavedAccounts, Converter={StaticResource BoolToVis}}"/>
+
+                                    <ItemsControl ItemsSource="{Binding SavedAccountItems}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="0" Margin="0,0,0,2"
+                                                        Command="{Binding DataContext.SelectSavedAccountCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border CornerRadius="0" Padding="6,4" Background="{Binding BackgroundBrush}">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+
+                                                                    <Border Grid.Column="0" Width="22" Height="22" CornerRadius="0" Background="#181820" ClipToBounds="True">
+                                                                        <Grid>
+                                                                            <TextBlock Text="{Binding Initial}" FontSize="10.5" FontWeight="Bold" Foreground="White"
+                                                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                            <Image Source="{Binding Avatar}" Stretch="UniformToFill"
+                                                                                   RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                                                                   RenderOptions.EdgeMode="Aliased"
+                                                                                   Visibility="{Binding HasAvatar, Converter={StaticResource BoolToVis}}"/>
+                                                                        </Grid>
+                                                                    </Border>
+
+                                                                    <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                                        <TextBlock Text="{Binding Username}" FontSize="11"
+                                                                                   FontWeight="{Binding NameFontWeight}"
+                                                                                   Foreground="{Binding NameForeground}"
+                                                                                   TextTrimming="CharacterEllipsis"/>
+                                                                        <TextBlock Text="{Binding TypeDisplay}" FontSize="9" Foreground="#5A5A64"/>
+                                                                    </StackPanel>
+
+                                                                    <TextBlock Grid.Column="2" Text="✓" FontSize="11" FontWeight="Bold" Foreground="White"
+                                                                               VerticalAlignment="Center" Margin="4,0,0,0"
+                                                                               Visibility="{Binding CurrentCheckVisibility}"/>
+                                                                </Grid>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
 
                                     <Border Height="1" Background="#16161E" Margin="2,4,2,4"/>
 
-                                    <Button x:Name="BtnSidebarAddAccount" Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand" Click="BtnSidebarAddAccount_Click">
+                                    <Button x:Name="BtnSidebarAddAccount" Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
+                                            Command="{Binding SidebarAddAccountCommand}">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
                                                 <Border x:Name="Bd" Background="Transparent" CornerRadius="0" Padding="6,5">
@@ -1233,7 +1337,8 @@
                                         </Button.Template>
                                     </Button>
 
-                                    <Button x:Name="BtnSidebarLogout" Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand" Click="BtnSidebarLogout_Click">
+                                    <Button x:Name="BtnSidebarLogout" Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
+                                            Command="{Binding SidebarLogoutCommand}">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
                                                 <Border x:Name="Bd" Background="Transparent" CornerRadius="0" Padding="6,5">

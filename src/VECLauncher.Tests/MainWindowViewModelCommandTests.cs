@@ -132,6 +132,63 @@ public class MainWindowViewModelCommandTests
         vm.DoClearLog();
         Assert.Equal("", vm.LogText);
     }
+
+    [Fact]
+    public void RefreshSavedAccounts_PopulatesSavedAccountItems()
+    {
+        var vm = CreateVm();
+        var acc = new MinecraftAccount { Username = "Steve", Type = AccountType.Offline };
+        vm.Accounts.Save(acc);
+        
+        vm.RefreshSavedAccounts();
+
+        Assert.True(vm.HasSavedAccounts);
+        Assert.False(vm.HasNoSavedAccounts);
+        Assert.Single(vm.SavedAccountItems);
+        Assert.Equal("Steve", vm.SavedAccountItems[0].Username);
+        Assert.Equal("Оффлайн", vm.SavedAccountItems[0].TypeDisplay);
+    }
+
+    [Fact]
+    public void SelectSavedAccount_UpdatesActiveAccount()
+    {
+        var vm = CreateVm();
+        var acc = new MinecraftAccount { Username = "Alex", Type = AccountType.Vec };
+        var item = new AccountItemViewModel(acc, isCurrent: false);
+
+        vm.SelectSavedAccountCommand.Execute(item);
+
+        Assert.NotNull(vm.Account);
+        Assert.Equal("Alex", vm.Account.Username);
+        Assert.True(vm.IsAccountLoggedIn);
+        Assert.False(vm.IsAccountLoggedOut);
+        Assert.Equal("Alex", vm.SideName);
+        Assert.Equal("VEC ID", vm.SideStatus);
+    }
+
+    [Fact]
+    public async Task RedeemCapePromo_EmptyCode_ShowsStatusError()
+    {
+        var vm = CreateVm();
+        vm.CapePromoCode = "   ";
+
+        await vm.RedeemCapePromoCommand.ExecuteAsync(null);
+
+        Assert.True(vm.IsCapePromoStatusVisible);
+        Assert.Equal("Введите промокод.", vm.CapePromoStatus);
+    }
+
+    [Fact]
+    public async Task RedeemCapePromo_NoAccount_ShowsStatusError()
+    {
+        var vm = CreateVm();
+        vm.CapePromoCode = "PROMO123";
+
+        await vm.RedeemCapePromoCommand.ExecuteAsync(null);
+
+        Assert.True(vm.IsCapePromoStatusVisible);
+        Assert.Equal("Сначала войдите в аккаунт.", vm.CapePromoStatus);
+    }
 }
 
 /// <summary>Test double for IDialogService — records calls, never shows UI.</summary>

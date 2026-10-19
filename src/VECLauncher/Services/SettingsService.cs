@@ -1,47 +1,144 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace VECLauncher.Services;
 
-public sealed class LauncherSettings : System.ComponentModel.INotifyPropertyChanged
+public sealed partial class LauncherSettings : ObservableObject
 {
-    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+    [ObservableProperty]
+    [property: JsonPropertyName("lastVersion")]
+    private string? _lastVersion;
 
-    private void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? name = null)
-        => PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
-    [JsonPropertyName("lastVersion")] public string? LastVersion { get; set; }
-    [JsonPropertyName("lastInstanceId")] public string? LastInstanceId { get; set; }
-    [JsonPropertyName("minMemoryMb")] public int MinMemoryMb { get; set; } = 1024;
-    [JsonPropertyName("maxMemoryMb")] public int MaxMemoryMb { get; set; } = 4096;
-    [JsonPropertyName("windowWidth")] public int WindowWidth { get; set; } = 1280;
-    [JsonPropertyName("windowHeight")] public int WindowHeight { get; set; } = 720;
-    [JsonPropertyName("fullscreen")] public bool Fullscreen { get; set; }
-    [JsonPropertyName("showSnapshots")] public bool ShowSnapshots { get; set; }
-    [JsonPropertyName("closeOnLaunch")] public bool CloseLauncherOnStart { get; set; }
-    [JsonPropertyName("showConsole")] public bool ShowConsole { get; set; }
-    [JsonPropertyName("serverAddress")] public string ServerAddress { get; set; } = LauncherConfig.DefaultMinecraftServer;
-    [JsonPropertyName("webServerUrl")] public string WebServerUrl { get; set; } = LauncherConfig.DefaultWebServerUrl;
-    [JsonPropertyName("extraJvmArgs")] public string ExtraJvmArgs { get; set; } = "";
-    [JsonPropertyName("gameDir")] public string GameDir { get; set; } = "";
-    [JsonPropertyName("customJavaPath")] public string CustomJavaPath { get; set; } = "";
+    [ObservableProperty]
+    [property: JsonPropertyName("lastInstanceId")]
+    private string? _lastInstanceId;
 
-    [JsonPropertyName("allowMultipleInstances")] public bool AllowMultipleInstances { get; set; }
-    [JsonPropertyName("minimizeOnLaunch")] public bool MinimizeOnLaunch { get; set; } = true;
-    [JsonPropertyName("confirmGameStop")] public bool ConfirmGameStop { get; set; } = true;
+    [ObservableProperty]
+    [property: JsonPropertyName("minMemoryMb")]
+    private int _minMemoryMb = 1024;
 
-    [JsonPropertyName("accentColor")] public string AccentColor { get; set; } = "#FACC15";
-    [JsonPropertyName("backgroundStyle")] public string BackgroundStyle { get; set; } = "Тёмный";
-    [JsonPropertyName("customBannerPath")] public string CustomBannerPath { get; set; } = "";
-    [JsonPropertyName("cornerRadius")] public int CornerRadius { get; set; } = 12;
-    [JsonPropertyName("animations")] public bool Animations { get; set; } = true;
-    [JsonPropertyName("compactMode")] public bool CompactMode { get; set; }
-    [JsonPropertyName("defaultIsolated")] public bool DefaultIsolated { get; set; }
-    [JsonPropertyName("theme")] public string Theme { get; set; } = "Тёмная";
-    [JsonPropertyName("windowBackground")] public string WindowBackgroundPath { get; set; } = "";
-    [JsonPropertyName("windowBackgroundOpacity")] public double WindowBackgroundOpacity { get; set; } = 0.35;
-    [JsonPropertyName("gameLanguage")] public string GameLanguage { get; set; } = "ru";
-    [JsonPropertyName("autoLanguage")] public bool AutoSetGameLanguage { get; set; } = true;
-    [JsonPropertyName("customTheme")] public string CustomThemeJson { get; set; } = "";
+    [ObservableProperty]
+    [property: JsonPropertyName("maxMemoryMb")]
+    private int _maxMemoryMb = 4096;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("windowWidth")]
+    private int _windowWidth = 1280;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("windowHeight")]
+    private int _windowHeight = 720;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("fullscreen")]
+    private bool _fullscreen;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("showSnapshots")]
+    private bool _showSnapshots;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("closeOnLaunch")]
+    private bool _closeLauncherOnStart;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("showConsole")]
+    private bool _showConsole;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("serverAddress")]
+    private string _serverAddress = LauncherConfig.DefaultMinecraftServer;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("webServerUrl")]
+    private string _webServerUrl = LauncherConfig.DefaultWebServerUrl;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("extraJvmArgs")]
+    private string _extraJvmArgs = "";
+
+    [ObservableProperty]
+    [property: JsonPropertyName("gameDir")]
+    private string _gameDir = "";
+
+    [ObservableProperty]
+    [property: JsonPropertyName("customJavaPath")]
+    private string _customJavaPath = "";
+
+    [ObservableProperty]
+    [property: JsonPropertyName("allowMultipleInstances")]
+    private bool _allowMultipleInstances;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("minimizeOnLaunch")]
+    private bool _minimizeOnLaunch = true;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("confirmGameStop")]
+    private bool _confirmGameStop = true;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("accentColor")]
+    private string _accentColor = "#FACC15";
+
+    [ObservableProperty]
+    [property: JsonPropertyName("backgroundStyle")]
+    private string _backgroundStyle = "Тёмный";
+
+    [ObservableProperty]
+    [property: JsonPropertyName("customBannerPath")]
+    private string _customBannerPath = "";
+
+    [ObservableProperty]
+    [property: JsonPropertyName("cornerRadius")]
+    private int _cornerRadius = 12;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("animations")]
+    private bool _animations = true;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("compactMode")]
+    private bool _compactMode;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("defaultIsolated")]
+    private bool _defaultIsolated;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("theme")]
+    private string _theme = "Тёмная";
+
+    [ObservableProperty]
+    [property: JsonPropertyName("windowBackground")]
+    private string _windowBackgroundPath = "";
+
+    [ObservableProperty]
+    [property: JsonPropertyName("windowBackgroundOpacity")]
+    private double _windowBackgroundOpacity = 0.35;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("gameLanguage")]
+    private string _gameLanguage = "ru";
+
+    [ObservableProperty]
+    [property: JsonPropertyName("autoLanguage")]
+    private bool _autoSetGameLanguage = true;
+
+    [ObservableProperty]
+    [property: JsonPropertyName("customTheme")]
+    private string _customThemeJson = "";
+
+    partial void OnCloseLauncherOnStartChanged(bool value)
+    {
+        if (value && MinimizeOnLaunch) MinimizeOnLaunch = false;
+    }
+
+    partial void OnMinimizeOnLaunchChanged(bool value)
+    {
+        if (value && CloseLauncherOnStart) CloseLauncherOnStart = false;
+    }
 
     public static int RecommendedMaxMemory()
     {

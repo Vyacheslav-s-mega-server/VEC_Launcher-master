@@ -203,11 +203,33 @@ public partial class MainWindow
     {
         Dispatcher.Invoke(() =>
         {
-            if (_currentSkinRawBytes != null && _currentSkinRawBytes.Length > 0)
+            var rawSkin = _currentSkinRawBytes ?? Vm.CurrentSkinRawBytes;
+            if (rawSkin == null && _account != null)
+            {
+                var skinPath = SkinService.FindAccountSkin(_account.Username);
+                if (skinPath != null && File.Exists(skinPath))
+                {
+                    try { rawSkin = File.ReadAllBytes(skinPath); } catch { }
+                    _currentSkinRawBytes = rawSkin;
+                }
+            }
+
+            var rawCape = _currentCapeRawBytes ?? Vm.CurrentCapeRawBytes;
+            if (rawCape == null && _account != null)
+            {
+                var capePath = SkinService.FindAccountCape(_account.Username);
+                if (capePath != null && File.Exists(capePath))
+                {
+                    try { rawCape = File.ReadAllBytes(capePath); } catch { }
+                    _currentCapeRawBytes = rawCape;
+                }
+            }
+
+            if (rawSkin != null && rawSkin.Length > 0)
             {
                 var isSlim = _currentSkinModel.Equals("slim", StringComparison.OrdinalIgnoreCase);
-                _gltfSkinModel.UpdateSkinTexture(_currentSkinRawBytes, isSlim);
-                _gltfSkinModel.UpdateCapeTexture(_currentCapeRawBytes);
+                _gltfSkinModel.UpdateSkinTexture(rawSkin, isSlim);
+                _gltfSkinModel.UpdateCapeTexture(rawCape);
                 SkinModelVisual.Content = _gltfSkinModel.RootModelGroup;
                 _gltfSkinModel.StartAnimation();
                 SkinViewerPlaceholder.Visibility = Visibility.Collapsed;

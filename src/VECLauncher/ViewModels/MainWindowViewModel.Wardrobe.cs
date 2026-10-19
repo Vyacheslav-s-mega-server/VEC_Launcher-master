@@ -83,6 +83,7 @@ public partial class MainWindowViewModel
                     var bytes = await Capes.DownloadCapeTextureAsync(c.PreviewUrl);
                     if (bytes != null && bytes.Length > 0)
                     {
+                        c.RawBytes = bytes;
                         var p = CapeService.CreateCapePreview(bytes);
                         if (p != null)
                         {
@@ -110,10 +111,11 @@ public partial class MainWindowViewModel
         {
             if (item.Id == "none")
             {
-                await Capes.RemoveCapeAsync(Account);
                 CurrentCapeRawBytes = null;
                 CapeTextureChanged?.Invoke(null);
                 Dialogs?.ShowToast("Гардероб", "Плащ снят.", ToastType.Info);
+
+                await Capes.RemoveCapeAsync(Account);
                 return;
             }
 
@@ -121,14 +123,16 @@ public partial class MainWindowViewModel
             if (capeBytes == null && !string.IsNullOrEmpty(item.PreviewUrl))
             {
                 capeBytes = await Capes.DownloadCapeTextureAsync(item.PreviewUrl);
+                if (capeBytes != null) item.Info.RawBytes = capeBytes;
             }
 
             if (capeBytes != null && capeBytes.Length > 0)
             {
-                await Capes.EquipCapeAsync(Account, item.Id);
                 CurrentCapeRawBytes = capeBytes;
                 CapeTextureChanged?.Invoke(capeBytes);
                 Dialogs?.ShowToast("Гардероб", $"Плащ «{item.Name}» успешно надет!", ToastType.Success);
+
+                await Capes.EquipCapeAsync(Account, item.Id);
             }
         }
         catch (Exception ex)

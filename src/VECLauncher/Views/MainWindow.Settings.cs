@@ -41,11 +41,13 @@ public partial class MainWindow
 
         AnimatePageTransition(tag);
 
-        if (tag == "0" && _account != null) _ = LoadSkinImagesAsync(_account);
-        if (tag == "3" && _account != null)
+        if (tag == "0" || tag == "3")
         {
-            _ = LoadSkinImagesAsync(_account);
-            _ = RefreshCapesGridUIAsync(_account);
+            ReloadSkin3DModel();
+            if (tag == "3" && _account != null && Vm.AvailableCapes.Count == 0)
+            {
+                _ = RefreshCapesGridUIAsync(_account);
+            }
         }
         if (tag == "7") RefreshContent();
     }

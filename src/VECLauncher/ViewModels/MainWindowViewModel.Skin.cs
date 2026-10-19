@@ -33,6 +33,7 @@ public partial class MainWindowViewModel
     {
         CurrentSkinModel = value ? "slim" : "classic";
         SkinModelBadge = value ? "Slim" : "Classic";
+        SkinModelChanged?.Invoke(value);
 
         if (Account != null)
         {
@@ -80,8 +81,6 @@ public partial class MainWindowViewModel
                 });
             }
         }
-
-        SkinModelChanged?.Invoke(value);
     }
 
     [RelayCommand]

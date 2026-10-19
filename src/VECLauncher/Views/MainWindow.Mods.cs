@@ -8,8 +8,6 @@ namespace VECLauncher.Views;
 
 public partial class MainWindow
 {
-    private DispatcherTimer? _contentPollingTimer;
-
     public void SetPreloadedManifest(List<BuildManifestFile> files)
     {
         Vm.Content?.SetPreloadedManifest(files);
@@ -23,21 +21,7 @@ public partial class MainWindow
 
     private void RefreshContent(bool force = false)
     {
-        _ = Vm.RefreshContentCommand.ExecuteAsync(force);
-    }
-
-    private void StartContentPolling()
-    {
-        if (_contentPollingTimer != null) return;
-        _contentPollingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
-        _contentPollingTimer.Tick += (s, e) =>
-        {
-            if (PageContent?.Visibility == Visibility.Visible && _selectedInstance != null)
-            {
-                _ = Vm.RefreshContentCommand.ExecuteAsync(false);
-            }
-        };
-        _contentPollingTimer.Start();
+        _ = Vm.RefreshContentAsync(force);
     }
 
     private void Content_DragOver(object sender, DragEventArgs e)

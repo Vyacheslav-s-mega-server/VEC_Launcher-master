@@ -103,32 +103,13 @@ public partial class MainWindow : Window
         Loaded += OnLoadedAsync;
         Closing += OnClosing;
         KeyDown += Window_KeyDown;
-        Activated += MainWindow_Activated;
         InitSkinDirectoryWatchers();
-        StartContentPolling();
     }
 
     private FileSystemWatcher? _skinWatcher;
     private FileSystemWatcher? _capeWatcher;
     private DateTime _lastWatcherReload = DateTime.MinValue;
     private bool _isInternalSkinWrite = false;
-
-    private void MainWindow_Activated(object? sender, EventArgs e)
-    {
-        if (_account != null && (DateTime.UtcNow - _lastWatcherReload).TotalSeconds > 2)
-        {
-            _lastWatcherReload = DateTime.UtcNow;
-            _ = LoadSkinImagesAsync(_account);
-            if (PageAccount?.Visibility == Visibility.Visible)
-            {
-                _ = RefreshCapesGridUIAsync(_account);
-            }
-        }
-        if (PageContent?.Visibility == Visibility.Visible && _selectedInstance != null)
-        {
-            RefreshContent(false);
-        }
-    }
 
     private void InitSkinDirectoryWatchers()
     {

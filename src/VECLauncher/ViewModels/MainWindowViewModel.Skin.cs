@@ -79,6 +79,7 @@ public partial class MainWindowViewModel
         SkinStatus = "Применяю скин...";
         SkinStatusColor = new SolidColorBrush(Color.FromRgb(0x9E, 0xA2, 0xB0));
 
+        IsInternalSkinWrite = true;
         try
         {
             var bytes = await File.ReadAllBytesAsync(filePath);
@@ -88,25 +89,20 @@ public partial class MainWindowViewModel
             CurrentSkinRawBytes = bytes;
 
             var skinFile = SkinService.AccountSkinPath(Account.Username);
-            var dir = Path.GetDirectoryName(skinFile);
-            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-            await File.WriteAllBytesAsync(skinFile, bytes);
+            await SkinService.SafeWriteAllBytesAsync(skinFile, bytes);
 
             if (Account.IsVec)
             {
                 var srvUrl = !string.IsNullOrEmpty(Account.ServerUrl) ? Account.ServerUrl : VecAuthService.DefaultVecServerUrl;
                 var modelEnum = IsSlimModel ? SkinService.SkinModel.Slim : SkinService.SkinModel.Classic;
-                _ = Task.Run(async () =>
+                try
                 {
-                    try
-                    {
-                        await Skins.UploadSkinToVecServerAsync(srvUrl, Account.Username, bytes, modelEnum, Account.Uuid);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Warn($"Skin upload failed: {ex.Message}");
-                    }
-                });
+                    await Skins.UploadSkinToVecServerAsync(srvUrl, Account.Username, bytes, modelEnum, Account.Uuid);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Skin upload failed: {ex.Message}");
+                }
             }
 
             CurrentAvatarImage = SkinService.CreateCrispHeadAvatar(bytes, 48);
@@ -122,6 +118,11 @@ public partial class MainWindowViewModel
             SkinStatusColor = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
             Dialogs?.ShowToast("Ошибка", ex.Message, ToastType.Error);
         }
+        finally
+        {
+            await Task.Delay(500);
+            IsInternalSkinWrite = false;
+        }
     }
 
     [RelayCommand]
@@ -132,25 +133,23 @@ public partial class MainWindowViewModel
         if (Dialogs != null && !await Dialogs.ConfirmAsync("Подтверждение", "Сбросить скин на стандартный?"))
             return;
 
+        IsInternalSkinWrite = true;
         try
         {
             var skinFile = SkinService.AccountSkinPath(Account.Username);
-            if (File.Exists(skinFile)) File.Delete(skinFile);
+            SkinService.SafeDelete(skinFile);
 
             CurrentSkinRawBytes = null;
             CurrentAvatarImage = null;
 
             if (Account.IsVec)
             {
-                _ = Task.Run(async () =>
+                try
                 {
-                    try
-                    {
-                        var srvUrl = await VecAuthService.GetActiveServerUrlAsync();
-                        await Skins.ResetSkinOnVecServerAsync(srvUrl, Account.Username, null, CurrentSkinModel);
-                    }
-                    catch (Exception ex) { Log.Warn(ex.Message); }
-                });
+                    var srvUrl = await VecAuthService.GetActiveServerUrlAsync();
+                    await Skins.ResetSkinOnVecServerAsync(srvUrl, Account.Username, null, CurrentSkinModel);
+                }
+                catch (Exception ex) { Log.Warn(ex.Message); }
             }
 
             SkinTextureChanged?.Invoke(null, IsSlimModel);
@@ -162,6 +161,11 @@ public partial class MainWindowViewModel
             SkinStatus = ex.Message;
             SkinStatusColor = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
             Dialogs?.ShowToast("Ошибка", ex.Message, ToastType.Error);
+        }
+        finally
+        {
+            await Task.Delay(500);
+            IsInternalSkinWrite = false;
         }
     }
 
@@ -179,6 +183,7 @@ public partial class MainWindowViewModel
 
             if (Account.IsVec)
             {
+                IsInternalSkinWrite = true;
                 _ = Task.Run(async () =>
                 {
                     try
@@ -188,17 +193,30 @@ public partial class MainWindowViewModel
                             : await VecAuthService.GetActiveServerUrlAsync();
                         await Skins.UpdateSkinModelOnVecServerAsync(srvUrl, Account.Username, CurrentSkinModel);
 
-                        var skinFile = SkinService.FindAccountSkin(Account.Username);
-                        if (skinFile != null && File.Exists(skinFile))
+                        byte[]? skinBytes = CurrentSkinRawBytes;
+                        if (skinBytes == null || skinBytes.Length == 0)
+                        {
+                            var skinFile = SkinService.FindAccountSkin(Account.Username);
+                            if (skinFile != null && File.Exists(skinFile))
+                            {
+                                skinBytes = await SkinService.SafeReadAllBytesAsync(skinFile);
+                            }
+                        }
+
+                        if (skinBytes != null && skinBytes.Length > 0)
                         {
                             var modelEnum = IsSlimModel ? SkinService.SkinModel.Slim : SkinService.SkinModel.Classic;
-                            var skinBytes = await File.ReadAllBytesAsync(skinFile);
                             await Skins.UploadSkinToVecServerAsync(srvUrl, Account.Username, skinBytes, modelEnum, Account.Uuid);
                         }
                     }
                     catch (Exception ex)
                     {
                         Log.Warn($"Sync model to server failed: {ex.Message}");
+                    }
+                    finally
+                    {
+                        await Task.Delay(500);
+                        IsInternalSkinWrite = false;
                     }
                 });
             }

@@ -40,6 +40,12 @@ public partial class ContentTileItemViewModel : ObservableObject
     private string? _modrinthSlug;
 
     [ObservableProperty]
+    private string? _iconUrl;
+
+    [ObservableProperty]
+    private string? _bannerUrl;
+
+    [ObservableProperty]
     private string _toggleText = "";
 
     [ObservableProperty]

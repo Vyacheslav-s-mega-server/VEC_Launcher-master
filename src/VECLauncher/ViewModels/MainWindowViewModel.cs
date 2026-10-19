@@ -35,6 +35,8 @@ public partial class MainWindowViewModel : ObservableObject
     public readonly ICapeService Capes;
     public readonly IContentService? Content;
 
+    public static bool IsInternalSkinWrite { get; set; }
+
     [ObservableProperty]
     private string _totalPlayTimeDisplay = "0 ч";
 

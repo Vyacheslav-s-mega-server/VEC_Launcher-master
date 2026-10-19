@@ -162,15 +162,16 @@ public partial class MainWindow : Window
 
     private void OnSkinFileChanged(object sender, FileSystemEventArgs e)
     {
-        if (_account == null || _isInternalSkinWrite) return;
+        if (_account == null || _isInternalSkinWrite || MainWindowViewModel.IsInternalSkinWrite) return;
         var name = System.IO.Path.GetFileNameWithoutExtension(e.Name);
         if (string.Equals(name, _account.Username, StringComparison.OrdinalIgnoreCase))
         {
             Dispatcher.InvokeAsync(async () =>
             {
-                if ((DateTime.UtcNow - _lastWatcherReload).TotalSeconds < 2) return;
+                if ((DateTime.UtcNow - _lastWatcherReload).TotalSeconds < 3) return;
                 _lastWatcherReload = DateTime.UtcNow;
-                await Task.Delay(200);
+                await Task.Delay(500);
+                if (_isInternalSkinWrite || MainWindowViewModel.IsInternalSkinWrite) return;
                 await LoadSkinImagesAsync(_account);
                 await RefreshCapesGridUIAsync(_account);
             });

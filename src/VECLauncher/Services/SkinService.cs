@@ -177,9 +177,7 @@ public sealed class SkinService
             {
                 skinBytes = await sResp.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
                 var skinPath = AccountSkinPath(acc.Username);
-                var dir = Path.GetDirectoryName(skinPath);
-                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                await File.WriteAllBytesAsync(skinPath, skinBytes, ct).ConfigureAwait(false);
+                await SafeWriteAllBytesAsync(skinPath, skinBytes, ct).ConfigureAwait(false);
             }
 
             var capeUrl = $"{srvUrl}/api/cape/{Uri.EscapeDataString(acc.Username)}.png?t={DateTime.UtcNow.Ticks}";
@@ -188,17 +186,12 @@ public sealed class SkinService
             {
                 capeBytes = await cResp.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
                 var capePath = AccountCapePath(acc.Username);
-                var dir = Path.GetDirectoryName(capePath);
-                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                await File.WriteAllBytesAsync(capePath, capeBytes, ct).ConfigureAwait(false);
+                await SafeWriteAllBytesAsync(capePath, capeBytes, ct).ConfigureAwait(false);
             }
             else if (cResp.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 var capePath = AccountCapePath(acc.Username);
-                if (File.Exists(capePath))
-                {
-                    try { File.Delete(capePath); } catch { }
-                }
+                SafeDelete(capePath);
             }
 
             try
@@ -373,5 +366,64 @@ public sealed class SkinService
         return Directory.GetFiles(dir, "*.png")
             .FirstOrDefault(f => string.Equals(
                 Path.GetFileNameWithoutExtension(f), username, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static async Task SafeWriteAllBytesAsync(string path, byte[] bytes, CancellationToken ct = default)
+    {
+        var dir = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+        for (int attempt = 0; attempt < 5; attempt++)
+        {
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite, 4096, useAsync: true);
+                await fs.WriteAsync(bytes, 0, bytes.Length, ct).ConfigureAwait(false);
+                return;
+            }
+            catch (IOException) when (attempt < 4)
+            {
+                await Task.Delay(50 * (attempt + 1), ct).ConfigureAwait(false);
+            }
+        }
+    }
+
+    public static async Task<byte[]?> SafeReadAllBytesAsync(string path, CancellationToken ct = default)
+    {
+        if (!File.Exists(path)) return null;
+
+        for (int attempt = 0; attempt < 5; attempt++)
+        {
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, useAsync: true);
+                using var ms = new MemoryStream();
+                await fs.CopyToAsync(ms, ct).ConfigureAwait(false);
+                return ms.ToArray();
+            }
+            catch (IOException) when (attempt < 4)
+            {
+                await Task.Delay(50 * (attempt + 1), ct).ConfigureAwait(false);
+            }
+        }
+        return null;
+    }
+
+    public static void SafeDelete(string path)
+    {
+        if (!File.Exists(path)) return;
+        for (int attempt = 0; attempt < 5; attempt++)
+        {
+            try
+            {
+                File.Delete(path);
+                return;
+            }
+            catch (IOException) when (attempt < 4)
+            {
+                Thread.Sleep(50 * (attempt + 1));
+            }
+            catch { return; }
+        }
     }
 }

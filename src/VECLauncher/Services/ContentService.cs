@@ -20,6 +20,7 @@ public class ContentService : IContentService
 {
     private readonly HttpClient _http;
     private readonly IInstanceService _instancesService;
+    private readonly IImageCacheService _imageCache;
 
     private static List<BuildManifestFile> _cachedServerManifest = new();
     private static DateTime _lastManifestFetch = DateTime.MinValue;
@@ -134,9 +135,15 @@ public class ContentService : IContentService
     };
 
     public ContentService(HttpClient http, IInstanceService instancesService)
+        : this(http, instancesService, new ImageCacheService())
+    {
+    }
+
+    public ContentService(HttpClient http, IInstanceService instancesService, IImageCacheService imageCache)
     {
         _http = http;
         _instancesService = instancesService;
+        _imageCache = imageCache;
     }
 
     public void SetPreloadedManifest(List<BuildManifestFile> files)
@@ -300,9 +307,6 @@ public class ContentService : IContentService
                         toggleText = "Скачать";
                     }
 
-                    BitmapImage? directIcon = CreateBitmapFromUrl(srv.IconUrl);
-                    BitmapImage? directBanner = CreateBitmapFromUrl(srv.BannerUrl);
-
                     var item = new ContentTileItemViewModel
                     {
                         Name = displayName,
@@ -316,8 +320,10 @@ public class ContentService : IContentService
                         IsRequired = srv.IsRequired,
                         IsServerItem = true,
                         ModrinthSlug = srv.ModrinthSlug,
-                        IconImage = directIcon,
-                        BannerImage = directBanner,
+                        IconUrl = srv.IconUrl,
+                        BannerUrl = srv.BannerUrl,
+                        IconImage = _imageCache.TryGetCached(srv.IconUrl),
+                        BannerImage = _imageCache.TryGetCached(srv.BannerUrl),
                         ToggleText = toggleText,
                         IconLetter = displayName.Length > 0 ? displayName[..1].ToUpperInvariant() : "V"
                     };
@@ -506,123 +512,114 @@ public class ContentService : IContentService
 
         foreach (var item in itemsCopy)
         {
-            var filePath = item.Path;
-            if (string.IsNullOrEmpty(filePath)) continue;
-
-            if (item.IsServerItem && item.IconImage is not null && item.BannerImage is not null)
-                continue;
-
-            BitmapImage? remoteIcon = item.IconImage;
-            BitmapImage? remoteBanner = item.BannerImage;
-            string? remoteName = null;
-            string? remoteDescription = null;
-
-            if (kind == ContentKind.Mods)
+            try
             {
-                var jarName = IOPath.GetFileName(filePath);
-                var isJar = filePath.EndsWith(".jar", StringComparison.OrdinalIgnoreCase) ||
-                            filePath.EndsWith(".jar.disabled", StringComparison.OrdinalIgnoreCase);
-
-                if (isJar && File.Exists(filePath))
+                if (!string.IsNullOrEmpty(item.IconUrl) && item.IconImage is null)
                 {
-                    var modInfo = ExtractModInfo(filePath);
-                    if (!string.IsNullOrEmpty(modInfo.modName)) remoteName = modInfo.modName;
-                    if (modInfo.icon is not null && remoteIcon is null) remoteIcon = modInfo.icon;
+                    var iconBmp = await _imageCache.GetAsync(item.IconUrl, _http, decodeWidth: 128);
+                    if (iconBmp != null) item.IconImage = iconBmp;
+                }
 
-                    var slugToQuery = !string.IsNullOrWhiteSpace(item.ModrinthSlug)
-                        ? item.ModrinthSlug
-                        : (!string.IsNullOrWhiteSpace(modInfo.modId) ? modInfo.modId : CleanSlugFromFilename(jarName));
+                if (!string.IsNullOrEmpty(item.BannerUrl) && item.BannerImage is null)
+                {
+                    var bannerBmp = await _imageCache.GetAsync(item.BannerUrl, _http, decodeWidth: 0);
+                    if (bannerBmp != null) item.BannerImage = bannerBmp;
+                }
 
-                    if (!string.IsNullOrWhiteSpace(slugToQuery))
+                if (item.IsServerItem && item.IconImage is not null && item.BannerImage is not null)
+                    continue;
+
+                var filePath = item.Path;
+                if (string.IsNullOrEmpty(filePath)) continue;
+
+                BitmapImage? remoteIcon = item.IconImage;
+                BitmapImage? remoteBanner = item.BannerImage;
+                string? remoteName = null;
+                string? remoteDescription = null;
+
+                if (kind == ContentKind.Mods)
+                {
+                    var jarName = IOPath.GetFileName(filePath);
+                    var isJar = filePath.EndsWith(".jar", StringComparison.OrdinalIgnoreCase) ||
+                                filePath.EndsWith(".jar.disabled", StringComparison.OrdinalIgnoreCase);
+
+                    if (isJar && File.Exists(filePath))
                     {
-                        var mr = await FetchModrinthProjectAsync(slugToQuery, "mod");
-                        if (mr.icon != null && remoteIcon == null) remoteIcon = mr.icon;
-                        if (mr.banner != null && remoteBanner == null) remoteBanner = mr.banner;
-                        if (!string.IsNullOrWhiteSpace(mr.title) && !item.IsServerItem) remoteName = mr.title;
-                        if (!string.IsNullOrWhiteSpace(mr.description)) remoteDescription = mr.description;
+                        var modInfo = ExtractModInfo(filePath);
+                        if (!string.IsNullOrEmpty(modInfo.modName)) remoteName = modInfo.modName;
+                        if (modInfo.icon is not null && remoteIcon is null) remoteIcon = modInfo.icon;
+
+                        var slugToQuery = !string.IsNullOrWhiteSpace(item.ModrinthSlug)
+                            ? item.ModrinthSlug
+                            : (!string.IsNullOrWhiteSpace(modInfo.modId) ? modInfo.modId : CleanSlugFromFilename(jarName));
+
+                        if (!string.IsNullOrWhiteSpace(slugToQuery) && (remoteIcon == null || remoteBanner == null))
+                        {
+                            var mr = await FetchModrinthProjectAsync(slugToQuery, "mod");
+                            if (mr.icon != null && remoteIcon == null) remoteIcon = mr.icon;
+                            if (mr.banner != null && remoteBanner == null) remoteBanner = mr.banner;
+                            if (!string.IsNullOrWhiteSpace(mr.title) && !item.IsServerItem) remoteName = mr.title;
+                            if (!string.IsNullOrWhiteSpace(mr.description)) remoteDescription = mr.description;
+                        }
                     }
                 }
-            }
-            else if (kind == ContentKind.ResourcePacks)
-            {
-                var zipName = IOPath.GetFileName(filePath);
-                var isZip = filePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
-                            filePath.EndsWith(".zip.disabled", StringComparison.OrdinalIgnoreCase);
-
-                if (isZip && File.Exists(filePath))
+                else if (kind == ContentKind.ResourcePacks)
                 {
-                    var packInfo = ExtractPackInfo(filePath);
-                    if (!string.IsNullOrEmpty(packInfo.name) && !item.IsServerItem) remoteName = packInfo.name;
+                    var zipName = IOPath.GetFileName(filePath);
+                    var isZip = filePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+                                filePath.EndsWith(".zip.disabled", StringComparison.OrdinalIgnoreCase);
 
+                    if (isZip && File.Exists(filePath))
+                    {
+                        var packInfo = ExtractPackInfo(filePath);
+                        if (!string.IsNullOrEmpty(packInfo.name) && !item.IsServerItem) remoteName = packInfo.name;
+
+                        var slugToQuery = !string.IsNullOrWhiteSpace(item.ModrinthSlug)
+                            ? item.ModrinthSlug
+                            : CleanSlugFromFilename(zipName);
+
+                        if (!string.IsNullOrWhiteSpace(slugToQuery) && (remoteIcon == null || remoteBanner == null))
+                        {
+                            var mr = await FetchModrinthProjectAsync(slugToQuery, "resourcepack");
+                            if (mr.icon != null && remoteIcon == null) remoteIcon = mr.icon;
+                            if (mr.banner != null && remoteBanner == null) remoteBanner = mr.banner;
+                            if (!string.IsNullOrWhiteSpace(mr.title) && !item.IsServerItem) remoteName = mr.title;
+                            if (!string.IsNullOrWhiteSpace(mr.description)) remoteDescription = mr.description;
+                        }
+                    }
+                }
+                else if (kind == ContentKind.Shaders)
+                {
+                    var zipName = IOPath.GetFileName(filePath);
                     var slugToQuery = !string.IsNullOrWhiteSpace(item.ModrinthSlug)
                         ? item.ModrinthSlug
                         : CleanSlugFromFilename(zipName);
 
-                    if (!string.IsNullOrWhiteSpace(slugToQuery))
+                    if (!string.IsNullOrWhiteSpace(slugToQuery) && (remoteIcon == null || remoteBanner == null))
                     {
-                        var mr = await FetchModrinthProjectAsync(slugToQuery, "resourcepack");
+                        var mr = await FetchModrinthProjectAsync(slugToQuery, "shader");
                         if (mr.icon != null && remoteIcon == null) remoteIcon = mr.icon;
                         if (mr.banner != null && remoteBanner == null) remoteBanner = mr.banner;
                         if (!string.IsNullOrWhiteSpace(mr.title) && !item.IsServerItem) remoteName = mr.title;
                         if (!string.IsNullOrWhiteSpace(mr.description)) remoteDescription = mr.description;
                     }
                 }
+
+                if (remoteIcon != null && item.IconImage == null) item.IconImage = remoteIcon;
+                if (remoteBanner != null && item.BannerImage == null) item.BannerImage = remoteBanner;
+                if (!string.IsNullOrEmpty(remoteName) && !item.IsServerItem) item.Name = remoteName;
+                if (!string.IsNullOrEmpty(remoteDescription) && string.IsNullOrEmpty(item.Description)) item.Description = remoteDescription;
             }
-            else if (kind == ContentKind.Shaders)
+            catch (Exception ex)
             {
-                var zipName = IOPath.GetFileName(filePath);
-                var slugToQuery = !string.IsNullOrWhiteSpace(item.ModrinthSlug)
-                    ? item.ModrinthSlug
-                    : CleanSlugFromFilename(zipName);
-
-                if (!string.IsNullOrWhiteSpace(slugToQuery))
-                {
-                    var mr = await FetchModrinthProjectAsync(slugToQuery, "shader");
-                    if (mr.icon != null && remoteIcon == null) remoteIcon = mr.icon;
-                    if (mr.banner != null && remoteBanner == null) remoteBanner = mr.banner;
-                    if (!string.IsNullOrWhiteSpace(mr.title) && !item.IsServerItem) remoteName = mr.title;
-                    if (!string.IsNullOrWhiteSpace(mr.description)) remoteDescription = mr.description;
-                }
+                Log.Warn($"LoadContentIconsAsync error for {item.Name}: {ex.Message}");
             }
-
-            if (remoteIcon != null && item.IconImage == null) item.IconImage = remoteIcon;
-            if (remoteBanner != null && item.BannerImage == null) item.BannerImage = remoteBanner;
-            if (!string.IsNullOrEmpty(remoteName) && !item.IsServerItem) item.Name = remoteName;
-            if (!string.IsNullOrEmpty(remoteDescription) && string.IsNullOrEmpty(item.Description)) item.Description = remoteDescription;
         }
     }
 
-    private static BitmapImage? CreateBitmapFromUrl(string? url)
+    private async Task<BitmapImage?> DownloadIconAsync(string url, int decodeWidth = 128)
     {
-        if (string.IsNullOrWhiteSpace(url)) return null;
-        try
-        {
-            var bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.UriSource = new Uri(url);
-            bmp.CacheOption = BitmapCacheOption.OnLoad;
-            bmp.EndInit();
-            bmp.Freeze();
-            return bmp;
-        }
-        catch { return null; }
-    }
-
-    private async Task<BitmapImage?> DownloadIconAsync(string url)
-    {
-        try
-        {
-            var data = await _http.GetByteArrayAsync(url);
-            using var ms = new MemoryStream(data);
-            var bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.CacheOption = BitmapCacheOption.OnLoad;
-            bmp.StreamSource = ms;
-            bmp.EndInit();
-            bmp.Freeze();
-            return bmp;
-        }
-        catch { return null; }
+        return await _imageCache.GetAsync(url, _http, decodeWidth);
     }
 
     private (string modName, string? modId, BitmapImage? icon) ExtractModInfo(string jarPath)
@@ -777,7 +774,7 @@ public class ContentService : IContentService
                     bannerUrl = (featured ?? gallery[0])?["url"]?.GetValue<string>();
                 }
                 if (!string.IsNullOrEmpty(bannerUrl))
-                    banner = await DownloadIconAsync(bannerUrl);
+                    banner = await DownloadIconAsync(bannerUrl, 0);
 
                 author = doc?["organization"]?.GetValue<string>();
             }

@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows.Input;
 using VECLauncher.Models;
 using VECLauncher.Services;
+using VECLauncher.ViewModels;
 using IOPath = System.IO.Path;
 
 namespace VECLauncher.Views;
@@ -30,6 +31,7 @@ public partial class MainWindow
         {
             var capePath = SkinService.AccountCapePath(_account.Username);
             _isInternalSkinWrite = true;
+            MainWindowViewModel.IsInternalSkinWrite = true;
             try
             {
                 lock (_skinFileLock)
@@ -38,17 +40,26 @@ public partial class MainWindow
                     {
                         var dir = IOPath.GetDirectoryName(capePath);
                         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                        File.WriteAllBytes(capePath, capeBytes);
+                        using var fs = new FileStream(capePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+                        fs.Write(capeBytes, 0, capeBytes.Length);
                     }
-                    else if (File.Exists(capePath))
+                    else
                     {
-                        File.Delete(capePath);
+                        SkinService.SafeDelete(capePath);
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                Log.Warn($"OnCapeTextureChanged write error: {ex.Message}");
+            }
             finally
             {
-                _isInternalSkinWrite = false;
+                Task.Delay(500).ContinueWith(_ =>
+                {
+                    _isInternalSkinWrite = false;
+                    MainWindowViewModel.IsInternalSkinWrite = false;
+                });
             }
         }
     }

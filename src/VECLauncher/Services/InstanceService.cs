@@ -14,7 +14,21 @@ public static class InstanceService
 
     public static string InstancesRoot => Path.Combine(LauncherPaths.Root, "instances");
 
-    public static string InstanceDir(GameInstance inst) => Path.Combine(InstancesRoot, inst.Id);
+    public static string SanitizeFolderName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "Instance";
+        var invalid = Path.GetInvalidFileNameChars();
+        var chars = name.Trim().Select(c => invalid.Contains(c) ? '_' : c).ToArray();
+        var clean = new string(chars).Trim('.', ' ');
+        return string.IsNullOrWhiteSpace(clean) ? "Instance" : clean;
+    }
+
+    public static string InstanceDir(GameInstance inst)
+    {
+        var cleanName = SanitizeFolderName(inst.Name);
+        return Path.Combine(InstancesRoot, cleanName);
+    }
+
     public static string ModsDir(GameInstance inst) => Path.Combine(InstanceDir(inst), "mods");
     public static string ResourcePacksDir(GameInstance inst) => Path.Combine(InstanceDir(inst), "resourcepacks");
     public static string ShaderPacksDir(GameInstance inst) => Path.Combine(InstanceDir(inst), "shaderpacks");
@@ -115,12 +129,13 @@ public static class InstanceService
         {
             if (!Directory.Exists(InstancesRoot)) return found;
 
-            var knownIds = known.Select(i => i.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var knownFolders = known.Select(i => SanitizeFolderName(i.Name))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             foreach (var dir in Directory.GetDirectories(InstancesRoot))
             {
-                var id = Path.GetFileName(dir);
-                if (knownIds.Contains(id)) continue;
+                var folderName = Path.GetFileName(dir);
+                if (string.IsNullOrEmpty(folderName) || knownFolders.Contains(folderName)) continue;
 
                 var looksLikeInstance =
                     Directory.Exists(Path.Combine(dir, "mods")) ||
@@ -146,8 +161,8 @@ public static class InstanceService
 
                 found.Add(new GameInstance
                 {
-                    Id = id,
-                    Name = $"Minecraft {mcVersion}",
+                    Id = Guid.NewGuid().ToString("N")[..8],
+                    Name = folderName,
                     McVersion = mcVersion,
                     Loader = LoaderKind.Vanilla,
                     LaunchVersionId = mcVersion,
@@ -181,8 +196,9 @@ public static class InstanceService
 
         try
         {
-            if (Directory.Exists(InstanceDir(inst)))
-                Directory.Delete(InstanceDir(inst), true);
+            var dir = InstanceDir(inst);
+            if (Directory.Exists(dir))
+                Directory.Delete(dir, true);
         }
         catch (Exception ex)
         {

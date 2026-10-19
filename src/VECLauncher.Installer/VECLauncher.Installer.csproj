@@ -2,35 +2,69 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>VEC_Setup</AssemblyName>
     <RootNamespace>VECLauncher.Installer</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>VEC Launcher Setup</Product>
     <Company>VEC</Company>
     <AssemblyTitle>VEC Launcher Setup</AssemblyTitle>
     <ApplicationIcon>..\..\logo.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <SelfContained>false</SelfContained>
-    <PublishSingleFile>true</PublishSingleFile>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.48">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="..\..\logo.ico" Link="logo.ico" />
+    <Resource Include="..\VECLauncher\Fonts\minecraft.ttf" Link="Fonts\minecraft.ttf" />
+    <Resource Include="Assets\banner.png" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="VECLauncher.Installer.Tests" />
+  </ItemGroup>
+
+  <Target Name="ILRepack" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <ItemGroup>
+      <InputAssemblies Include="$(OutputPath)$(TargetName)$(TargetExt)" />
+      <InputAssemblies Include="$(OutputPath)*.dll" Exclude="$(OutputPath)$(TargetName)$(TargetExt)" />
+    </ItemGroup>
+    <ILRepack
+        Parallel="true"
+        Internalize="false"
+        InputAssemblies="@(InputAssemblies)"
+        TargetKind="SameAsPrimaryAssembly"
+        OutputFile="$(OutputPath)$(TargetName)$(TargetExt)" />
+  </Target>
 
 </Project>

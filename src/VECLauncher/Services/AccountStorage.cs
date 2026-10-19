@@ -14,8 +14,7 @@ public static class AccountStorage
     private static readonly object _lock = new();
     private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("VEC.VECLauncher.MultiAcc.v2");
     private static readonly string SavedAccountsFile = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "VECLauncher", "saved_accounts.dat");
+        LauncherPaths.Root, "saved_accounts.dat");
 
     public static void Save(MinecraftAccount account)
     {

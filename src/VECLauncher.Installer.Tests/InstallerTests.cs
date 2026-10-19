@@ -22,7 +22,7 @@ public class InstallerTests
         Assert.False(config.IsUninstall);
         Assert.True(config.CreateDesktopShortcut);
         Assert.True(config.CreateStartMenuShortcut);
-        Assert.True(config.LaunchAfterInstall);
+        Assert.False(config.LaunchAfterInstall);
         Assert.Contains("Programs", config.InstallPath);
         Assert.Contains("VECLauncher", config.InstallPath);
     }
@@ -157,28 +157,46 @@ public class InstallerTests
 
         Assert.True(vm.IsWelcomeStep);
         Assert.False(vm.IsInstallingStep);
-        Assert.False(vm.IsCompletedStep);
+        Assert.False(vm.IsFinishedStep);
         Assert.False(vm.IsErrorStep);
         Assert.False(vm.IsUninstallStep);
-        Assert.False(vm.IsOptionsExpanded);
+        Assert.True(vm.CanGoNext);
+        Assert.False(vm.CanGoBack);
     }
 
     [Fact]
-    public void InstallerViewModel_ToggleOptions_FlipsFlag()
+    public void InstallerViewModel_WizardNavigation_ForwardAndBack()
     {
         var mock = new MockInstallService();
         var config = InstallerConfig.FromArgs(Array.Empty<string>());
         var vm = new InstallerViewModel(mock, config);
 
-        Assert.False(vm.IsOptionsExpanded);
-        vm.ToggleOptions();
-        Assert.True(vm.IsOptionsExpanded);
-        vm.ToggleOptions();
-        Assert.False(vm.IsOptionsExpanded);
+        Assert.Equal(WizardStep.Welcome, vm.Step);
+
+        // Next -> Directory
+        vm.NextStep();
+        Assert.Equal(WizardStep.Directory, vm.Step);
+        Assert.True(vm.CanGoBack);
+        Assert.True(vm.CanGoNext);
+
+        // Next -> Confirmation
+        vm.NextStep();
+        Assert.Equal(WizardStep.Confirmation, vm.Step);
+        Assert.True(vm.CanGoBack);
+        Assert.True(vm.CanInstall);
+
+        // Back -> Directory
+        vm.BackStep();
+        Assert.Equal(WizardStep.Directory, vm.Step);
+
+        // Back -> Welcome
+        vm.BackStep();
+        Assert.Equal(WizardStep.Welcome, vm.Step);
+        Assert.False(vm.CanGoBack);
     }
 
     [Fact]
-    public async Task InstallerViewModel_StartInstall_UpdatesStepToCompleted()
+    public async Task InstallerViewModel_StartInstall_TransitionsToFinished()
     {
         var mock = new MockInstallService();
         var config = InstallerConfig.FromArgs(Array.Empty<string>());
@@ -187,7 +205,25 @@ public class InstallerTests
         await vm.StartInstallAsync();
 
         Assert.Equal(InstallStage.Completed, vm.Stage);
-        Assert.True(vm.IsCompletedStep);
+        Assert.True(vm.IsFinishedStep);
         Assert.False(vm.IsWelcomeStep);
+        Assert.True(vm.ShowFinishButton);
+    }
+
+    [Fact]
+    public async Task InstallerViewModel_StartUninstall_TransitionsToUninstallFinished()
+    {
+        var mock = new MockInstallService();
+        var config = InstallerConfig.FromArgs(new[] { "--uninstall" });
+        var vm = new InstallerViewModel(mock, config);
+
+        Assert.True(vm.IsUninstallStep);
+        Assert.True(vm.ShowUninstallButton);
+
+        await vm.StartUninstallAsync();
+
+        Assert.True(vm.IsUninstallFinishedStep);
+        Assert.True(vm.ShowFinishButton);
+        Assert.Equal("Закрыть", vm.FinishButtonText);
     }
 }

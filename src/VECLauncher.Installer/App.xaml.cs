@@ -28,7 +28,7 @@ public partial class App : Application
         {
             var handler = new HttpClientHandler
             {
-                AutomaticDecompression = System.Net.DecompressionMethods.All
+                AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
             };
             var client = new HttpClient(handler)
             {

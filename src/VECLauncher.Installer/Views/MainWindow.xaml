@@ -1,30 +1,31 @@
 <Window x:Class="VECLauncher.Installer.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="VEC Launcher • Установщик"
-        Width="520" Height="360"
+        Title="VEC Launcher • Мастер установки"
+        Width="730" Height="480"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="False"
         Background="#0D0D0D"
         ResizeMode="NoResize"
-        FontFamily="Segoe UI, Tahoma, Arial">
+        FontFamily="{StaticResource FontMinecraft}">
 
     <Border Background="{DynamicResource Bg}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="0">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="38"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="56"/>
             </Grid.RowDefinitions>
 
-            <!-- Flat VEC Titlebar -->
+            <!-- 1. Title Bar -->
             <Border Grid.Row="0" Background="#0A0A0A" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1"
                     MouseDown="OnTitleBarMouseDown">
-                <Grid Margin="12,0,4,0">
+                <Grid Margin="14,0,6,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Image Source="pack://application:,,,/logo.ico" Width="16" Height="16" Margin="0,0,8,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-                        <TextBlock Text="VEC Launcher" Foreground="{DynamicResource Fg}" FontWeight="SemiBold" FontSize="12"/>
-                        <TextBlock Text=" • Установщик" Foreground="{DynamicResource FgMuted}" FontSize="12"/>
+                        <Image Source="pack://application:,,,/logo.ico" Width="16" Height="16" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <TextBlock Text="VEC Launcher" Foreground="{DynamicResource Fg}" FontSize="11.5" FontWeight="Bold"/>
+                        <TextBlock Text=" • Мастер установки" Foreground="{DynamicResource FgMuted}" FontSize="11.5"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -34,135 +35,230 @@
                 </Grid>
             </Border>
 
-            <!-- Main Content Area -->
-            <Grid Grid.Row="1" Margin="24,20">
+            <!-- 2. Wizard Body (Left Banner 226px + Right Content Area) -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="226"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                <!-- 1. WELCOME STEP -->
-                <Grid Visibility="{Binding IsWelcomeStep, Converter={StaticResource BoolToVis}}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                <!-- Left Banner Placeholder (Clean image container) -->
+                <Border Grid.Column="0" Background="#141418" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,1,0">
+                    <Image Source="pack://application:,,,/Assets/banner.png"
+                           Stretch="UniformToFill"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Border>
 
-                    <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,10,0,20">
-                        <Image Source="pack://application:,,,/logo.ico" Width="40" Height="40" HorizontalAlignment="Center" Margin="0,0,0,12" RenderOptions.BitmapScalingMode="HighQuality"/>
-                        <TextBlock Text="VEC Launcher" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Fg}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Официальный игровой лаунчер VEC" FontSize="12.5" Foreground="{DynamicResource FgMuted}" HorizontalAlignment="Center" Margin="0,3,0,0"/>
-                    </StackPanel>
+                <!-- Right Step Content Container -->
+                <Grid Grid.Column="1" Margin="26,20">
 
-                    <StackPanel Grid.Row="1" HorizontalAlignment="Center">
-                        <Button Style="{StaticResource AccentButton}" Content="Установить" Width="220" Command="{Binding StartInstallCommand}"/>
-                        <Button Content="{Binding IsOptionsExpanded, ConverterParameter='Параметры установки', FallbackValue='Параметры установки ▾'}"
-                                Command="{Binding ToggleOptionsCommand}"
-                                Foreground="{DynamicResource FgMuted}" FontSize="12" Background="Transparent" BorderThickness="0"
-                                Cursor="Hand" HorizontalAlignment="Center" Margin="0,10,0,0">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"/>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </StackPanel>
+                    <!-- STEP 1: WELCOME -->
+                    <Grid Visibility="{Binding IsWelcomeStep, Converter={StaticResource BoolToVis}}">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Вас приветствует Мастер установки VEC Launcher"
+                                       Foreground="{DynamicResource Fg}" FontSize="16" FontWeight="Bold"
+                                       TextWrapping="Wrap" Margin="0,0,0,16"/>
+                            <TextBlock Text="Программа установит официальный игровой лаунчер VEC на ваш компьютер."
+                                       Foreground="{DynamicResource FgSubtle}" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,18"/>
+                            <TextBlock Text="Перед началом установки рекомендуется закрыть запущенные копии игры или лаунчера."
+                                       Foreground="{DynamicResource FgMuted}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,24"/>
+                            <TextBlock Text="Для продолжения нажмите кнопку «Далее»."
+                                       Foreground="{DynamicResource Fg}" FontSize="11.5"/>
+                        </StackPanel>
+                    </Grid>
 
-                    <Border Grid.Row="2" Visibility="{Binding IsOptionsExpanded, Converter={StaticResource BoolToVis}}"
-                            Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Border}" BorderThickness="1"
-                            CornerRadius="0" Padding="12,10" Margin="0,10,0,0" VerticalAlignment="Top">
-                        <StackPanel>
-                            <TextBlock Text="Папка установки:" Foreground="{DynamicResource FgMuted}" FontSize="11.5" Margin="0,0,0,5"/>
-                            <Grid Margin="0,0,0,8">
+                    <!-- STEP 2: DIRECTORY SELECTION -->
+                    <Grid Visibility="{Binding IsDirectoryStep, Converter={StaticResource BoolToVis}}">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Выбор папки установки"
+                                       Foreground="{DynamicResource Fg}" FontSize="15" FontWeight="Bold" Margin="0,0,0,8"/>
+                            <TextBlock Text="Мастер установит VEC Launcher в указанную папку:"
+                                       Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,0,0,14"/>
+
+                            <Grid Margin="0,0,0,20">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBox Grid.Column="0" Text="{Binding InstallPath, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource FlatTextBox}" IsReadOnly="True" Margin="0,0,6,0"/>
+                                         Style="{StaticResource FlatTextBox}" Margin="0,0,8,0"/>
                                 <Button Grid.Column="1" Content="Обзор..." Style="{StaticResource BaseButton}"
-                                        Height="34" Padding="10,0" Command="{Binding BrowsePathCommand}"/>
+                                        Command="{Binding BrowsePathCommand}"/>
                             </Grid>
 
-                            <WrapPanel Orientation="Horizontal">
-                                <CheckBox Content="Ярлык на рабочем столе" IsChecked="{Binding CreateDesktopShortcut}"
-                                          Style="{StaticResource FlatCheckBox}" Margin="0,0,16,4"/>
-                                <CheckBox Content="Ярлык в меню «Пуск»" IsChecked="{Binding CreateStartMenuShortcut}"
-                                          Style="{StaticResource FlatCheckBox}" Margin="0,0,16,4"/>
-                                <CheckBox Content="Запустить лаунчер" IsChecked="{Binding LaunchAfterInstall}"
-                                          Style="{StaticResource FlatCheckBox}" Margin="0,0,0,4"/>
-                            </WrapPanel>
+                            <TextBlock Text="Дополнительные параметры:"
+                                       Foreground="{DynamicResource FgSubtle}" FontSize="11.5" Margin="0,0,0,10"/>
+                            <CheckBox Content="Создать ярлык на Рабочем столе"
+                                      IsChecked="{Binding CreateDesktopShortcut}"
+                                      Style="{StaticResource FlatCheckBox}" Margin="0,0,0,10"/>
+                            <CheckBox Content="Создать ярлык в меню «Пуск»"
+                                      IsChecked="{Binding CreateStartMenuShortcut}"
+                                      Style="{StaticResource FlatCheckBox}"/>
                         </StackPanel>
-                    </Border>
-                </Grid>
+                    </Grid>
 
-                <!-- 2. INSTALLING / PROGRESS STEP -->
-                <Grid Visibility="{Binding IsInstallingStep, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
-                    <StackPanel Margin="10,0">
-                        <TextBlock Text="Установка VEC Launcher" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Fg}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Загрузка и подготовка файлов..." FontSize="12.5" Foreground="{DynamicResource FgMuted}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
+                    <!-- STEP 3: CONFIRMATION (READY TO INSTALL) -->
+                    <Grid Visibility="{Binding IsConfirmationStep, Converter={StaticResource BoolToVis}}">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Всё готово к установке"
+                                       Foreground="{DynamicResource Fg}" FontSize="15" FontWeight="Bold" Margin="0,0,0,8"/>
+                            <TextBlock Text="Мастер готов начать копирование файлов на ваш компьютер."
+                                       Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,0,0,16"/>
 
-                        <Border Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="0" Padding="16,14">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,8">
-                                    <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource Fg}" FontSize="12.5" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding SpeedDisplay}" Foreground="{DynamicResource FgMuted}" FontSize="11.5" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                </Grid>
+                            <Border Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Border}"
+                                    BorderThickness="1" Padding="14,12" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="Папка назначения:" Foreground="{DynamicResource FgMuted}" FontSize="10.5"/>
+                                    <TextBlock Text="{Binding InstallPath}" Foreground="{DynamicResource Fg}" FontSize="11" TextWrapping="Wrap" Margin="0,3,0,10"/>
 
-                                <ProgressBar Style="{StaticResource FlatProgressBar}" Value="{Binding ProgressPercent}" Maximum="100"/>
+                                    <TextBlock Text="Создание ярлыков:" Foreground="{DynamicResource FgMuted}" FontSize="10.5"/>
+                                    <TextBlock Text="Рабочий стол, Меню «Пуск»" Foreground="{DynamicResource Fg}" FontSize="11"/>
+                                </StackPanel>
+                            </Border>
 
-                                <Grid Margin="0,6,0,0">
-                                    <TextBlock Text="{Binding ProgressPercent, StringFormat={}{0:F0}%}" Foreground="{DynamicResource FgMuted}" FontSize="11.5" HorizontalAlignment="Right"/>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <Button Style="{StaticResource BaseButton}" Content="Отмена" Command="{Binding CancelCommand}"
-                                Width="100" HorizontalAlignment="Center" Margin="0,20,0,0"/>
-                    </StackPanel>
-                </Grid>
-
-                <!-- 3. COMPLETED STEP -->
-                <Grid Visibility="{Binding IsCompletedStep, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="Установка завершена" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource Fg}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="VEC Launcher готов к запуску." FontSize="13" Foreground="{DynamicResource FgMuted}" HorizontalAlignment="Center" Margin="0,6,0,24"/>
-
-                        <Button Style="{StaticResource AccentButton}" Content="Запустить VEC Launcher" Width="220" Command="{Binding LaunchAppCommand}"/>
-                        <Button Style="{StaticResource BaseButton}" Content="Закрыть" Width="100" Command="{Binding CancelCommand}" Margin="0,8,0,0"/>
-                    </StackPanel>
-                </Grid>
-
-                <!-- 4. ERROR STEP -->
-                <Grid Visibility="{Binding IsErrorStep, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
-                    <StackPanel Margin="10,0">
-                        <TextBlock Text="Ошибка при установке" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Fg}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Не удалось завершить операцию:" FontSize="12.5" Foreground="{DynamicResource FgMuted}" HorizontalAlignment="Center" Margin="0,4,0,14"/>
-
-                        <Border Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="0" Padding="12" Margin="0,0,0,18" MaxHeight="80">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <TextBlock Text="{Binding ErrorDetails}" TextWrapping="Wrap" Foreground="#DDDDDD" FontSize="12" FontFamily="Consolas, Segoe UI"/>
-                            </ScrollViewer>
-                        </Border>
-
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Button Style="{StaticResource AccentButton}" Content="Попробовать снова" Width="180" Command="{Binding StartInstallCommand}" Margin="0,0,8,0"/>
-                            <Button Style="{StaticResource BaseButton}" Content="Закрыть" Width="100" Command="{Binding CancelCommand}"/>
+                            <TextBlock Text="Нажмите «Установить» для начала процесса."
+                                       Foreground="{DynamicResource FgSubtle}" FontSize="11"/>
                         </StackPanel>
-                    </StackPanel>
-                </Grid>
+                    </Grid>
 
-                <!-- 5. UNINSTALL STEP -->
-                <Grid Visibility="{Binding IsUninstallStep, Converter={StaticResource BoolToVis}}" VerticalAlignment="Center">
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="Удаление VEC Launcher" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Fg}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Вы действительно хотите удалить лаунчер и связанные ярлыки?" FontSize="12.5" Foreground="{DynamicResource FgMuted}" HorizontalAlignment="Center" Margin="0,4,0,24"/>
+                    <!-- STEP 4: INSTALLING / UNINSTALLING PROGRESS -->
+                    <Grid Visibility="{Binding IsInstallingStep, Converter={StaticResource BoolToVis}}">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding InstallingTitle}"
+                                       Foreground="{DynamicResource Fg}" FontSize="15" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <TextBlock Text="{Binding StatusMessage}"
+                                       Foreground="{DynamicResource FgSubtle}" FontSize="11.5" Margin="0,0,0,16" TextTrimming="CharacterEllipsis"/>
 
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Button Style="{StaticResource DangerButton}" Content="Удалить лаунчер" Width="160" Command="{Binding StartUninstallCommand}" Margin="0,0,8,0"/>
-                            <Button Style="{StaticResource BaseButton}" Content="Отмена" Width="100" Command="{Binding CancelCommand}"/>
+                            <ProgressBar Value="{Binding ProgressPercent}" Maximum="100"
+                                         Style="{StaticResource FlatProgressBar}" Height="16" Margin="0,0,0,10"/>
+
+                            <Grid>
+                                <TextBlock Text="{Binding ProgressPercent, StringFormat='{}{0:0}%'}"
+                                           Foreground="{DynamicResource Fg}" FontSize="11" HorizontalAlignment="Left"/>
+                                <TextBlock Text="{Binding SpeedDisplay}"
+                                           Foreground="{DynamicResource FgMuted}" FontSize="10.5" HorizontalAlignment="Right"/>
+                            </Grid>
                         </StackPanel>
-                    </StackPanel>
-                </Grid>
+                    </Grid>
 
+                    <!-- STEP 5: INSTALL FINISHED -->
+                    <Grid Visibility="{Binding IsFinishedStep, Converter={StaticResource BoolToVis}}">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Установка завершена!"
+                                       Foreground="{DynamicResource Fg}" FontSize="17" FontWeight="Bold" Margin="0,0,0,14"/>
+                            <TextBlock Text="VEC Launcher успешно установлен на ваш компьютер."
+                                       Foreground="{DynamicResource FgSubtle}" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,22"/>
+
+                            <CheckBox Content="Запустить VEC Launcher сейчас"
+                                      IsChecked="{Binding LaunchAfterInstall}"
+                                      Style="{StaticResource FlatCheckBox}" Margin="0,0,0,20"/>
+
+                            <TextBlock Text="Для завершения работы мастера нажмите «Готово»."
+                                       Foreground="{DynamicResource FgMuted}" FontSize="11"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- STEP 6: UNINSTALL FINISHED -->
+                    <Grid Visibility="{Binding IsUninstallFinishedStep, Converter={StaticResource BoolToVis}}">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Удаление завершено!"
+                                       Foreground="{DynamicResource Fg}" FontSize="17" FontWeight="Bold" Margin="0,0,0,14"/>
+                            <TextBlock Text="VEC Launcher и все связанные с ним файлы были полностью удалены с вашего компьютера."
+                                       Foreground="{DynamicResource FgSubtle}" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,22"/>
+
+                            <TextBlock Text="Для закрытия программы нажмите кнопку «Закрыть»."
+                                       Foreground="{DynamicResource FgMuted}" FontSize="11"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- STEP 7: ERROR -->
+                    <Grid Visibility="{Binding IsErrorStep, Converter={StaticResource BoolToVis}}">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Ошибка операции"
+                                       Foreground="#FF6B6B" FontSize="15" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <TextBlock Text="Не удалось завершить операцию:"
+                                       Foreground="{DynamicResource FgMuted}" FontSize="11" Margin="0,0,0,12"/>
+
+                            <Border Background="#1A1114" BorderBrush="#3D1820" BorderThickness="1"
+                                    Padding="12" MaxHeight="120" Margin="0,0,0,16">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <TextBlock Text="{Binding ErrorDetails}" Foreground="#FF8A8A" FontSize="10.5" TextWrapping="Wrap"/>
+                                </ScrollViewer>
+                            </Border>
+
+                            <Button Content="Повторить" Style="{StaticResource AccentButton}"
+                                    HorizontalAlignment="Left" Command="{Binding RetryInstallCommand}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- STEP 8: UNINSTALL CONFIRMATION -->
+                    <Grid Visibility="{Binding IsUninstallStep, Converter={StaticResource BoolToVis}}">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Удаление VEC Launcher"
+                                       Foreground="{DynamicResource Fg}" FontSize="16" FontWeight="Bold" Margin="0,0,0,12"/>
+                            <TextBlock Text="Мастер удалит VEC Launcher и все связанные файлы с вашего компьютера:"
+                                       Foreground="{DynamicResource FgSubtle}" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+                            <Border Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Border}"
+                                    BorderThickness="1" Padding="14,12" Margin="0,0,0,18">
+                                <StackPanel>
+                                    <TextBlock Text="Будут удалены:" Foreground="{DynamicResource FgMuted}" FontSize="10.5"/>
+                                    <TextBlock Text="• Исполняемые файлы программы (%LOCALAPPDATA%\Programs\VECLauncher)"
+                                               Foreground="{DynamicResource Fg}" FontSize="10.5" Margin="0,4,0,2"/>
+                                    <TextBlock Text="• Данные, сборки и кэш игры (%APPDATA%\.veclauncher)"
+                                               Foreground="{DynamicResource Fg}" FontSize="10.5" Margin="0,2,0,2"/>
+                                    <TextBlock Text="• Ярлыки на Рабочем столе и в меню «Пуск»"
+                                               Foreground="{DynamicResource Fg}" FontSize="10.5"/>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Text="Для подтверждения нажмите кнопку «Удалить» внизу."
+                                       Foreground="{DynamicResource FgMuted}" FontSize="11"/>
+                        </StackPanel>
+                    </Grid>
+
+                </Grid>
             </Grid>
+
+            <!-- 3. Bottom Navigation Bar -->
+            <Border Grid.Row="2" Background="#0A0A0A" BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,18,0">
+                    <Button Content="&lt; Назад" Style="{StaticResource BaseButton}"
+                            Command="{Binding BackStepCommand}"
+                            IsEnabled="{Binding CanGoBack}"
+                            Visibility="{Binding ShowBackButton, Converter={StaticResource BoolToVis}}"
+                            Margin="0,0,10,0"/>
+
+                    <Button Content="Далее &gt;" Style="{StaticResource AccentButton}"
+                            Command="{Binding NextStepCommand}"
+                            IsEnabled="{Binding CanGoNext}"
+                            Visibility="{Binding ShowNextButton, Converter={StaticResource BoolToVis}}"
+                            Margin="0,0,10,0"/>
+
+                    <Button Content="Установить" Style="{StaticResource AccentButton}"
+                            Command="{Binding StartInstallCommand}"
+                            IsEnabled="{Binding CanInstall}"
+                            Visibility="{Binding ShowInstallButton, Converter={StaticResource BoolToVis}}"
+                            Margin="0,0,10,0"/>
+
+                    <Button Content="Удалить" Style="{StaticResource DangerButton}"
+                            Command="{Binding StartUninstallCommand}"
+                            Visibility="{Binding ShowUninstallButton, Converter={StaticResource BoolToVis}}"
+                            Margin="0,0,10,0"/>
+
+                    <Button Content="{Binding FinishButtonText}" Style="{StaticResource AccentButton}"
+                            Command="{Binding FinishCommand}"
+                            Visibility="{Binding ShowFinishButton, Converter={StaticResource BoolToVis}}"
+                            Margin="0,0,10,0"/>
+
+                    <Button Content="Отмена" Style="{StaticResource BaseButton}"
+                            Command="{Binding CancelCommand}"
+                            IsEnabled="{Binding CanCancel}"
+                            Visibility="{Binding ShowCancelButton, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+            </Border>
         </Grid>
     </Border>
 </Window>

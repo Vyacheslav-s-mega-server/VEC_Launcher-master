@@ -27,12 +27,12 @@ public sealed class UpdateCheckService : IUpdateCheckService
 
     public async Task<ReleaseManifest> GetLatestReleaseAsync(CancellationToken ct = default)
     {
-        // 1. Try production / dev VEC backend servers
+        // 1. Try dev/local server first (if running on machine), then custom env, then production
         var serverCandidates = new[]
         {
+            DefaultServerUrl,
             Environment.GetEnvironmentVariable("VEC_SERVER_URL")?.TrimEnd('/'),
-            ProductionServerUrl,
-            DefaultServerUrl
+            ProductionServerUrl
         };
 
         foreach (var server in serverCandidates)
@@ -41,19 +41,24 @@ public sealed class UpdateCheckService : IUpdateCheckService
             try
             {
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                cts.CancelAfter(TimeSpan.FromSeconds(3));
+                cts.CancelAfter(TimeSpan.FromSeconds(2));
 
                 var manifestUrl = $"{server}/api/launcher/version";
                 using var resp = await _http.GetAsync(manifestUrl, cts.Token).ConfigureAwait(false);
                 if (resp.IsSuccessStatusCode)
                 {
-                    var json = await resp.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
+                    var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
                     var manifest = JsonSerializer.Deserialize<ReleaseManifest>(json);
                     if (manifest != null && !string.IsNullOrEmpty(manifest.DownloadUrl))
                     {
                         if (manifest.DownloadUrl.StartsWith("/"))
                         {
                             manifest.DownloadUrl = $"{server}{manifest.DownloadUrl}";
+                        }
+                        else if (Uri.TryCreate(manifest.DownloadUrl, UriKind.Absolute, out var uri) &&
+                                 manifest.DownloadUrl.Contains("/downloads/"))
+                        {
+                            manifest.DownloadUrl = $"{server}{uri.PathAndQuery}";
                         }
                         return manifest;
                     }
@@ -77,7 +82,7 @@ public sealed class UpdateCheckService : IUpdateCheckService
             using var resp = await _http.SendAsync(req, cts.Token).ConfigureAwait(false);
             if (resp.IsSuccessStatusCode)
             {
-                var json = await resp.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
+                var json = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
                 using var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
 

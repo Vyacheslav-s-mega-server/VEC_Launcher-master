@@ -2,7 +2,7 @@ namespace VECLauncher.Services;
 
 public static class LauncherPaths
 {
-    private const string FolderName = "VECLauncher";
+    private const string FolderName = ".veclauncher";
 
     public const string PortableMarker = "portable.txt";
 

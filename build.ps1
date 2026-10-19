@@ -101,13 +101,19 @@ if ($Target -in @('All', 'Launcher')) {
     # Create manifest.json
     $manifest = [ordered]@{
         version     = "1.0.0"
-        downloadUrl = "https://vec.kpvk.edu.kz/downloads/VECLauncher-win-x64.zip"
+        downloadUrl = "/downloads/VECLauncher-win-x64.zip"
         sha256      = $sha256
         fileSize    = $zipSize
         changelog   = "Initial bootstrap release"
     }
     $manifestJson = $manifest | ConvertTo-Json -Depth 4
-    Set-Content -Path (Join-Path $outDir 'manifest.json') -Value $manifestJson -Encoding UTF8
+    $manifestPath = Join-Path $outDir 'manifest.json'
+    Set-Content -Path $manifestPath -Value $manifestJson -Encoding UTF8
+
+    if (Test-Path $webAppDownloads) {
+        Copy-Item $manifestPath (Join-Path $webAppDownloads 'manifest.json') -Force -ErrorAction SilentlyContinue
+        Copy-Item $zipPath (Join-Path $webAppDownloads 'VECLauncher-win-x64.zip') -Force -ErrorAction SilentlyContinue
+    }
 }
 
 # ----------------------------------------------------
@@ -116,27 +122,18 @@ if ($Target -in @('All', 'Launcher')) {
 if ($Target -in @('All', 'Installer')) {
     Write-Host ''
     Write-Host '---------------------------------------------------' -ForegroundColor Cyan
-    Write-Host 'Publishing VEC_Setup.exe (win-x64 Single-File)...' -ForegroundColor Cyan
+    Write-Host 'Building VEC_Setup.exe (Standalone Web Bootstrapper)...' -ForegroundColor Cyan
     Write-Host '---------------------------------------------------' -ForegroundColor Cyan
 
-    if (Test-Path $tempPubInstaller) { Remove-Item $tempPubInstaller -Recurse -Force }
-
-    & $dotnet publish $installerProject `
-        -c Release `
-        -r win-x64 `
-        --self-contained false `
-        -p:PublishSingleFile=true `
-        -p:DebugType=none `
-        -p:GenerateDocumentationFile=false `
-        -o $tempPubInstaller
+    & $dotnet build $installerProject -c Release -p:DebugType=none -p:GenerateDocumentationFile=false
 
     if ($LASTEXITCODE -ne 0) {
         Write-Host 'Installer build failed.' -ForegroundColor Red
         exit $LASTEXITCODE
     }
 
-    $setupExe = Join-Path $tempPubInstaller 'VEC_Setup.exe'
-    if (-not (Test-Path $setupExe)) { throw "VEC_Setup.exe not found in $tempPubInstaller" }
+    $setupExe = Join-Path $root 'src\VECLauncher.Installer\bin\Release\net48\VEC_Setup.exe'
+    if (-not (Test-Path $setupExe)) { throw "VEC_Setup.exe not found at $setupExe" }
 
     $destSetup = Join-Path $outDir 'VEC_Setup.exe'
     Copy-Item $setupExe -Destination $destSetup -Force

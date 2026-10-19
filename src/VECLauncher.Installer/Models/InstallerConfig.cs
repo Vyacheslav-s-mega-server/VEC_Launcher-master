@@ -14,7 +14,7 @@ public sealed class InstallerConfig
     public string InstallPath { get; set; } = DefaultInstallPath;
     public bool CreateDesktopShortcut { get; set; } = true;
     public bool CreateStartMenuShortcut { get; set; } = true;
-    public bool LaunchAfterInstall { get; set; } = true;
+    public bool LaunchAfterInstall { get; set; } = false;
     public bool RegisterProtocol { get; set; } = true;
 
     public bool IsSilent { get; set; }
@@ -53,7 +53,7 @@ public sealed class InstallerConfig
             }
             else if (arg.StartsWith("--dir=") && arg.Length > 6)
             {
-                config.InstallPath = args[i].Trim()[6..].Trim('"', '\'');
+                config.InstallPath = args[i].Trim().Substring(6).Trim('"', '\'');
             }
             else if (arg == "--dir" && i + 1 < args.Length)
             {

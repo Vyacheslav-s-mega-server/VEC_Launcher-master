@@ -119,11 +119,8 @@ if ($Target -in @('All', 'Installer')) {
     & $dotnet publish $installerProject `
         -c Release `
         -r win-x64 `
-        --self-contained true `
+        --self-contained false `
         -p:PublishSingleFile=true `
-        -p:IncludeNativeLibrariesForSelfExtract=true `
-        -p:IncludeAllContentForSelfExtract=true `
-        -p:EnableCompressionInSingleFile=true `
         -p:DebugType=none `
         -p:GenerateDocumentationFile=false `
         -o $tempPubInstaller

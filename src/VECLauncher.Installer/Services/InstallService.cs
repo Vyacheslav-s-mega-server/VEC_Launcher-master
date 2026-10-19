@@ -97,31 +97,24 @@ public sealed class InstallService : IInstallService
 
             await Task.Run(() =>
             {
-                try
+                using var archive = ZipFile.OpenRead(tempZipPath);
+                foreach (var entry in archive.Entries)
                 {
-                    using var archive = ZipFile.OpenRead(tempZipPath);
-                    foreach (var entry in archive.Entries)
+                    if (string.IsNullOrEmpty(entry.Name))
                     {
-                        if (string.IsNullOrEmpty(entry.Name))
-                        {
-                            var folderPath = Path.Combine(targetDir, entry.FullName);
-                            Directory.CreateDirectory(folderPath);
-                            continue;
-                        }
-
-                        var destinationPath = Path.Combine(targetDir, entry.FullName);
-                        var entryDir = Path.GetDirectoryName(destinationPath);
-                        if (!string.IsNullOrEmpty(entryDir))
-                        {
-                            Directory.CreateDirectory(entryDir);
-                        }
-
-                        entry.ExtractToFile(destinationPath, true);
+                        var folderPath = Path.Combine(targetDir, entry.FullName);
+                        Directory.CreateDirectory(folderPath);
+                        continue;
                     }
-                }
-                catch (InvalidDataException)
-                {
-                    File.Copy(tempZipPath, Path.Combine(targetDir, "VECLauncher.exe"), true);
+
+                    var destinationPath = Path.Combine(targetDir, entry.FullName);
+                    var entryDir = Path.GetDirectoryName(destinationPath);
+                    if (!string.IsNullOrEmpty(entryDir))
+                    {
+                        Directory.CreateDirectory(entryDir);
+                    }
+
+                    entry.ExtractToFile(destinationPath, true);
                 }
             }, ct);
 
@@ -269,48 +262,6 @@ public sealed class InstallService : IInstallService
 
     private async Task DownloadFileWithProgressAsync(string url, string destinationPath, CancellationToken ct)
     {
-        if (File.Exists(url) || url.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
-        {
-            var sourcePath = url.StartsWith("file://", StringComparison.OrdinalIgnoreCase) ? new Uri(url).LocalPath : url;
-            if (!string.Equals(Path.GetFullPath(sourcePath), Path.GetFullPath(destinationPath), StringComparison.OrdinalIgnoreCase))
-            {
-                var fi = new FileInfo(sourcePath);
-                var localTotalBytes = fi.Length;
-                await using var srcStream = File.OpenRead(sourcePath);
-                await using var dstStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
-
-                var buf = new byte[81920];
-                long readSum = 0;
-                int n;
-                var rep = Stopwatch.StartNew();
-                long lastBytes = 0;
-
-                while ((n = await srcStream.ReadAsync(buf, ct).ConfigureAwait(false)) > 0)
-                {
-                    await dstStream.WriteAsync(buf.AsMemory(0, n), ct).ConfigureAwait(false);
-                    readSum += n;
-
-                    if (rep.ElapsedMilliseconds >= 50)
-                    {
-                        var dBytes = readSum - lastBytes;
-                        var dSec = rep.Elapsed.TotalSeconds;
-                        var speedBps = dSec > 0 ? (dBytes / dSec) : 0;
-                        var spdStr = $"{InstallProgressReport.FormatBytes((long)speedBps)}/с";
-
-                        var pct = localTotalBytes > 0 ? 15.0 + ((double)readSum / localTotalBytes) * 60.0 : 50.0;
-                        var m = $"Копирование: {InstallProgressReport.FormatBytes(readSum)} из {InstallProgressReport.FormatBytes(localTotalBytes)} ({spdStr})";
-                        Report(InstallStage.Downloading, m, pct, spdStr, readSum, localTotalBytes);
-
-                        lastBytes = readSum;
-                        rep.Restart();
-                    }
-                }
-            }
-
-            Report(InstallStage.Downloading, "Пакет успешно подготовлен", 75);
-            return;
-        }
-
         using var resp = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
         resp.EnsureSuccessStatusCode();
 

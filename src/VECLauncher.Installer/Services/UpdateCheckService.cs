@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
@@ -26,6 +27,52 @@ public sealed class UpdateCheckService : IUpdateCheckService
 
     public async Task<ReleaseManifest> GetLatestReleaseAsync(CancellationToken ct = default)
     {
+        // 0. Check local files adjacent to installer (instant offline/local testing)
+        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        var candidateZips = new[]
+        {
+            Path.Combine(baseDir, "VECLauncher-win-x64.zip"),
+            Path.Combine(baseDir, "dist", "VECLauncher-win-x64.zip"),
+            Path.Combine(Directory.GetCurrentDirectory(), "dist", "VECLauncher-win-x64.zip")
+        };
+
+        foreach (var zip in candidateZips)
+        {
+            if (File.Exists(zip))
+            {
+                var fi = new FileInfo(zip);
+                return new ReleaseManifest
+                {
+                    Version = "1.0.0-local",
+                    DownloadUrl = Path.GetFullPath(zip),
+                    FileSize = fi.Length,
+                    Changelog = "Локальный тестовый пакет"
+                };
+            }
+        }
+
+        var candidateExes = new[]
+        {
+            Path.Combine(baseDir, "VECLauncher.exe"),
+            Path.Combine(baseDir, "dist", "VECLauncher.exe"),
+            Path.Combine(Directory.GetCurrentDirectory(), "dist", "VECLauncher.exe")
+        };
+
+        foreach (var exe in candidateExes)
+        {
+            if (File.Exists(exe))
+            {
+                var fi = new FileInfo(exe);
+                return new ReleaseManifest
+                {
+                    Version = "1.0.0-local",
+                    DownloadUrl = Path.GetFullPath(exe),
+                    FileSize = fi.Length,
+                    Changelog = "Локальный файл VECLauncher.exe"
+                };
+            }
+        }
+
         // 1. Try local dev / production VEC server
         var serverCandidates = new[]
         {

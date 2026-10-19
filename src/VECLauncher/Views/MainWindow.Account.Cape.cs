@@ -32,6 +32,7 @@ public partial class MainWindow
             var capePath = SkinService.AccountCapePath(_account.Username);
             _isInternalSkinWrite = true;
             MainWindowViewModel.IsInternalSkinWrite = true;
+            MainWindowViewModel.LastInternalSkinWriteTime = DateTime.UtcNow;
             try
             {
                 lock (_skinFileLock)

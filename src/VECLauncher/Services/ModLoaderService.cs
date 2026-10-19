@@ -21,27 +21,65 @@ public sealed class ModLoaderService
     public event Action<string>? Status;
     private void Report(string s) { Status?.Invoke(s); Log.Info(s); }
 
+    public async Task<string> GetLatestFabricLoaderVersionAsync(string mcVersion, CancellationToken ct = default)
+    {
+        try
+        {
+            var cleanMc = !string.IsNullOrWhiteSpace(mcVersion) ? Uri.EscapeDataString(mcVersion) : "1.21.1";
+            var url = $"{FabricMetaBase}/versions/loader/{cleanMc}";
+            using var resp = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            if (resp.IsSuccessStatusCode)
+            {
+                var json = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.ValueKind == JsonValueKind.Array && doc.RootElement.GetArrayLength() > 0)
+                {
+                    var first = doc.RootElement[0];
+                    if (first.TryGetProperty("loader", out var loaderProp) &&
+                        loaderProp.TryGetProperty("version", out var verProp))
+                    {
+                        var v = verProp.GetString();
+                        if (!string.IsNullOrEmpty(v)) return v;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warn($"Failed to fetch latest fabric loader for {mcVersion}: {ex.Message}");
+        }
+
+        return "0.16.10";
+    }
+
     public async Task<string> InstallAsync(
-        LoaderKind kind, string mcVersion, string loaderVersion,
+        LoaderKind kind, string mcVersion, string? loaderVersion,
         JavaInstallation java, CancellationToken ct = default)
     {
         return kind switch
         {
             LoaderKind.Fabric => await InstallFabricAsync(mcVersion, loaderVersion, ct).ConfigureAwait(false),
             LoaderKind.Forge => await InstallWithInstallerAsync(
-                LoaderKind.Forge, mcVersion, loaderVersion, java, ct).ConfigureAwait(false),
+                LoaderKind.Forge, mcVersion, loaderVersion ?? "latest", java, ct).ConfigureAwait(false),
             LoaderKind.NeoForge => await InstallWithInstallerAsync(
-                LoaderKind.NeoForge, mcVersion, loaderVersion, java, ct).ConfigureAwait(false),
+                LoaderKind.NeoForge, mcVersion, loaderVersion ?? "latest", java, ct).ConfigureAwait(false),
             _ => mcVersion
         };
     }
 
-    private async Task<string> InstallFabricAsync(string mcVersion, string loaderVersion, CancellationToken ct)
+    private async Task<string> InstallFabricAsync(string mcVersion, string? loaderVersion, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(loaderVersion))
+        {
+            loaderVersion = await GetLatestFabricLoaderVersionAsync(mcVersion, ct).ConfigureAwait(false);
+        }
+
         Report($"Устанавливаю Fabric {loaderVersion} для {mcVersion}...");
 
-        var url = $"{FabricMetaBase}/versions/loader/" +
-                  $"{Uri.EscapeDataString(mcVersion)}/{Uri.EscapeDataString(loaderVersion)}/profile/json";
+        var cleanMc = !string.IsNullOrWhiteSpace(mcVersion) ? Uri.EscapeDataString(mcVersion) : "1.21.1";
+        var cleanLoader = !string.IsNullOrWhiteSpace(loaderVersion) ? Uri.EscapeDataString(loaderVersion) : "0.16.10";
+
+        var url = $"{FabricMetaBase}/versions/loader/{cleanMc}/{cleanLoader}/profile/json";
 
         var json = await _http.GetStringAsync(url, ct).ConfigureAwait(false);
 

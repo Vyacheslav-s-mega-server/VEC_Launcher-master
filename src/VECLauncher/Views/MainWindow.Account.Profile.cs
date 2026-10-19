@@ -30,7 +30,6 @@ public partial class MainWindow
             ReloadSkin3DModel();
             if (TxtSelectedSkinFileName != null) TxtSelectedSkinFileName.Text = "";
             if (BtnResetSkin != null) BtnResetSkin.IsEnabled = false;
-            if (TxtSkinStatus != null) TxtSkinStatus.Text = "";
         }
     }
 }

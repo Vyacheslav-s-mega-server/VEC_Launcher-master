@@ -104,6 +104,8 @@ public partial class MainWindowViewModel
             c.IsEquipped = c.Id.Equals(item.Id, StringComparison.OrdinalIgnoreCase);
         }
 
+        IsInternalSkinWrite = true;
+        LastInternalSkinWriteTime = DateTime.UtcNow;
         try
         {
             if (item.Id == "none")
@@ -134,6 +136,11 @@ public partial class MainWindowViewModel
             Log.Warn($"Equip cape failed: {ex.Message}");
             Dialogs?.ShowToast("Ошибка", ex.Message, ToastType.Error);
             _ = RefreshWardrobeAsync();
+        }
+        finally
+        {
+            await Task.Delay(500);
+            IsInternalSkinWrite = false;
         }
     }
 

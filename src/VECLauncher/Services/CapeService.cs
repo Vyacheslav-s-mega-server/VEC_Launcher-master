@@ -57,7 +57,7 @@ public class CapeService : ICapeService
             IsEquipped = true
         });
 
-        if (acc.IsVec)
+        if (acc.IsVec && !string.IsNullOrWhiteSpace(acc.Username))
         {
             try
             {

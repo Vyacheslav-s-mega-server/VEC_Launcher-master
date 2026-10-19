@@ -132,7 +132,7 @@ public sealed class PreloadService : IPreloadService
             {
                 try
                 {
-                    await _imageCache.GetAsync(url, _http, 128, ct);
+                    await _imageCache.GetAsync(url, _http, decodeWidth: 0, ct);
                 }
                 catch { }
             }

@@ -104,6 +104,7 @@ public partial class MainWindowViewModel
                 Name = "VEC Fabric 1.21.11",
                 McVersion = "1.21.11",
                 Loader = LoaderKind.Fabric,
+                LoaderVersion = "0.16.10",
                 ServerAddress = LauncherConfig.DefaultMinecraftServer
             };
             InstanceService.EnsureFolders(defaultInst);

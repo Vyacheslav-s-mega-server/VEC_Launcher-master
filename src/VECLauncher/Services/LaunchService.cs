@@ -93,9 +93,17 @@ public sealed class LaunchService
 
             if (!alreadyInstalled)
             {
-                SetStatus($"Устанавливаю {inst.Loader.Display()} {inst.LoaderVersion}...");
+                var loaderVer = inst.LoaderVersion;
+                if (string.IsNullOrWhiteSpace(loaderVer) && inst.Loader == LoaderKind.Fabric)
+                {
+                    loaderVer = await _loaders.GetLatestFabricLoaderVersionAsync(inst.McVersion, ct);
+                    inst.LoaderVersion = loaderVer;
+                    InstanceService.SaveAll(instances);
+                }
+
+                SetStatus($"Устанавливаю {inst.Loader.Display()} {loaderVer}...");
                 launchId = await _loaders.InstallAsync(
-                    inst.Loader, inst.McVersion, inst.LoaderVersion!, java, ct);
+                    inst.Loader, inst.McVersion, loaderVer, java, ct);
 
                 inst.LaunchVersionId = launchId;
                 InstanceService.SaveAll(instances);

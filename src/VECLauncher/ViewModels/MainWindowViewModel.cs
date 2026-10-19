@@ -36,6 +36,7 @@ public partial class MainWindowViewModel : ObservableObject
     public readonly IContentService? Content;
 
     public static bool IsInternalSkinWrite { get; set; }
+    public static DateTime LastInternalSkinWriteTime { get; set; } = DateTime.MinValue;
 
     [ObservableProperty]
     private string _totalPlayTimeDisplay = "0 ч";

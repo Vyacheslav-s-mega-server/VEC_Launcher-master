@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
 using VECLauncher.Models;
+using VECLauncher.ViewModels;
 
 namespace VECLauncher.Services;
 
@@ -162,7 +163,7 @@ public sealed class SkinService
         byte[]? capeBytes = null;
         string? model = null;
 
-        if (!acc.IsVec) return (null, null, null);
+        if (!acc.IsVec || string.IsNullOrWhiteSpace(acc.Username)) return (null, null, null);
 
         try
         {
@@ -177,7 +178,16 @@ public sealed class SkinService
             {
                 skinBytes = await sResp.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
                 var skinPath = AccountSkinPath(acc.Username);
-                await SafeWriteAllBytesAsync(skinPath, skinBytes, ct).ConfigureAwait(false);
+                MainWindowViewModel.IsInternalSkinWrite = true;
+                MainWindowViewModel.LastInternalSkinWriteTime = DateTime.UtcNow;
+                try
+                {
+                    await SafeWriteAllBytesAsync(skinPath, skinBytes, ct).ConfigureAwait(false);
+                }
+                finally
+                {
+                    _ = Task.Delay(500).ContinueWith(_ => MainWindowViewModel.IsInternalSkinWrite = false);
+                }
             }
 
             var capeUrl = $"{srvUrl}/api/cape/{Uri.EscapeDataString(acc.Username)}.png?t={DateTime.UtcNow.Ticks}";
@@ -186,12 +196,30 @@ public sealed class SkinService
             {
                 capeBytes = await cResp.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
                 var capePath = AccountCapePath(acc.Username);
-                await SafeWriteAllBytesAsync(capePath, capeBytes, ct).ConfigureAwait(false);
+                MainWindowViewModel.IsInternalSkinWrite = true;
+                MainWindowViewModel.LastInternalSkinWriteTime = DateTime.UtcNow;
+                try
+                {
+                    await SafeWriteAllBytesAsync(capePath, capeBytes, ct).ConfigureAwait(false);
+                }
+                finally
+                {
+                    _ = Task.Delay(500).ContinueWith(_ => MainWindowViewModel.IsInternalSkinWrite = false);
+                }
             }
             else if (cResp.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 var capePath = AccountCapePath(acc.Username);
-                SafeDelete(capePath);
+                MainWindowViewModel.IsInternalSkinWrite = true;
+                MainWindowViewModel.LastInternalSkinWriteTime = DateTime.UtcNow;
+                try
+                {
+                    SafeDelete(capePath);
+                }
+                finally
+                {
+                    _ = Task.Delay(500).ContinueWith(_ => MainWindowViewModel.IsInternalSkinWrite = false);
+                }
             }
 
             try

@@ -276,7 +276,7 @@
                                                         <CheckBox x:Name="ToggleModelSwitch" HorizontalAlignment="Right"
                                                                   Style="{StaticResource MinecraftSwitchStyle}"
                                                                   IsChecked="{Binding IsSlimModel, Mode=TwoWay}"
-                                                                  Command="{Binding ToggleSkinModelCommand}" ToolTip="Переключить модель Classic (4px) / Slim (3px)"/>
+                                                                  ToolTip="Переключить модель Classic (4px) / Slim (3px)"/>
                                                     </Grid>
                                                 </Border>
 
@@ -292,8 +292,6 @@
                                                 </Button>
                                                 <TextBlock x:Name="TxtSelectedSkinFileName" Text="{Binding SelectedSkinFileName}" FontSize="11" Foreground="#34D399" Margin="0,6,0,0" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
-                                            <TextBlock x:Name="TxtSkinStatus" Text="{Binding SkinStatus}" Foreground="{Binding SkinStatusColor}" FontSize="11" TextWrapping="Wrap"
-                                                       Margin="0,8,0,0" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
 

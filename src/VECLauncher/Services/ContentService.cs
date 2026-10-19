@@ -516,7 +516,7 @@ public class ContentService : IContentService
             {
                 if (!string.IsNullOrEmpty(item.IconUrl) && item.IconImage is null)
                 {
-                    var iconBmp = await _imageCache.GetAsync(item.IconUrl, _http, decodeWidth: 128);
+                    var iconBmp = await _imageCache.GetAsync(item.IconUrl, _http, decodeWidth: 0);
                     if (iconBmp != null) item.IconImage = iconBmp;
                 }
 
@@ -617,7 +617,7 @@ public class ContentService : IContentService
         }
     }
 
-    private async Task<BitmapImage?> DownloadIconAsync(string url, int decodeWidth = 128)
+    private async Task<BitmapImage?> DownloadIconAsync(string url, int decodeWidth = 0)
     {
         return await _imageCache.GetAsync(url, _http, decodeWidth);
     }
@@ -740,6 +740,7 @@ public class ContentService : IContentService
     private async Task<(string? title, BitmapImage? icon, BitmapImage? banner, string? description, string? author)> FetchModrinthProjectAsync(string query, string projectType = "mod")
     {
         var cleanSlug = query.Trim().Replace('_', '-').Trim('-');
+        if (string.IsNullOrWhiteSpace(cleanSlug)) return (null, null, null, null, null);
         var cacheKey = $"{projectType}:{cleanSlug}";
         if (_modrinthProjectCache.TryGetValue(cacheKey, out var cached)) return cached;
 

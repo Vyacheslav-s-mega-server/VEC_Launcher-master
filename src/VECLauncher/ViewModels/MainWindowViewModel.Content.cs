@@ -35,7 +35,11 @@ public partial class MainWindowViewModel
     private bool _hasOptionalContent;
 
     [RelayCommand]
-    public async Task RefreshContentAsync(bool force = false)
+    public Task RefreshContentAsync() => RefreshContentCoreAsync(force: true);
+
+    public Task RefreshContentAsync(bool force) => RefreshContentCoreAsync(force);
+
+    public async Task RefreshContentCoreAsync(bool force = false)
     {
         if (Content is null || SelectedInstance is null)
         {

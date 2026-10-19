@@ -4,50 +4,52 @@
     <Application.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
-        <!-- Color Palette -->
-        <SolidColorBrush x:Key="BgDark" Color="#0B0D12"/>
-        <SolidColorBrush x:Key="BgCard" Color="#131620"/>
-        <SolidColorBrush x:Key="BgCardHover" Color="#171C28"/>
-        <SolidColorBrush x:Key="BgInput" Color="#0E1017"/>
-        <SolidColorBrush x:Key="BorderDark" Color="#1E2330"/>
-        <SolidColorBrush x:Key="BorderHover" Color="#333C52"/>
+        <!-- VEC Palette (Matches VECLauncher App.xaml) -->
+        <SolidColorBrush x:Key="BgDeep" Color="#050505"/>
+        <SolidColorBrush x:Key="Bg" Color="#0D0D0D"/>
+        <SolidColorBrush x:Key="Panel" Color="#141414"/>
+        <SolidColorBrush x:Key="PanelHover" Color="#1F1F1F"/>
+        <SolidColorBrush x:Key="Border" Color="#2A2A2A"/>
+        <SolidColorBrush x:Key="Accent" Color="#FACC15"/>
+        <SolidColorBrush x:Key="Fg" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="FgMuted" Color="#8A8A8A"/>
 
-        <SolidColorBrush x:Key="AccentGreen" Color="#22C55E"/>
-        <SolidColorBrush x:Key="AccentGreenDark" Color="#16A34A"/>
-        <SolidColorBrush x:Key="AccentGreenGlow" Color="#3022C55E"/>
-
-        <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="TextSecondary" Color="#94A3B8"/>
-        <SolidColorBrush x:Key="TextMuted" Color="#64748B"/>
-
-        <SolidColorBrush x:Key="DangerRed" Color="#EF4444"/>
-        <SolidColorBrush x:Key="DangerRedDark" Color="#DC2626"/>
-
-        <!-- Primary Action Button -->
-        <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Height" Value="46"/>
-            <Setter Property="FontSize" Value="15"/>
+        <!-- Base Button (Flat VEC Style) -->
+        <Style x:Key="BaseButton" TargetType="Button">
+            <Setter Property="Foreground" Value="#EEEEEE"/>
+            <Setter Property="Background" Value="#131318"/>
+            <Setter Property="BorderBrush" Value="#242430"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="Height" Value="38"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" CornerRadius="8" Background="#22C55E" BorderThickness="0">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="16" ShadowDepth="2" Direction="270" Color="#22C55E" Opacity="0.35"/>
-                            </Border.Effect>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,0"/>
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#16A34A"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#1C1C26"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#383848"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#15803D"/>
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.8"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -55,31 +57,77 @@
             </Setter>
         </Style>
 
-        <!-- Danger Button -->
+        <!-- Accent Button (White Solid, Black Text, Flat VEC Style) -->
+        <Style x:Key="AccentButton" TargetType="Button">
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="#FFFFFF"
+                                BorderThickness="0"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E2E2EA"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.35"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Danger Button (Flat VEC Style) -->
         <Style x:Key="DangerButton" TargetType="Button">
-            <Setter Property="Height" Value="44"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#FF6B6B"/>
+            <Setter Property="Background" Value="#1A1114"/>
+            <Setter Property="BorderBrush" Value="#3D1820"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="Height" Value="38"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" CornerRadius="8" Background="#DC2626" BorderThickness="0">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Color="#DC2626" Opacity="0.3"/>
-                            </Border.Effect>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,0"/>
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#B91C1C"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#2A141A"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#5C202E"/>
+                                <Setter Property="Foreground" Value="#FFA8A8"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#991B1B"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.8"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -87,49 +135,22 @@
             </Setter>
         </Style>
 
-        <!-- Secondary Button -->
-        <Style x:Key="SecondaryButton" TargetType="Button">
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="Foreground" Value="#CBD5E1"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" CornerRadius="6" Background="#1C212E" BorderBrush="#2A3245" BorderThickness="1">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="14,0"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#252C3E"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3B4662"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#171C28"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Ghost / Titlebar Button -->
+        <!-- TitleBar Buttons -->
         <Style x:Key="TitleBarButton" TargetType="Button">
-            <Setter Property="Width" Value="38"/>
+            <Setter Property="Width" Value="42"/>
             <Setter Property="Height" Value="32"/>
-            <Setter Property="Foreground" Value="#94A3B8"/>
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#8A8A8A"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="Transparent" CornerRadius="4">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="0">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#1E2330"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#1E1E2A"/>
                                 <Setter Property="Foreground" Value="#FFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -142,12 +163,12 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="Transparent" CornerRadius="4">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="0">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#DC2626"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#C0392B"/>
                                 <Setter Property="Foreground" Value="#FFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -156,32 +177,32 @@
             </Setter>
         </Style>
 
-        <!-- Modern Dark CheckBox -->
-        <Style x:Key="ModernCheckBox" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="#CBD5E1"/>
-            <Setter Property="FontSize" Value="13"/>
+        <!-- Flat VEC CheckBox -->
+        <Style x:Key="FlatCheckBox" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="FontSize" Value="12.5"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border x:Name="Box" Width="18" Height="18" CornerRadius="4"
-                                    Background="#0E1017" BorderBrush="#252C3E" BorderThickness="1.5"
-                                    Margin="0,0,10,0">
-                                <Path x:Name="CheckMark" Data="M3,8 L7,12 L14,4"
-                                      Stroke="#FFFFFF" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                            <Border x:Name="Box" Width="16" Height="16" CornerRadius="0"
+                                    Background="#141414" BorderBrush="#2A2A2A" BorderThickness="1"
+                                    Margin="0,0,8,0">
+                                <Path x:Name="CheckMark" Data="M2,6 L6,10 L12,2"
+                                      Stroke="#FFFFFF" StrokeThickness="2"
                                       Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <ContentPresenter VerticalAlignment="Center"/>
                         </StackPanel>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Box" Property="Background" Value="#22C55E"/>
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#22C55E"/>
+                                <Setter TargetName="Box" Property="Background" Value="#242430"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#FFFFFF"/>
                                 <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#4ADE80"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#8A8A8A"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -189,26 +210,15 @@
             </Setter>
         </Style>
 
-        <!-- Modern ProgressBar -->
-        <Style x:Key="ModernProgressBar" TargetType="ProgressBar">
-            <Setter Property="Height" Value="10"/>
+        <!-- Flat VEC ProgressBar -->
+        <Style x:Key="FlatProgressBar" TargetType="ProgressBar">
+            <Setter Property="Height" Value="6"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
-                        <Border CornerRadius="5" Background="#11141C" BorderBrush="#1E2330" BorderThickness="1" ClipToBounds="True">
+                        <Border CornerRadius="0" Background="#141414" BorderBrush="#2A2A2A" BorderThickness="1">
                             <Grid x:Name="PART_Track">
-                                <Border x:Name="PART_Indicator" CornerRadius="5" HorizontalAlignment="Left">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="#16A34A" Offset="0.0"/>
-                                            <GradientStop Color="#22C55E" Offset="0.5"/>
-                                            <GradientStop Color="#4ADE80" Offset="1.0"/>
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-                                    <Border.Effect>
-                                        <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="#22C55E" Opacity="0.5"/>
-                                    </Border.Effect>
-                                </Border>
+                                <Border x:Name="PART_Indicator" CornerRadius="0" HorizontalAlignment="Left" Background="#FFFFFF"/>
                             </Grid>
                         </Border>
                     </ControlTemplate>
@@ -216,29 +226,29 @@
             </Setter>
         </Style>
 
-        <!-- Modern Dark TextBox -->
-        <Style x:Key="ModernTextBox" TargetType="TextBox">
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#F1F5F9"/>
-            <Setter Property="Background" Value="#0E1017"/>
-            <Setter Property="BorderBrush" Value="#252C3E"/>
+        <!-- Flat VEC TextBox -->
+        <Style x:Key="FlatTextBox" TargetType="TextBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#111116"/>
+            <Setter Property="BorderBrush" Value="#242430"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Padding" Value="8,0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Border x:Name="Bd" CornerRadius="6" Background="{TemplateBinding Background}"
+                        <Border x:Name="Bd" CornerRadius="0" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                             <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsFocused" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#22C55E"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#3B4662"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#383848"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

@@ -92,33 +92,47 @@ public sealed class InstallService : IInstallService
                 }
             }
 
-            Report(InstallStage.Extracting, "Распаковка файлов лаунчера...", 80);
+            Report(InstallStage.Extracting, "Подготовка файлов лаунчера...", 80);
             Directory.CreateDirectory(targetDir);
+
+            var installedExe = Path.Combine(targetDir, "VECLauncher.exe");
 
             await Task.Run(() =>
             {
-                using var archive = ZipFile.OpenRead(tempZipPath);
-                foreach (var entry in archive.Entries)
+                if (release.DownloadUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (string.IsNullOrEmpty(entry.Name))
+                    File.Copy(tempZipPath, installedExe, true);
+                }
+                else
+                {
+                    try
                     {
-                        var folderPath = Path.Combine(targetDir, entry.FullName);
-                        Directory.CreateDirectory(folderPath);
-                        continue;
-                    }
+                        using var archive = ZipFile.OpenRead(tempZipPath);
+                        foreach (var entry in archive.Entries)
+                        {
+                            if (string.IsNullOrEmpty(entry.Name))
+                            {
+                                var folderPath = Path.Combine(targetDir, entry.FullName);
+                                Directory.CreateDirectory(folderPath);
+                                continue;
+                            }
 
-                    var destinationPath = Path.Combine(targetDir, entry.FullName);
-                    var entryDir = Path.GetDirectoryName(destinationPath);
-                    if (!string.IsNullOrEmpty(entryDir))
+                            var destinationPath = Path.Combine(targetDir, entry.FullName);
+                            var entryDir = Path.GetDirectoryName(destinationPath);
+                            if (!string.IsNullOrEmpty(entryDir))
+                            {
+                                Directory.CreateDirectory(entryDir);
+                            }
+
+                            entry.ExtractToFile(destinationPath, true);
+                        }
+                    }
+                    catch (InvalidDataException)
                     {
-                        Directory.CreateDirectory(entryDir);
+                        File.Copy(tempZipPath, installedExe, true);
                     }
-
-                    entry.ExtractToFile(destinationPath, true);
                 }
             }, ct);
-
-            var installedExe = Path.Combine(targetDir, "VECLauncher.exe");
 
             // Copy setup executable itself into install directory for uninstallation / auto-updates
             try

@@ -18,7 +18,7 @@ public static class VmsAuthService
 #else
             try
             {
-                Settings s = SettingsService.Load();
+                LauncherSettings s = SettingsService.Load();
                 if (!string.IsNullOrWhiteSpace(s.WebServerUrl)) return s.WebServerUrl.TrimEnd('/');
             }
             catch { }

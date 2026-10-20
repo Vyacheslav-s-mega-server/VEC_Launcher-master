@@ -6,6 +6,7 @@ public enum AccountType
 {
     Microsoft = 0,
     Offline = 1,
+    Vms = 2,
     Vec = 2
 }
 
@@ -27,8 +28,9 @@ public sealed class MinecraftAccount
     [JsonPropertyName("sessionKey")] public string? SessionKey { get; set; }
 
     [JsonIgnore] public bool IsOffline => Type == AccountType.Offline;
-    [JsonIgnore] public bool IsVec => Type == AccountType.Vec;
-    [JsonIgnore] public string UserType => (IsOffline || IsVec) ? "legacy" : "msa";
+    [JsonIgnore] public bool IsVms => Type == AccountType.Vms || Type == AccountType.Vec;
+    [JsonIgnore] public bool IsVec => IsVms;
+    [JsonIgnore] public string UserType => (IsOffline || IsVms) ? "legacy" : "msa";
     [JsonIgnore]
     public string DashedUuid
     {

@@ -18,7 +18,7 @@ public sealed class WebAuthService
     public async Task<MinecraftAccount?> LoginViaWebAsync(CancellationToken ct = default)
     {
         int port = GetAvailablePort(DefaultPort);
-        using var listener = new HttpListener();
+        using HttpListener listener = new HttpListener();
         listener.Prefixes.Add($"http://127.0.0.1:{port}/callback/");
         
         try
@@ -31,7 +31,7 @@ public sealed class WebAuthService
             return null;
         }
 
-        string authUrl = $"{VecAuthService.DefaultVecServerUrl}/Account/LauncherAuth?port={port}";
+        string authUrl = $"{VmsAuthService.DefaultVmsServerUrl}/Account/LauncherAuth?port={port}";
         try
         {
             Process.Start(new ProcessStartInfo
@@ -47,11 +47,11 @@ public sealed class WebAuthService
 
         try
         {
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(4));
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+            using CancellationTokenSource timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(4));
+            using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
 
-            var contextTask = listener.GetContextAsync();
-            var completedTask = await Task.WhenAny(contextTask, Task.Delay(Timeout.Infinite, linkedCts.Token));
+            Task<HttpListenerContext> contextTask = listener.GetContextAsync();
+            Task completedTask = await Task.WhenAny(contextTask, Task.Delay(Timeout.Infinite, linkedCts.Token));
 
             if (completedTask != contextTask)
             {
@@ -59,9 +59,9 @@ public sealed class WebAuthService
                 return null;
             }
 
-            var context = await contextTask;
-            var request = context.Request;
-            var response = context.Response;
+            HttpListenerContext context = await contextTask;
+            HttpListenerRequest request = context.Request;
+            HttpListenerResponse response = context.Response;
 
             string? sessionKey = request.QueryString["sessionKey"];
             string? username = request.QueryString["username"];
@@ -71,7 +71,7 @@ public sealed class WebAuthService
             string? mcGamertag = request.QueryString["mcGamertag"];
             string? mcUuid = request.QueryString["mcUuid"];
 
-            var srvUrl = VecAuthService.DefaultVecServerUrl;
+            string srvUrl = VmsAuthService.DefaultVmsServerUrl;
             string safeUsername = WebUtility.HtmlEncode(username ?? "Игрок");
 
             string html = $$"""
@@ -225,13 +225,14 @@ public sealed class WebAuthService
                 return null;
             }
 
-            var model = string.Equals(skinModel, "slim", StringComparison.OrdinalIgnoreCase) ? "slim" : "classic";
+            string model = string.Equals(skinModel, "slim", StringComparison.OrdinalIgnoreCase) ? "slim" : "classic";
 
-            var acc = new MinecraftAccount
+            MinecraftAccount acc = new MinecraftAccount
             {
-                Type = AccountType.Vec,
+                Type = AccountType.Vms,
                 Username = username,
                 AccessToken = sessionKey,
+                SessionKey = sessionKey,
                 ServerUrl = srvUrl,
                 SkinModel = model,
                 HasMinecraftLicense = hasLicense,
@@ -246,11 +247,11 @@ public sealed class WebAuthService
             {
                 try
                 {
-                    using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-                    var sBytes = await http.GetByteArrayAsync($"{srvUrl}/api/skin/{username}.png?t={DateTime.UtcNow.Ticks}");
+                    using HttpClient http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+                    byte[] sBytes = await http.GetByteArrayAsync($"{srvUrl}/api/skin/{username}.png?t={DateTime.UtcNow.Ticks}");
                     if (sBytes.Length > 0)
                     {
-                        var sPath = SkinService.AccountSkinPath(username);
+                        string sPath = SkinService.AccountSkinPath(username);
                         Directory.CreateDirectory(Path.GetDirectoryName(sPath)!);
                         await File.WriteAllBytesAsync(sPath, sBytes);
                     }
@@ -259,11 +260,11 @@ public sealed class WebAuthService
 
                 try
                 {
-                    using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-                    var cBytes = await http.GetByteArrayAsync($"{srvUrl}/api/cape/{username}.png?t={DateTime.UtcNow.Ticks}");
+                    using HttpClient http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+                    byte[] cBytes = await http.GetByteArrayAsync($"{srvUrl}/api/cape/{username}.png?t={DateTime.UtcNow.Ticks}");
                     if (cBytes.Length > 0)
                     {
-                        var cPath = SkinService.AccountCapePath(username);
+                        string cPath = SkinService.AccountCapePath(username);
                         Directory.CreateDirectory(Path.GetDirectoryName(cPath)!);
                         await File.WriteAllBytesAsync(cPath, cBytes);
                     }

@@ -180,7 +180,7 @@ public partial class MainWindowViewModel : ObservableObject
         if (acc.IsVec)
         {
             SideName = acc.Username;
-            SideStatus = "VEC ID";
+            SideStatus = "VMS ID";
         }
         else if (acc.IsOffline)
         {
@@ -400,29 +400,29 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task LoginVecAsync()
+    private async Task LoginVmsAsync()
     {
         if (Dialogs is null) return;
 
         SetBusy(true);
-        SetStage("Авторизация через VEC ID...");
+        SetStage("Авторизация через VMS ID...");
 
         try
         {
-            var vecAcc = await Dialogs.ShowVecLoginAsync();
-            if (vecAcc is null)
+            MinecraftAccount? vmsAcc = await Dialogs.ShowVmsLoginAsync();
+            if (vmsAcc is null)
             {
-                AppendLog("Вход через VEC ID отменён.");
+                AppendLog("Вход через VMS ID отменён.");
                 return;
             }
 
-            Accounts.Save(vecAcc);
-            SetAccount(vecAcc, refreshSkin: true);
-            Dialogs.ShowToast("VEC ID", $"Добро пожаловать, {vecAcc.Username}!", ToastType.Success);
+            Accounts.Save(vmsAcc);
+            SetAccount(vmsAcc, refreshSkin: true);
+            Dialogs.ShowToast("VMS ID", $"Добро пожаловать, {vmsAcc.Username}!", ToastType.Success);
         }
         catch (Exception ex)
         {
-            AppendLog("Ошибка авторизации VEC: " + ex.Message);
+            AppendLog("Ошибка авторизации VMS ID: " + ex.Message);
             Dialogs.ShowToast("Ошибка", ex.Message, ToastType.Error);
         }
         finally
@@ -431,6 +431,9 @@ public partial class MainWindowViewModel : ObservableObject
             HideProgress();
         }
     }
+
+    [RelayCommand]
+    private async Task LoginVecAsync() => await LoginVmsAsync();
 
     [RelayCommand]
     private void OpenWebsite()
@@ -497,7 +500,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             Dialogs?.ShowMessage(
                 "Сначала войдите в аккаунт на вкладке «Аккаунт».\n\n" +
-                "Требуется авторизация через VEC ID.", "Требуется вход");
+                "Требуется авторизация через VMS ID.", "Требуется вход");
             Navigate("3");
             return;
         }

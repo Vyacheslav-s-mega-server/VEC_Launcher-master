@@ -121,15 +121,15 @@ public sealed class LaunchService
         bool useAuthlibInjector = false;
         string? authlibServerUrl = null;
 
-        if (account.IsVec)
+        if (account.IsVms)
         {
-            var vecResult = await PrepareVecAuthAsync(account, inst, ct);
-            useAuthlibInjector = vecResult.UseAuthlib;
-            authlibServerUrl = vecResult.ServerUrl;
+            (bool UseAuthlib, string? ServerUrl) vmsResult = await PrepareVmsAuthAsync(account, inst, ct);
+            useAuthlibInjector = vmsResult.UseAuthlib;
+            authlibServerUrl = vmsResult.ServerUrl;
         }
         if (settings.AutoSetGameLanguage)
         {
-            var updated = GameOptionsService.SetLanguage(
+            bool updated = GameOptionsService.SetLanguage(
                 InstanceService.InstanceDir(inst), inst.McVersion, settings.GameLanguage);
             if (updated)
                 Log($"Язык игры установлен: " +
@@ -137,14 +137,14 @@ public sealed class LaunchService
         }
 
         string? launchTicket = null;
-        if (account.IsVec)
+        if (account.IsVms)
         {
-            var srvUrl = !string.IsNullOrWhiteSpace(authlibServerUrl) ? authlibServerUrl : VecAuthService.DefaultVecServerUrl;
-            var integrity = await IntegrityService.ValidateAndSyncAsync(inst, account, srvUrl, Log, SetStatus, ct);
+            string srvUrl = !string.IsNullOrWhiteSpace(authlibServerUrl) ? authlibServerUrl : VecAuthService.DefaultVecServerUrl;
+            IntegrityResult integrity = await IntegrityService.ValidateAndSyncAsync(inst, account, srvUrl, Log, SetStatus, ct);
             launchTicket = integrity.Ticket;
         }
 
-        var jvmArgs = string.IsNullOrWhiteSpace(inst.ExtraJvmArgs) ? settings.ExtraJvmArgs : inst.ExtraJvmArgs;
+        string jvmArgs = string.IsNullOrWhiteSpace(inst.ExtraJvmArgs) ? settings.ExtraJvmArgs : inst.ExtraJvmArgs;
 
         if (!string.IsNullOrWhiteSpace(launchTicket))
         {
@@ -186,22 +186,22 @@ public sealed class LaunchService
         };
     }
 
-    private async Task<(bool UseAuthlib, string? ServerUrl)> PrepareVecAuthAsync(
+    private async Task<(bool UseAuthlib, string? ServerUrl)> PrepareVmsAuthAsync(
         MinecraftAccount account, GameInstance inst, CancellationToken ct)
     {
-        var srvUrl = !string.IsNullOrEmpty(account.ServerUrl) && account.ServerUrl != VecAuthService.DefaultVecServerUrl
+        string srvUrl = !string.IsNullOrEmpty(account.ServerUrl) && account.ServerUrl != VecAuthService.DefaultVecServerUrl
             ? account.ServerUrl
             : await VecAuthService.GetActiveServerUrlAsync();
 
-        var serverOnline = await AuthlibInjectorService.IsServerAvailableAsync(srvUrl, ct);
+        bool serverOnline = await AuthlibInjectorService.IsServerAvailableAsync(srvUrl, ct);
         if (!serverOnline)
         {
             Log($"Сервер VEC ({srvUrl}) пока оффлайн — запуск в автономном режиме со скином из кэша.");
             return (false, null);
         }
 
-        SetStatus("Подготовка VEC ID (authlib-injector)...");
-        var jar = await AuthlibInjectorService.EnsureInstalledAsync(ct);
+        SetStatus("Подготовка VMS ID (authlib-injector)...");
+        string? jar = await AuthlibInjectorService.EnsureInstalledAsync(ct);
         if (jar == null) return (false, null);
 
         Log($"Подключен VEC Auth Server ({srvUrl}).");

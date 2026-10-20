@@ -57,7 +57,7 @@ public class MainWindowViewModelCommandTests
         var vm = CreateVm();
         var dialog = (TestDialogService)vm.Dialogs;
 
-        var acc = new MinecraftAccount { Username = "TestPlayer", Type = AccountType.Vec };
+        var acc = new MinecraftAccount { Username = "TestPlayer", Type = AccountType.Vms };
         vm.SetAccount(acc, refreshSkin: false);
 
         vm.LaunchGameCommand.Execute(null);
@@ -71,7 +71,7 @@ public class MainWindowViewModelCommandTests
         var vm = CreateVm();
         var dialog = (TestDialogService)vm.Dialogs;
 
-        var acc = new MinecraftAccount { Username = "TestPlayer", Type = AccountType.Vec };
+        var acc = new MinecraftAccount { Username = "TestPlayer", Type = AccountType.Vms };
         vm.SetAccount(acc, refreshSkin: false);
 
         var inst = new GameInstance
@@ -103,7 +103,7 @@ public class MainWindowViewModelCommandTests
     public void Logout_ClearsAccount()
     {
         var vm = CreateVm();
-        var acc = new MinecraftAccount { Username = "TestPlayer", Type = AccountType.Vec };
+        var acc = new MinecraftAccount { Username = "TestPlayer", Type = AccountType.Vms };
         vm.SetAccount(acc, refreshSkin: false);
         Assert.NotNull(vm.Account);
 
@@ -153,7 +153,7 @@ public class MainWindowViewModelCommandTests
     public void SelectSavedAccount_UpdatesActiveAccount()
     {
         var vm = CreateVm();
-        var acc = new MinecraftAccount { Username = "Alex", Type = AccountType.Vec };
+        var acc = new MinecraftAccount { Username = "Alex", Type = AccountType.Vms };
         var item = new AccountItemViewModel(acc, isCurrent: false);
 
         vm.SelectSavedAccountCommand.Execute(item);
@@ -163,7 +163,7 @@ public class MainWindowViewModelCommandTests
         Assert.True(vm.IsAccountLoggedIn);
         Assert.False(vm.IsAccountLoggedOut);
         Assert.Equal("Alex", vm.SideName);
-        Assert.Equal("VEC ID", vm.SideStatus);
+        Assert.Equal("VMS ID", vm.SideStatus);
     }
 
     [Fact]
@@ -208,7 +208,8 @@ internal sealed class TestDialogService : IDialogService
 
     public string? BrowseFolder(string description = "") => null;
     public string? BrowseFile(string filter, string title = "Выберите файл") => null;
-    public Task<MinecraftAccount?> ShowVecLoginAsync() => Task.FromResult<MinecraftAccount?>(null);
+    public Task<MinecraftAccount?> ShowVmsLoginAsync() => Task.FromResult<MinecraftAccount?>(null);
+    public Task<MinecraftAccount?> ShowVecLoginAsync() => ShowVmsLoginAsync();
     public void MinimizeWindow() { }
     public void ShowMessage(string message, string title = "VEC Launcher", MessageSeverity severity = MessageSeverity.Info) { }
 }

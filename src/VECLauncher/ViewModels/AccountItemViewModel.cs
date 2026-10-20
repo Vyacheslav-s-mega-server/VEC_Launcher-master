@@ -9,8 +9,8 @@ public partial class AccountItemViewModel : ObservableObject
 {
     public MinecraftAccount Account { get; }
     public string Username => Account.Username;
-    public string TypeDisplay => Account.IsVec ? "VEC ID" : (Account.IsOffline ? "Оффлайн" : "Microsoft");
-    public string Initial => Account.IsVec ? "V" : (Account.IsOffline ? "O" : "M");
+    public string TypeDisplay => Account.IsVms ? "VMS ID" : (Account.IsOffline ? "Оффлайн" : "Microsoft");
+    public string Initial => Account.IsVms ? "V" : (Account.IsOffline ? "O" : "M");
 
     [ObservableProperty]
     private ImageSource? _avatar;

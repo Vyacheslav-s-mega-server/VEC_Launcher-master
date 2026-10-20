@@ -192,7 +192,7 @@
                         <Grid Grid.Row="0" Margin="0,0,0,16">
                             <StackPanel>
                                 <TextBlock Text="ПРОФИЛЬ И ГАРДЕРОБ" FontSize="18" FontWeight="Bold" Foreground="White"/>
-                                <TextBlock Text="Единый аккаунт VEC ID, лицензия Minecraft, персонализация скина и гардероб плащей"
+                                <TextBlock Text="Единый аккаунт VMS ID, лицензия Minecraft, персонализация скина и гардероб плащей"
                                            Foreground="#888" FontSize="11" Margin="0,3,0,0"/>
                             </StackPanel>
                         </Grid>
@@ -352,15 +352,15 @@
                                                     </Grid.ColumnDefinitions>
 
                                                     <StackPanel Grid.Column="0" Margin="0,0,24,0" VerticalAlignment="Center">
-                                                        <TextBlock Text="ЕДИНЫЙ ВХОД VEC ID" FontSize="11.5" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,8"/>
+                                                        <TextBlock Text="ЕДИНЫЙ ВХОД VMS ID" FontSize="11.5" FontWeight="Bold" Foreground="#9CA3AF" Margin="0,0,0,8"/>
                                                         <TextBlock Text="Авторизуйтесь через единый аккаунт платформы VEC" FontWeight="Bold" FontSize="14.5" Foreground="#FFFFFF" Margin="0,0,0,8" TextWrapping="Wrap"/>
                                                         <TextBlock Text="Авторизация через веб-браузер. Лицензия Mojang, скины и гардероб плащей синхронизируются автоматически."
                                                                     Foreground="#9CA3AF" FontSize="12" TextWrapping="Wrap" LineHeight="18"/>
                                                     </StackPanel>
 
-                                                    <Button x:Name="BtnVecLogin" Grid.Column="1" Style="{StaticResource AccentButton}"
-                                                            Content="Войти через VEC ID" Padding="24,12" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"
-                                                            Command="{Binding LoginVecCommand}">
+                                                    <Button x:Name="BtnVmsLogin" Grid.Column="1" Style="{StaticResource AccentButton}"
+                                                            Content="Войти через VMS ID" Padding="24,12" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"
+                                                            Command="{Binding LoginVmsCommand}">
                                                         <Button.Resources>
                                                             <Style TargetType="Border">
                                                                 <Setter Property="CornerRadius" Value="0"/>

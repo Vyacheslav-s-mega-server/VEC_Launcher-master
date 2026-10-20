@@ -75,5 +75,6 @@ public class AccountStorageTests
     {
         Assert.Equal(0, (int)AccountType.Microsoft);
         Assert.Equal(1, (int)AccountType.Offline);
+        Assert.Equal(2, (int)AccountType.Vms);
         Assert.Equal(2, (int)AccountType.Vec);
     }}

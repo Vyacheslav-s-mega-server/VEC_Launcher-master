@@ -66,10 +66,12 @@ public sealed class DialogService : IDialogService
         return dlg.ShowDialog() == true ? dlg.FileName : null;
     }
 
-    public async Task<MinecraftAccount?> ShowVecLoginAsync()
+    public async Task<MinecraftAccount?> ShowVmsLoginAsync()
     {
         return await _webAuth.LoginViaWebAsync();
     }
+
+    public Task<MinecraftAccount?> ShowVecLoginAsync() => ShowVmsLoginAsync();
 
     public void MinimizeWindow()
     {

@@ -40,7 +40,7 @@ public partial class MainWindowViewModel
             Account.SkinModel = CurrentSkinModel;
             Accounts.Save(Account);
 
-            if (Account.IsVec)
+            if (Account.IsVms)
             {
                 IsInternalSkinWrite = true;
                 LastInternalSkinWriteTime = DateTime.UtcNow;
@@ -48,7 +48,7 @@ public partial class MainWindowViewModel
                 {
                     try
                     {
-                        var srvUrl = (!string.IsNullOrEmpty(Account.ServerUrl) && !Account.ServerUrl.Contains("95.59.233"))
+                        string srvUrl = (!string.IsNullOrEmpty(Account.ServerUrl) && !Account.ServerUrl.Contains("95.59.233"))
                             ? Account.ServerUrl
                             : await VecAuthService.GetActiveServerUrlAsync();
                         await Skins.UpdateSkinModelOnVecServerAsync(srvUrl, Account.Username, CurrentSkinModel);
@@ -159,13 +159,13 @@ public partial class MainWindowViewModel
             SelectedSkinFileName = Path.GetFileName(filePath);
             CurrentSkinRawBytes = bytes;
 
-            var skinFile = SkinService.AccountSkinPath(Account.Username);
+            string skinFile = SkinService.AccountSkinPath(Account.Username);
             await SkinService.SafeWriteAllBytesAsync(skinFile, bytes);
 
-            if (Account.IsVec)
+            if (Account.IsVms)
             {
-                var srvUrl = !string.IsNullOrEmpty(Account.ServerUrl) ? Account.ServerUrl : VecAuthService.DefaultVecServerUrl;
-                var modelEnum = IsSlimModel ? SkinService.SkinModel.Slim : SkinService.SkinModel.Classic;
+                string srvUrl = !string.IsNullOrEmpty(Account.ServerUrl) ? Account.ServerUrl : VecAuthService.DefaultVecServerUrl;
+                SkinService.SkinModel modelEnum = IsSlimModel ? SkinService.SkinModel.Slim : SkinService.SkinModel.Classic;
                 try
                 {
                     await Skins.UploadSkinToVecServerAsync(srvUrl, Account.Username, bytes, modelEnum, Account.Uuid);
@@ -211,11 +211,11 @@ public partial class MainWindowViewModel
             CurrentSkinRawBytes = null;
             CurrentAvatarImage = null;
 
-            if (Account.IsVec)
+            if (Account.IsVms)
             {
                 try
                 {
-                    var srvUrl = await VecAuthService.GetActiveServerUrlAsync();
+                    string srvUrl = await VecAuthService.GetActiveServerUrlAsync();
                     await Skins.ResetSkinOnVecServerAsync(srvUrl, Account.Username, null, CurrentSkinModel);
                 }
                 catch (Exception ex) { Log.Warn(ex.Message); }

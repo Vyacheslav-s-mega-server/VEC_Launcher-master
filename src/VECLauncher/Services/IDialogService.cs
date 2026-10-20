@@ -10,7 +10,8 @@ public interface IDialogService
     void ShowToast(string title, string message, ToastType type = ToastType.Info);
     string? BrowseFolder(string description = "");
     string? BrowseFile(string filter, string title = "Выберите файл");
-    Task<MinecraftAccount?> ShowVecLoginAsync();
+    Task<MinecraftAccount?> ShowVmsLoginAsync();
+    Task<MinecraftAccount?> ShowVecLoginAsync() => ShowVmsLoginAsync();
     void MinimizeWindow();
 }
 
